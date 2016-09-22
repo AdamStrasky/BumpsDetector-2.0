@@ -27,8 +27,8 @@ public class MainActivity extends ActionBarActivity {
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
     public static int ZOOM_LEVEL = 18;
-    private BlankFragment blankFragment;
-    public static final String COUNTDOWN_FRAGMENT_TAG = "blankFragment";
+    private FragmentActivity fragmentActivity;
+    public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
 
 
     @Override
@@ -52,11 +52,11 @@ public class MainActivity extends ActionBarActivity {
         context = this;
 
         FragmentManager fragmentManager = getFragmentManager();
-        blankFragment = (BlankFragment) fragmentManager.findFragmentByTag(COUNTDOWN_FRAGMENT_TAG);
-        if (blankFragment == null) {
-            blankFragment = new BlankFragment();
+        fragmentActivity = (FragmentActivity) fragmentManager.findFragmentByTag(FRAGMENTACTIVITY_TAG);
+        if (fragmentActivity == null) {
+            fragmentActivity = new FragmentActivity();
             fragmentManager.beginTransaction()
-                    .add(blankFragment, COUNTDOWN_FRAGMENT_TAG)
+                    .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
 
@@ -71,7 +71,7 @@ public class MainActivity extends ActionBarActivity {
         hideKeyboard(v);
         String location = text.getText().toString();
 
-        if (blankFragment.isNetworkAvailable()) {
+        if (fragmentActivity.isNetworkAvailable()) {
             try {
                 address = Route.findLocality(location, this);
                 if (address == null) {
@@ -80,10 +80,10 @@ public class MainActivity extends ActionBarActivity {
                 }
                 else {
                     LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
-                    LatLng myPosition = new LatLng(blankFragment.gps.getmCurrentLocation().getLatitude(), blankFragment.gps.getmCurrentLocation().getLongitude());
-                    blankFragment.gps.goTo(myPosition, ZOOM_LEVEL);
-                    blankFragment.gps.showDirection(myPosition, to_position);
-                    blankFragment.gps.setNavigation(true);
+                    LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
+                    fragmentActivity.gps.goTo(myPosition, ZOOM_LEVEL);
+                    fragmentActivity.gps.showDirection(myPosition, to_position);
+                    fragmentActivity.gps.setNavigation(true);
                 }
             }
             catch (Exception e) {
@@ -113,50 +113,50 @@ public class MainActivity extends ActionBarActivity {
         switch (item.getItemId()) {
 
             case R.id.satellite:
-                blankFragment.gps.getMap().setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                fragmentActivity.gps.getMap().setMapType(GoogleMap.MAP_TYPE_SATELLITE);
                 return true;
 
             case R.id.normal:
-                blankFragment.gps.getMap().setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                fragmentActivity.gps.getMap().setMapType(GoogleMap.MAP_TYPE_NORMAL);
                 return true;
 
             case R.id.clear_map:
-                blankFragment. gps.setRoad(null);
-                blankFragment.gps.getMap().clear();
+                fragmentActivity. gps.setRoad(null);
+                fragmentActivity.gps.getMap().clear();
                 return true;
 
             case R.id.calibrate:
-                blankFragment.accelerometer.calibrate();
+                fragmentActivity.accelerometer.calibrate();
                 Toast.makeText(context,"Your phone was calibrated.",Toast.LENGTH_SHORT).show();
                 return true;
 
             case R.id.navigation:
-                blankFragment.gps.setNavigation(false);
+                fragmentActivity.gps.setNavigation(false);
                 EditText text = (EditText) findViewById(R.id.location);
                 text.setText("Navigate to...");
                 return true;
 
             case R.id.all_bumps:
-                blankFragment.level = ALL_BUMPS;
-                blankFragment.getBumpsWithLevel();
+                fragmentActivity.level = ALL_BUMPS;
+                fragmentActivity.getBumpsWithLevel();
                 return true;
 
             case R.id.medium_bumps:
-                blankFragment.level = MEDIUM_BUMPS;
-                blankFragment.getBumpsWithLevel();
+                fragmentActivity.level = MEDIUM_BUMPS;
+                fragmentActivity.getBumpsWithLevel();
                 return true;
 
             case R.id.large_bumps:
-                blankFragment.level = LARGE_BUMPS;
-                blankFragment.getBumpsWithLevel();
+                fragmentActivity.level = LARGE_BUMPS;
+                fragmentActivity.getBumpsWithLevel();
                 return true;
 
             case R.id.exit:
-                if (blankFragment.isNetworkAvailable()) {
-                    for (HashMap<Location, Float> bump : blankFragment.accelerometer.getPossibleBumps()) {
-                        blankFragment.saveBump(bump);
+                if (fragmentActivity.isNetworkAvailable()) {
+                    for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
+                        fragmentActivity.saveBump(bump);
                     }
-                    blankFragment.accelerometer.getPossibleBumps().clear();
+                    fragmentActivity.accelerometer.getPossibleBumps().clear();
                 }
                 onDestroy();
                 return true;
