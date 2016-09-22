@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/calibrate" android:title="Calibrate"></item>
+    <item android:id="@+id/clear_map" android:title="Clear Map"></item>
+    <item android:id="@+id/navigation" android:title="End navigation"></item>
+    <item android:id="@+id/all_bumps" android:title="All bumps"></item>
+    <item android:id="@+id/medium_bumps" android:title="Medium and large bumps"></item>
+    <item android:id="@+id/large_bumps" android:title="Large bumps"></item>
+    <item android:id="@+id/satellite" android:title="Satellite map type"></item>
+    <item android:id="@+id/normal" android:title="Normal map type"></item>
+    <item android:id="@+id/exit" android:title="Exit app"></item>
+
+</menu>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\21.0.3\support-annotations-21.0.3.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="4b74cefe1f0c1b819e7260c8627a14674e37fd35">
+        <dex dex="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\pre-dexed\debug\support-annotations-21.0.3_b1c049e1d354b47e165bcad4856edd38cf5e599c.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\jars\libs\internal_impl-21.0.3.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
+        <dex dex="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\pre-dexed\debug\internal_impl-21.0.3_439a789534a482850acf74a17ae32b25e6c2b76a.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\6\4\app\build\intermediates\exploded-aar\com.google.android.gms\play-services\6.5.87\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="dd9247ea0fabe8ee479638c4b4a23e93752be256">
+        <dex dex="C:\Users\Adam\Desktop\6\4\app\build\intermediates\pre-dexed\debug\com.google.android.gms-play-services-6.5.87_9eea58b0f100cfc34306b243133ca8bbc905f140.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\6\4\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\21.0.3\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="81d42bf983a8741f4888a6e333e454e4a5e0eeb7">
+        <dex dex="C:\Users\Adam\Desktop\6\4\app\build\intermediates\pre-dexed\debug\com.android.support-appcompat-v7-21.0.3_438397cce70a5e4f19d15979952e6113207fad1d.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\6\4\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
+        <dex dex="C:\Users\Adam\Desktop\6\4\app\build\intermediates\pre-dexed\debug\com.android.support-support-v4-21.0.3_6eaca8cfb0f707cd775f8da89223ee48bb4b4abc.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
+        <dex dex="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\pre-dexed\debug\com.android.support-support-v4-21.0.3_ba4a5134d521106e10d35f3ca075f212b54c6d91.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\exploded-aar\com.google.android.gms\play-services\6.5.87\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="dd9247ea0fabe8ee479638c4b4a23e93752be256">
+        <dex dex="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\pre-dexed\debug\com.google.android.gms-play-services-6.5.87_7408166642ca22b57f2c8f5e29b45176231400cd.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\6\4\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\jars\libs\internal_impl-21.0.3.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
+        <dex dex="C:\Users\Adam\Desktop\6\4\app\build\intermediates\pre-dexed\debug\internal_impl-21.0.3_c848f54b0107a1625d256a0c21a3951b684e2a71.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\21.0.3\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="21.1.2"
+        sha1="81d42bf983a8741f4888a6e333e454e4a5e0eeb7">
+        <dex dex="C:\Users\Adam\Desktop\BumpsDetector 2.0\app\build\intermediates\pre-dexed\debug\com.android.support-appcompat-v7-21.0.3_d26f23495bff7d2f5a27d42f1a58579b3931c926.jar" />
+    </item>
+
+</items>
