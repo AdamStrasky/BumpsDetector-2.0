@@ -37,6 +37,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public GPSLocator gps;
     public static Activity global_contet;
     public static GPSLocator global_gps;
+    public static GoogleApiClient global_mGoogleApiClient;
+    public static MapFragment global_MapFragment;
     public Accelerometer accelerometer;
     //konstanty pre level (podiel rating/count pre vytlk v databaze)
     private final float ALL_BUMPS = 1.0f;
@@ -68,7 +70,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
       new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                gps.goTo(gps.getCurrentLatLng(),ZOOM_LEVEL);
+                mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
                 //mapa sa nastavuje kazde 2 minuty
                 new Timer().schedule(new MapSetter(), 0, 120000);   //120000
                 //vytlky sa do dabatazy odosielaju kazdu minutu
@@ -81,6 +83,41 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     boolean mServiceConnected = false;
     boolean mBound = false;
     private Accelerometer mLocnServ;
+
+
+    /**************
+     *
+     * *///////////
+
+    boolean mServiceConnectedGPS = false;
+    boolean mBoundGPS = false;
+    private  GPSLocator mLocnServGPS;
+
+    ServiceConnection mServconnGPS = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d("SVTEST", "GPS service connected");
+            GPSLocator.LocalBinder binder = (GPSLocator.LocalBinder) service;
+            mLocnServGPS = binder.getService();
+
+            getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    Toast.makeText(getActivity(), " GPS Service is connected", Toast.LENGTH_SHORT).show();
+
+                }
+            });
+            mBoundGPS = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d("SVTEST", "Activity service disconnected");
+            mBoundGPS = false;
+        }
+    };
+
+
+
 
     ServiceConnection mServconn = new ServiceConnection() {
         @Override
@@ -142,6 +179,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 
 
+    /*public  Location posli(){
+        Location location = mLocnServGPS.getmCurrentLocation();
+        return location;
+    }*/
+
+
     public boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -171,12 +214,65 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     public void init () {
 
-        gps = new GPSLocator(mGoogleApiClient, ((MapFragment) getFragmentManager().findFragmentById(R.id.map)));
+      //  gps = new GPSLocator(mGoogleApiClient, ((MapFragment) getFragmentManager().findFragmentById(R.id.map)));
+
+
+        global_mGoogleApiClient= mGoogleApiClient;
+        global_MapFragment =  ((MapFragment) getFragmentManager().findFragmentById(R.id.map));
+        mServiceConnectedGPS =   getActivity().bindService(new Intent(getActivity().getApplicationContext(), GPSLocator.class), mServconnGPS, Context.BIND_AUTO_CREATE);
+        if (mServiceConnectedGPS)
+        Log.d("SVTESTA", "true");
+        else
+            Log.d("SVTESTA", "false");
       //  accelerometer = new Accelerometer(getActivity(), gps);
-        global_contet =getActivity();
-        global_gps =gps;
+    /*    global_contet =getActivity();
+         global_gps =mLocnServGPS;
+        //gps=mLocnServGPS;
+      //  Log.d("SVTESTA", mLocnServGPS.getCurrentLatLng().toString());
         Log.d("SVTEST", "Activity onStart");
         mServiceConnected=   getActivity().bindService(new Intent(getActivity().getApplicationContext(), Accelerometer.class), mServconn, Context.BIND_AUTO_CREATE);
+         if ( mLocnServGPS == null)
+             Log.d("XXX", "null");
+         else
+             Log.d("XXX", " no null");*/
+
+
+    /*    new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if ( mLocnServ.getPossibleBumps() == null)
+                    Log.d("XXXZ", "nulla");
+                else
+                    Log.d("XXXZ", " no nulla");;
+            }
+        }, 500);*/
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                global_contet =getActivity();
+                global_gps =mLocnServGPS;
+                //gps=mLocnServGPS;
+                //  Log.d("SVTESTA", mLocnServGPS.getCurrentLatLng().toString());
+                Log.d("SVTEST", "Activity onStart");
+                mServiceConnected=   getActivity().bindService(new Intent(getActivity().getApplicationContext(), Accelerometer.class), mServconn, Context.BIND_AUTO_CREATE);
+                if ( mLocnServGPS == null)
+                    Log.d("XXX", "null");
+                else
+                    Log.d("XXX", " no null");
+            }
+        }, 200);
+
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+               accelerometer = mLocnServ;
+                gps = mLocnServGPS;
+            }
+        }, 400);
+
+
 
     }
 
@@ -252,8 +348,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             //pouzivatelovi sa zobrazi notifikacia Setting map
             Toast.makeText(getActivity(), "Setting map", Toast.LENGTH_SHORT).show();
             //level je globalna premenna, na zaklade ktorej sa filtruju zobrazovane vytlky
-            gps.setLevel(level);
-            gps.updateMap();
+
+            mLocnServGPS.setLevel(level);
+            mLocnServGPS.updateMap();
         }
         else {
           Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();

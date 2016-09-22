@@ -47,9 +47,15 @@
         </activity>
 
         <service
-            android:name="com.example.monikas.navigationapp.Accelerometer"
+            android:name=".Accelerometer"
             android:enabled="true"
             android:exported="true" />
+        <service
+            android:name=".GPSLocator"
+            android:enabled="true"
+            android:exported="true">
+
+        </service>
     </application>
 
 </manifest>

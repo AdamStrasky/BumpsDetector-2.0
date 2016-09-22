@@ -1,8 +1,14 @@
 package com.example.monikas.navigationapp;
 
+import android.app.Service;
+import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Binder;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -28,10 +34,13 @@ import org.w3c.dom.Document;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
+import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
+
 /**
  * Created by monikas on 24. 3. 2015.
  */
-public class GPSLocator implements LocationListener {
+public class GPSLocator extends Service implements LocationListener {
 
     private Location mCurrentLocation;
     private GoogleApiClient mGoogleApiClient;
@@ -41,8 +50,10 @@ public class GPSLocator implements LocationListener {
     private PolylineOptions road;
     private float level;
 
-    public GPSLocator (GoogleApiClient googleApiClient, MapFragment fragment) {
-        this.mGoogleApiClient = googleApiClient;
+    public GPSLocator () {
+
+       MapFragment fragment = global_MapFragment ;
+        this.mGoogleApiClient = global_mGoogleApiClient;
 
         if (map == null) {
             map = fragment.getMap();
@@ -132,6 +143,7 @@ public class GPSLocator implements LocationListener {
     }
 
     public void onLocationChanged(Location location) {
+        Log.d("DDDDD", "aaaaaaaaaaaaaaaaaaa");
         mCurrentLocation = location;
         //ak je zapnuta navigacia, obrazovka sa hybe spolu s meniacou sa polohou
         if (isNavigation()) goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
@@ -143,6 +155,30 @@ public class GPSLocator implements LocationListener {
         //ak je nejaka trasa, vykresli ju
         if (road != null) map.addPolyline(road);
         new GetAllBumps().execute();
+    }
+
+    public IBinder onBind(Intent intent) {
+        Log.d("SVTEST", "GPS Loc service ONBIND");
+        return mBinder;
+    }
+
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // Won't run unless it's EXPLICITLY STARTED
+        Log.d("SVTEST", "GPS Loc service ONSTARTCOMMAND");
+        return START_STICKY;
+        //.getClass().onStartCommand(intent, flags, startId);
+    }
+
+
+
+    private final IBinder mBinder = new LocalBinder();
+    public class LocalBinder extends Binder {
+
+
+        public GPSLocator getService() {
+            Log.d("SVTEST", "Loc service ONDESTROY");
+            return GPSLocator.this;
+        }
     }
 
     class GetAllBumps extends AsyncTask<String, Void, JSONArray> {
