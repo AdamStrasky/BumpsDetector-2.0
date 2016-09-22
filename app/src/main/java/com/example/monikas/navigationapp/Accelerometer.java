@@ -201,7 +201,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
             //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
             possibleBumps.add(hashToArray);
         }
-
+//aaaasasxasd
     }
 
     //vzdialenost dvoch pozicii v metroch
