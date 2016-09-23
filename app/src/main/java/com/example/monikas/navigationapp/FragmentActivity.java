@@ -34,7 +34,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     private GoogleApiClient mGoogleApiClient;
     private Context context;
-    public GPSLocator gps;
+    public GPSLocator gps = null;
     public Accelerometer accelerometer;
     public static Activity fragment_context;
     public static GPSLocator global_gps;
@@ -73,10 +73,16 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
          buildGoogleApiClient();
          showCalibrationAlert();
         //po 10 sekundach sa spustia metody vykonavajuce sa pravidelne
-      new Handler().postDelayed(new Runnable() {
+         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
+                Activity activity = getActivity();
+                if(activity != null) {
+                    Log.d("AAA","activit existuje ");
+                 mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
+                }
+                else
+                    Log.d("AAA","activit neexistuje ");
                 //mapa sa nastavuje kazde 2 minuty
                 new Timer().schedule(new MapSetter(), 0, 120000);   //120000
                 //vytlky sa do dabatazy odosielaju kazdu minutu
@@ -255,8 +261,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
                        Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
                         //kazdy vytlk v zozname vytlkov uloz do databazy
+
                         for (HashMap<Location, Float> bump : list) {
                             saveBump(bump);
+                            Log.d("VLAKNO","prebehlo");
                         }
                         //vymaz zoznam
                         mLocnServAcc.getPossibleBumps().clear();

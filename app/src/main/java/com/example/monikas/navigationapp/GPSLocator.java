@@ -1,14 +1,18 @@
 package com.example.monikas.navigationapp;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.hardware.display.DisplayManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.Display;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -87,11 +91,9 @@ public class GPSLocator extends Service implements LocationListener {
 
     //mapa ukaze na toto miesto
     public void goTo (LatLng latlong, float zoom) {
-
-        CameraUpdate update = CameraUpdateFactory.newLatLngZoom(latlong, zoom);
-        map.moveCamera(update);
-
-    }
+            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(latlong, zoom);
+            map.moveCamera(update);
+     }
 
     //vykresli cestu z miesta from do miesta to
     public void showDirection (LatLng from, LatLng to) {
@@ -146,8 +148,13 @@ public class GPSLocator extends Service implements LocationListener {
         Log.d("GPS", " change GPS position");
         mCurrentLocation = location;
         //ak je zapnuta navigacia, obrazovka sa hybe spolu s meniacou sa polohou
-        if (isNavigation()) goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
-    }
+        if (isNavigation() && isScreenOn()) {
+            Log.d("ZAP","zapnuta");
+            goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
+        }
+        else
+            Log.d("ZAP","vypnuta");
+        }
 
 
     public void updateMap () {
@@ -237,6 +244,26 @@ public class GPSLocator extends Service implements LocationListener {
                 }
             }
         }
+    }
+    private boolean isScreenOn () {
+
+        if (android.os.Build.VERSION.SDK_INT >= 20) {
+            DisplayManager dm = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+            for (Display display : dm.getDisplays ()) {
+                if (display.getState () == Display.STATE_ON ||
+                        display.getState () == Display.STATE_UNKNOWN) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        if (powerManager.isScreenOn ()) {
+            return true;
+        }
+        return false;
     }
 
 

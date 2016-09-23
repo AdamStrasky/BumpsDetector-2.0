@@ -6,6 +6,8 @@ package com.example.monikas.navigationapp;
 
 import android.location.Location;
 import android.os.AsyncTask;
+import android.util.Log;
+
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
@@ -47,6 +49,7 @@ public class Bump {
             params.add(new BasicNameValuePair("intensity", Float.toString(intensity)));
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             jsonParser.makeHttpRequest(url_create_product, "POST", params);
+            Log.d("VLAKNO","makeHttpRequest");
             return null;
         }
     }

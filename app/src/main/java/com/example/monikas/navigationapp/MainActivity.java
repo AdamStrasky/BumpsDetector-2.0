@@ -4,8 +4,10 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.location.Address;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -153,10 +155,7 @@ public class MainActivity extends ActionBarActivity {
 
             case R.id.exit:
                 if (fragmentActivity.isNetworkAvailable()) {
-                    for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
-                        fragmentActivity.saveBump(bump);
-                    }
-                    fragmentActivity.accelerometer.getPossibleBumps().clear();
+                     new SensorEventLoggerTask().execute();
                 }
                 onDestroy();
                 return true;
@@ -166,11 +165,33 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    private class SensorEventLoggerTask extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... params) {
+            for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
+                fragmentActivity.saveBump(bump);
+            }
+            fragmentActivity.accelerometer.getPossibleBumps().clear();
+            return null;
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         finish();
         android.os.Process.killProcess(android.os.Process.myPid());
+    }
+
+    protected void onResume() {
+        super.onResume();
+        Log.d("III","znova zapnutie obrazovky ");
+        if (fragmentActivity.gps !=null ) {
+            Log.d("III","zvzkonalo sa  ");
+            LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
+            fragmentActivity.gps.goTo(myPosition, ZOOM_LEVEL);
+        }
     }
 
 }
