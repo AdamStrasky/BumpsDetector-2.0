@@ -143,7 +143,7 @@ public class GPSLocator extends Service implements LocationListener {
     }
 
     public void onLocationChanged(Location location) {
-        Log.d("DDDDD", "aaaaaaaaaaaaaaaaaaa");
+        Log.d("GPS", " change GPS position");
         mCurrentLocation = location;
         //ak je zapnuta navigacia, obrazovka sa hybe spolu s meniacou sa polohou
         if (isNavigation()) goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
@@ -163,20 +163,16 @@ public class GPSLocator extends Service implements LocationListener {
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Won't run unless it's EXPLICITLY STARTED
         Log.d("SVTEST", "GPS Loc service ONSTARTCOMMAND");
         return START_STICKY;
-        //.getClass().onStartCommand(intent, flags, startId);
     }
 
 
 
     private final IBinder mBinder = new LocalBinder();
     public class LocalBinder extends Binder {
-
-
         public GPSLocator getService() {
-            Log.d("SVTEST", "Loc service ONDESTROY");
+            Log.d("SVTEST", "GPS service ONDESTROY");
             return GPSLocator.this;
         }
     }

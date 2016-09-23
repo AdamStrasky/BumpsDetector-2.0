@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.example.monikas.navigationapp.FragmentActivity.global_contet;
+import static com.example.monikas.navigationapp.FragmentActivity.fragment_context;
 import static com.example.monikas.navigationapp.FragmentActivity.global_gps;
 
 
@@ -48,7 +48,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private boolean unlock = true;
 
     public Accelerometer(){
-        this.context = global_contet;
+        this.context = fragment_context;
         LIFO = new ArrayList<>();
         flag = false;
         mSensorManager = (SensorManager) context.getSystemService(context.SENSOR_SERVICE);
@@ -93,13 +93,11 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                 currentData = new AccData(x,y,z);
                 final Location location = global_gps.getmCurrentLocation();
                 if (location != null) {
-                    Log.d("GPS", " pred vypisanim " + location.getLongitude());
-                    Log.d("GPS", " pred vypisanim " + location.getLatitude());
+                    Log.d("GPS", " current position  " + location.getLongitude());
+                    Log.d("GPS", " current position  " + location.getLatitude());
                 }
                 else
-                    Log.d("GPS", " nuuuuuuuuul  " );
-             //   Log.d("SVTESTA", String.valueOf(gps.getmCurrentLocation().getLatitude()));
-              //  Log.d("SVTESTA",  String.valueOf(gps.getmCurrentLocation().getLongitude()));
+                    Log.d("GPS", " no GPS  " );
                 //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
                 for (AccData temp : LIFO) {
                     //pre kazdu os X,Y,Z sa vypocita zmena zrychlenia
@@ -121,7 +119,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                     if (location != null && data != null) {
                         //pokial je znama aktualna pozicia a intenzita otrasu
                         if (unlock) {
-
                             Log.d("SVTEST", "sensor");
                             unlock = false;
                             result= detect(location, data);
@@ -141,9 +138,8 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
 
 
         protected void onPostExecute(String result){
-
             if (result != null)
-            Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+                 Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -180,9 +176,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                     if (data > (Float) pair.getValue()) {
                         pair.setValue(data);
                         Log.d("SVTEST", "same location");
-                        result = "same";
-
-                     //   Toast.makeText(context,"BUMPaaa!!!",Toast.LENGTH_SHORT).show();
+                        result = "same bump";
                     }
                     isToClose = true;
                 }
@@ -194,7 +188,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
                         if (data > (Float) pair.getValue()) {
                             Log.d("SVTEST", "under 2 meters ");
-                            result = "under";
+                            result = "under bump";
                             pair.setValue(data);
                         }
                         isToClose = true;
@@ -206,7 +200,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
         if (!isToClose) {
 
             Log.d("SVTEST", "new dump");
-            result = "new";
+            result = "new bump";
             System.out.println("lat: "+ location.getLatitude() + ",lng: "+ location.getLongitude() + ",data: " + data);
             HashMap<Location, Float> hashToArray = new HashMap();
             hashToArray.put(location,data);
@@ -235,25 +229,21 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     }
 
     public IBinder onBind(Intent intent) {
-        Log.d("SVTEST", "Loc service ONBIND");
+        Log.d("SVTEST", "Accelerometer service ONBIND");
         return mBinder;
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Won't run unless it's EXPLICITLY STARTED
-        Log.d("SVTEST", "Loc service ONSTARTCOMMAND");
-         return START_STICKY;
-        //.getClass().onStartCommand(intent, flags, startId);
+        Log.d("SVTEST", "Accelerometer service ONSTARTCOMMAND");
+        return START_STICKY;
     }
-
-
 
     private final IBinder mBinder = new LocalBinder();
     public class LocalBinder extends Binder {
 
 
         public Accelerometer getService() {
-            Log.d("SVTEST", "Loc service ONDESTROY");
+            Log.d("SVTEST", "Accelerometer service getService");
             return Accelerometer.this;
         }
     }
