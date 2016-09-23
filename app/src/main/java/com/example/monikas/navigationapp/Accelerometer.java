@@ -36,7 +36,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private Context context;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
- //   private GPSLocator gps;
     private float THRESHOLD = 4.5f;
     private ArrayList<HashMap<Location, Float>> possibleBumps;
     private float priorityX = 0.0f;
@@ -49,10 +48,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private boolean unlock = true;
 
     public Accelerometer(){
-
         this.context = global_contet;
-        //this.gps = global_gps;
-        Log.d("SVTESTA", "vvbbvvb");
         LIFO = new ArrayList<>();
         flag = false;
         mSensorManager = (SensorManager) context.getSystemService(context.SENSOR_SERVICE);
@@ -95,10 +91,13 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                 LIFO.add(currentData);
             } else {
                 currentData = new AccData(x,y,z);
-
-               // Log.d("SVTESTA", gps.toString());
-
                 final Location location = global_gps.getmCurrentLocation();
+                if (location != null) {
+                    Log.d("GPS", " pred vypisanim " + location.getLongitude());
+                    Log.d("GPS", " pred vypisanim " + location.getLatitude());
+                }
+                else
+                    Log.d("GPS", " nuuuuuuuuul  " );
              //   Log.d("SVTESTA", String.valueOf(gps.getmCurrentLocation().getLatitude()));
               //  Log.d("SVTESTA",  String.valueOf(gps.getmCurrentLocation().getLongitude()));
                 //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD

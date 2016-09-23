@@ -261,7 +261,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 else
                     Log.d("XXX", " no null");
             }
-        }, 200);
+        }, 400);
 
 
         new Handler().postDelayed(new Runnable() {
@@ -270,7 +270,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                accelerometer = mLocnServ;
                 gps = mLocnServGPS;
             }
-        }, 400);
+        }, 600);
 
 
 
