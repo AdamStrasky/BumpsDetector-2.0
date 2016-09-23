@@ -29,8 +29,10 @@ public class MainActivity extends ActionBarActivity {
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
     public static int ZOOM_LEVEL = 18;
-    private FragmentActivity fragmentActivity;
+    private static FragmentActivity fragmentActivity;
     public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
+
+
 
 
     @Override
@@ -55,6 +57,8 @@ public class MainActivity extends ActionBarActivity {
 
         FragmentManager fragmentManager = getFragmentManager();
         fragmentActivity = (FragmentActivity) fragmentManager.findFragmentByTag(FRAGMENTACTIVITY_TAG);
+
+
         if (fragmentActivity == null) {
             fragmentActivity = new FragmentActivity();
             fragmentManager.beginTransaction()
@@ -62,6 +66,30 @@ public class MainActivity extends ActionBarActivity {
                     .commit();
         }
 
+    }
+
+    public static boolean isActivityVisible() {
+        return activityVisible;
+    }
+
+    public static void activityResumed() {
+        activityVisible = true;
+    }
+
+    public static void activityPaused() {
+        activityVisible = false;
+    }
+
+    private static boolean activityVisible=true;
+
+
+
+    public static boolean vidno() {
+        if (  fragmentActivity.getView() != null && fragmentActivity.isVisible) {
+            return true;
+        }
+        else
+            return false;
     }
 
     public void onClick_Search(View v) throws IOException {
@@ -109,6 +137,8 @@ public class MainActivity extends ActionBarActivity {
         getMenuInflater().inflate(R.menu.activity_main, menu);
         return true;
     }
+
+
 
 
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -192,6 +222,13 @@ public class MainActivity extends ActionBarActivity {
             LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
             fragmentActivity.gps.goTo(myPosition, ZOOM_LEVEL);
         }
+        MainActivity.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MainActivity.activityPaused();
     }
 
 }

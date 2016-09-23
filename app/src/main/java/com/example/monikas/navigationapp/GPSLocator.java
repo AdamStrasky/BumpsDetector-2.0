@@ -1,5 +1,6 @@
 package com.example.monikas.navigationapp;
 
+import android.app.Fragment;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -147,8 +148,9 @@ public class GPSLocator extends Service implements LocationListener {
     public void onLocationChanged(Location location) {
         Log.d("GPS", " change GPS position");
         mCurrentLocation = location;
-        //ak je zapnuta navigacia, obrazovka sa hybe spolu s meniacou sa polohou
-        if (isNavigation() && isScreenOn()) {
+        //ak je zapnuta navigacia, obrazovka sa hybe spolu s meniacou sa polohou]
+
+        if (isNavigation() && MainActivity.isActivityVisible()) {
             Log.d("ZAP","zapnuta");
             goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
         }

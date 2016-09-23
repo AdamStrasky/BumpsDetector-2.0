@@ -80,7 +80,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
             boolean isBump = false;
             //objekt AccData obsahuje data z akcelerometra pre osi X,Y,Z
             final AccData currentData;
-
+           Log.d("POP"," stav"+ MainActivity.isActivityVisible());
             values[0] = event.values[0];
             values[1] = event.values[1];
             values[2] = event.values[2];

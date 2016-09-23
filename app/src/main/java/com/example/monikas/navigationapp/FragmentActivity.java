@@ -62,6 +62,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     private  GPSLocator mLocnServGPS;
     public static final String GPS_ENABLED_CHANGE_ACTION = "android.location.GPS_ENABLED_CHANGE";
     private boolean isGPSEnabled = false;
+    protected boolean isVisible;
     LocationManager locationManager;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -82,6 +83,20 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             aaaa();
         }
 
+
+    }
+
+
+
+
+    @Override
+    public  void setUserVisibleHint(boolean visible){
+        super.setUserVisibleHint(visible);
+        if (visible){
+            isVisible=true;
+        }
+        else
+            isVisible=false;
     }
     private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
         @Override
