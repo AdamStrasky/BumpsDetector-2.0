@@ -187,7 +187,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         Log.d("III","znova zapnutie obrazovky ");
-        if (fragmentActivity.gps !=null ) {
+        if (fragmentActivity.gps !=null && fragmentActivity.gps.getmCurrentLocation()!= null) {
             Log.d("III","zvzkonalo sa  ");
             LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
             fragmentActivity.gps.goTo(myPosition, ZOOM_LEVEL);

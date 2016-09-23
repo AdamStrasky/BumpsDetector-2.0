@@ -46,6 +46,8 @@
             </intent-filter>
         </activity>
 
+
+
         <service
             android:name=".Accelerometer"
             android:enabled="true"
@@ -56,6 +58,7 @@
             android:exported="true">
 
         </service>
+
     </application>
 
 </manifest>

@@ -4,11 +4,14 @@ package com.example.monikas.navigationapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -29,8 +32,10 @@ import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static java.security.AccessController.getContext;
 
-public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
     private GoogleApiClient mGoogleApiClient;
     private Context context;
@@ -51,11 +56,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     boolean mServiceConnectedAcc = false;
     boolean mBoundAcc = false;
     private Accelerometer mLocnServAcc;
-
+    private boolean GPS_FLAG = true;
     boolean mServiceConnectedGPS = false;
     boolean mBoundGPS = false;
     private  GPSLocator mLocnServGPS;
-
+    public static final String GPS_ENABLED_CHANGE_ACTION = "android.location.GPS_ENABLED_CHANGE";
+    private boolean isGPSEnabled = false;
+    LocationManager locationManager;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,32 +71,35 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         if (!isNetworkAvailable()){
              Toast.makeText(getActivity(),"Network is disabled. Please, connect to network.",Toast.LENGTH_SHORT).show();
         }
-        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
+        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if(!isGPSEnabled) {
+            Log.d("onGpsStatusChanged", "nezapnuta gps ");
             showGPSDisabledAlertToUser();
+        } else {
+            GPS_FLAG = false;
+            aaaa();
         }
 
-         buildGoogleApiClient();
-         showCalibrationAlert();
-        //po 10 sekundach sa spustia metody vykonavajuce sa pravidelne
-         new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Activity activity = getActivity();
-                if(activity != null) {
-                    Log.d("AAA","activit existuje ");
-                 mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
-                }
-                else
-                    Log.d("AAA","activit neexistuje ");
-                //mapa sa nastavuje kazde 2 minuty
-                new Timer().schedule(new MapSetter(), 0, 120000);   //120000
-                //vytlky sa do dabatazy odosielaju kazdu minutu
-                new Timer().schedule(new SendBumpsToDb(), 0, 60000);
-            }
-        }, 10000);
     }
+    private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().matches("android.location.PROVIDERS_CHANGED")) {
+               if(  locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER ) && GPS_FLAG) {
+                   aaaa();
+                   GPS_FLAG = false;
+               }
+                else
+                   Log.d("onGpsStatusChanged"," brodcast ylz");
+
+            }
+        }
+    };
+
+
+
 
     ServiceConnection mServconnGPS = new ServiceConnection() {
         @Override
@@ -228,6 +238,31 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             new Bump(loc, data);
             it.remove();
         }
+    }
+
+
+
+
+    private void aaaa() {
+        Log.d("onGpsStatusChanged", "zapnuta gps po broadcaste");
+        showCalibrationAlert();
+        buildGoogleApiClient();
+
+        //po 10 sekundach sa spustia metody vykonavajuce sa pravidelne
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Activity activity = getActivity();
+                if(activity != null) {
+                    mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
+                }
+                //mapa sa nastavuje kazde 2 minuty
+                new Timer().schedule(new MapSetter(), 0, 120000);   //120000
+                //vytlky sa do dabatazy odosielaju kazdu minutu
+                new Timer().schedule(new SendBumpsToDb(), 0, 60000);
+            }
+        }, 10000);
+
     }
 
 
