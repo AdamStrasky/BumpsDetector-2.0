@@ -247,26 +247,7 @@ public class GPSLocator extends Service implements LocationListener {
             }
         }
     }
-    private boolean isScreenOn () {
 
-        if (android.os.Build.VERSION.SDK_INT >= 20) {
-            DisplayManager dm = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
-            for (Display display : dm.getDisplays ()) {
-                if (display.getState () == Display.STATE_ON ||
-                        display.getState () == Display.STATE_UNKNOWN) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        if (powerManager.isScreenOn ()) {
-            return true;
-        }
-        return false;
-    }
 
 
 }

@@ -6,6 +6,7 @@ import android.location.Address;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -29,7 +30,7 @@ public class MainActivity extends ActionBarActivity {
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
     public static int ZOOM_LEVEL = 18;
-    private static FragmentActivity fragmentActivity;
+    private  FragmentActivity fragmentActivity;
     public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
 
 
@@ -83,14 +84,6 @@ public class MainActivity extends ActionBarActivity {
     private static boolean activityVisible=true;
 
 
-
-    public static boolean vidno() {
-        if (  fragmentActivity.getView() != null && fragmentActivity.isVisible) {
-            return true;
-        }
-        else
-            return false;
-    }
 
     public void onClick_Search(View v) throws IOException {
 
@@ -187,7 +180,11 @@ public class MainActivity extends ActionBarActivity {
                 if (fragmentActivity.isNetworkAvailable()) {
                      new SensorEventLoggerTask().execute();
                 }
+                fragmentActivity.konci();
                 onDestroy();
+
+
+
                 return true;
 
             default:
@@ -199,8 +196,11 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected String doInBackground(Void... params) {
+            int i= 0;
             for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
                 fragmentActivity.saveBump(bump);
+                i++;
+                Log.d("DISC"," cislo "+i);
             }
             fragmentActivity.accelerometer.getPossibleBumps().clear();
             return null;

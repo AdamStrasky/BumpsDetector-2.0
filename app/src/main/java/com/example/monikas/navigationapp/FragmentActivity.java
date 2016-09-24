@@ -55,11 +55,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     boolean mServiceConnectedAcc = false;
     boolean mBoundAcc = false;
-    private Accelerometer mLocnServAcc;
+    private Accelerometer mLocnServAcc = null;
     private boolean GPS_FLAG = true;
     boolean mServiceConnectedGPS = false;
     boolean mBoundGPS = false;
-    private  GPSLocator mLocnServGPS;
+    private  GPSLocator mLocnServGPS = null;
     public static final String GPS_ENABLED_CHANGE_ACTION = "android.location.GPS_ENABLED_CHANGE";
     private boolean isGPSEnabled = false;
     protected boolean isVisible;
@@ -127,7 +127,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.d("SVTEST", "GPS service disconnected");
+            Log.d("DISC", "GPS service disconnected");
             mBoundGPS = false;
         }
     };
@@ -143,7 +143,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.d("SVTEST", "Accelerometer service disconnected");
+            Log.d("DISC", "Accelerometer service disconnected");
             mBoundAcc = false;
         }
     };
@@ -281,6 +281,24 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 
 
+
+    public void konci(){
+
+Log.d("DISC","111");
+     getActivity().stopService(new Intent(getActivity().getApplicationContext(), Accelerometer.class));
+     if (  mServiceConnectedAcc) {
+         getActivity().unbindService(mServconnAcc);
+         Log.d("DISC","2222");
+     }
+
+        Log.d("DISC","3333");
+      getActivity().stopService(new Intent(getActivity().getApplicationContext(), GPSLocator.class));
+        if (  mServiceConnectedGPS) {
+            Log.d("DISC","444");
+            getActivity().unbindService(mServconnGPS);
+        }
+
+    }
     private class MapSetter extends TimerTask {
 
         @Override
