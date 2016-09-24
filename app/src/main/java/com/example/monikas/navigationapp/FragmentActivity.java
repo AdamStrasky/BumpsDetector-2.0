@@ -208,6 +208,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             public void run() {
                accelerometer = mLocnServAcc;
                 gps = mLocnServGPS;
+                showCalibrationAlert();
             }
         }, 600);
     }
@@ -236,7 +237,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 
      private void initialization() {
-        showCalibrationAlert();
+
         buildGoogleApiClient();
 
         //po 10 sekundach sa spustia metody vykonavajuce sa pravidelne
