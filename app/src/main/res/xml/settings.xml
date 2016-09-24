@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-
+    <PreferenceCategory android:title="Settings"
+        android:textSize="@dimen/abc_action_bar_stacked_max_height" />
     <CheckBoxPreference android:key="alarm"
         android:title="Alarm"
         android:defaultValue="true"/>

@@ -49,7 +49,7 @@ public class Bump {
             params.add(new BasicNameValuePair("intensity", Float.toString(intensity)));
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             jsonParser.makeHttpRequest(url_create_product, "POST", params);
-            Log.d("VLAKNO","makeHttpRequest");
+            Log.d("BUMP","makeHttpRequest");
             return null;
         }
     }

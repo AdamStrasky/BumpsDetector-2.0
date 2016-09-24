@@ -3,14 +3,12 @@ package com.example.monikas.navigationapp;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,8 +32,8 @@ public class MainActivity extends ActionBarActivity {
     public static int ZOOM_LEVEL = 18;
     private  FragmentActivity fragmentActivity;
     public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
-
-
+    private static boolean activityVisible=true;
+    public static final String PREF_FILE_NAME = "Settings";
 
 
     @Override
@@ -51,17 +49,13 @@ public class MainActivity extends ActionBarActivity {
                 if (v.getId() == searchBar.getId()) {
                     searchBar.setCursorVisible(true);
                     searchBar.setText("");
-
-
                 }
-
             }
         });
         context = this;
 
         FragmentManager fragmentManager = getFragmentManager();
         fragmentActivity = (FragmentActivity) fragmentManager.findFragmentByTag(FRAGMENTACTIVITY_TAG);
-
 
         if (fragmentActivity == null) {
             fragmentActivity = new FragmentActivity();
@@ -84,15 +78,13 @@ public class MainActivity extends ActionBarActivity {
         activityVisible = false;
     }
 
-    private static boolean activityVisible=true;
-
-
-
-    public void onClick_Search(View v) throws IOException {
+     public void onClick_Search(View v) throws IOException {
 
         Address address = null;
         EditText text = (EditText) findViewById(R.id.location);
         Toast.makeText(this, "Finding location...", Toast.LENGTH_LONG).show();
+
+
         text.setCursorVisible(false);
         hideKeyboard(v);
         String location = text.getText().toString();
@@ -101,8 +93,8 @@ public class MainActivity extends ActionBarActivity {
             try {
                 address = Route.findLocality(location, this);
                 if (address == null) {
-                    Toast.makeText(this, "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
-
+                    if (isEneableShowText())
+                        Toast.makeText(this, "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
                 }
                 else {
                     LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
@@ -113,14 +105,15 @@ public class MainActivity extends ActionBarActivity {
                 }
             }
             catch (Exception e) {
-                Toast.makeText(this, "Unable to find location!", Toast.LENGTH_LONG).show();
+                if (isEneableShowText())
+                     Toast.makeText(this, "Unable to find location!", Toast.LENGTH_LONG).show();
             }
         }
         else {
-            Toast.makeText(this, "Unable to find location! Please, connect to network.", Toast.LENGTH_LONG).show();
+            if (isEneableShowText())
+                 Toast.makeText(this, "Unable to find location! Please, connect to network.", Toast.LENGTH_LONG).show();
         }
     }
-
 
     public void hideKeyboard(View v) {
 
@@ -133,9 +126,6 @@ public class MainActivity extends ActionBarActivity {
         getMenuInflater().inflate(R.menu.activity_main, menu);
         return true;
     }
-
-
-
 
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -155,7 +145,8 @@ public class MainActivity extends ActionBarActivity {
 
             case R.id.calibrate:
                 fragmentActivity.accelerometer.calibrate();
-                Toast.makeText(context,"Your phone was calibrated.",Toast.LENGTH_SHORT).show();
+                if (isEneableShowText())
+                    Toast.makeText(context,"Your phone was calibrated.",Toast.LENGTH_SHORT).show();
                 return true;
 
             case R.id.navigation:
@@ -186,13 +177,10 @@ public class MainActivity extends ActionBarActivity {
 
             case R.id.exit:
                 if (fragmentActivity.isNetworkAvailable()) {
-                     new SensorEventLoggerTask().execute();
+                     new EndAsyncTask().execute();
                 }
-                fragmentActivity.konci();
+                fragmentActivity.stop_servise();
                 onDestroy();
-
-
-
                 return true;
 
             default:
@@ -200,15 +188,12 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    private class SensorEventLoggerTask extends AsyncTask<Void, Void, String> {
+    private class EndAsyncTask extends AsyncTask<Void, Void, String> {
 
         @Override
         protected String doInBackground(Void... params) {
-            int i= 0;
             for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
                 fragmentActivity.saveBump(bump);
-                i++;
-                Log.d("DISC"," cislo "+i);
             }
             fragmentActivity.accelerometer.getPossibleBumps().clear();
             return null;
@@ -224,9 +209,7 @@ public class MainActivity extends ActionBarActivity {
 
     protected void onResume() {
         super.onResume();
-        Log.d("III","znova zapnutie obrazovky ");
         if (fragmentActivity.gps !=null && fragmentActivity.gps.getmCurrentLocation()!= null) {
-            Log.d("III","zvzkonalo sa  ");
             LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
             fragmentActivity.gps.goTo(myPosition, ZOOM_LEVEL);
         }
@@ -237,6 +220,17 @@ public class MainActivity extends ActionBarActivity {
     protected void onPause() {
         super.onPause();
         MainActivity.activityPaused();
+    }
+
+    public boolean isEneableShowText() {
+
+        SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
+        Boolean alarm = preferences.getBoolean("alarm", Boolean.parseBoolean(null));
+        if ((alarm) || (!alarm && MainActivity.isActivityVisible())) {
+           return true;
+        }
+        else
+            return false;
     }
 
 }

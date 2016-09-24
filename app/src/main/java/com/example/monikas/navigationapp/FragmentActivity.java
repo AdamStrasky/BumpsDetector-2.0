@@ -11,7 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.location.GpsStatus;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -19,6 +19,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -31,9 +32,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import static java.security.AccessController.getContext;
-
 
 public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
@@ -60,8 +58,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     boolean mServiceConnectedGPS = false;
     boolean mBoundGPS = false;
     private  GPSLocator mLocnServGPS = null;
-    public static final String GPS_ENABLED_CHANGE_ACTION = "android.location.GPS_ENABLED_CHANGE";
-    private boolean isGPSEnabled = false;
     protected boolean isVisible;
     LocationManager locationManager;
     @Override
@@ -70,56 +66,37 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         setRetainInstance(true);
 
         if (!isNetworkAvailable()){
-             Toast.makeText(getActivity(),"Network is disabled. Please, connect to network.",Toast.LENGTH_SHORT).show();
+            if (isEneableShowText())
+                Toast.makeText(getActivity(), "Network is disabled. Please, connect to network.", Toast.LENGTH_SHORT).show();
+
         }
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
-        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        if(!isGPSEnabled) {
-            Log.d("onGpsStatusChanged", "nezapnuta gps ");
-            showGPSDisabledAlertToUser();
+        
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+           showGPSDisabledAlertToUser();
         } else {
             GPS_FLAG = false;
-            aaaa();
+            initialization();
         }
-
-
     }
 
-
-
-
-    @Override
-    public  void setUserVisibleHint(boolean visible){
-        super.setUserVisibleHint(visible);
-        if (visible){
-            isVisible=true;
-        }
-        else
-            isVisible=false;
-    }
     private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().matches("android.location.PROVIDERS_CHANGED")) {
                if(  locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER ) && GPS_FLAG) {
-                   aaaa();
+                   initialization();
                    GPS_FLAG = false;
                }
-                else
-                   Log.d("onGpsStatusChanged"," brodcast ylz");
-
             }
         }
     };
 
-
-
-
     ServiceConnection mServconnGPS = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.d("SVTEST", "GPS service connected");
+            Log.d("GPS_SERV", "GPS service connected");
             GPSLocator.LocalBinder binder = (GPSLocator.LocalBinder) service;
             mLocnServGPS = binder.getService();
             mBoundGPS = true;
@@ -127,7 +104,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.d("DISC", "GPS service disconnected");
+            Log.d("GPS_SERV", "GPS service disconnected");
             mBoundGPS = false;
         }
     };
@@ -135,7 +112,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     ServiceConnection mServconnAcc = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.d("SVTEST", "Accelerometer service connected");
+            Log.d("ACC_SERV", "Accelerometer service connected");
             Accelerometer.LocalBinder binder = (Accelerometer.LocalBinder) service;
             mLocnServAcc = binder.getService();
             mBoundAcc = true;
@@ -143,7 +120,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.d("DISC", "Accelerometer service disconnected");
+            Log.d("ACC_SERV", "Accelerometer service disconnected");
             mBoundAcc = false;
         }
     };
@@ -177,8 +154,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         mLocnServAcc.calibrate();
-                        Toast.makeText(getActivity(),"Your phone was calibrated.",Toast.LENGTH_SHORT).show();
-                    }
+                        if (isEneableShowText())
+                            Toast.makeText(getActivity(),"Your phone was calibrated.",Toast.LENGTH_SHORT).show();
+                   }
                 });
         alert.show();
     }
@@ -204,13 +182,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                init();
+                init_servise();
             }
         }, 500);
     }
 
 
-    public void init () {
+    public void init_servise() {
 
         global_mGoogleApiClient= mGoogleApiClient;
         global_MapFragment =  ((MapFragment) getFragmentManager().findFragmentById(R.id.map));
@@ -219,7 +197,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
          new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                fragment_context =getActivity();
+                fragment_context = getActivity();
                 global_gps =mLocnServGPS;
                 mServiceConnectedAcc =   getActivity().bindService(new Intent(getActivity().getApplicationContext(), Accelerometer.class), mServconnAcc, Context.BIND_AUTO_CREATE);
             }
@@ -241,7 +219,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-       Toast.makeText(getActivity(), "GoogliApiClient connection failed", Toast.LENGTH_LONG).show();
+        if (isEneableShowText())
+            Toast.makeText(getActivity(), "GoogliApiClient connection failed", Toast.LENGTH_LONG).show();
+
     }
 
     public void saveBump(HashMap<Location, Float> bump) {
@@ -255,11 +235,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
     }
 
-
-
-
-    private void aaaa() {
-        Log.d("onGpsStatusChanged", "zapnuta gps po broadcaste");
+     private void initialization() {
         showCalibrationAlert();
         buildGoogleApiClient();
 
@@ -280,30 +256,21 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     }
 
+    public void stop_servise(){
+         getActivity().stopService(new Intent(getActivity().getApplicationContext(), Accelerometer.class));
+         if (  mServiceConnectedAcc) {
+             getActivity().unbindService(mServconnAcc);
+         }
 
-
-    public void konci(){
-
-Log.d("DISC","111");
-     getActivity().stopService(new Intent(getActivity().getApplicationContext(), Accelerometer.class));
-     if (  mServiceConnectedAcc) {
-         getActivity().unbindService(mServconnAcc);
-         Log.d("DISC","2222");
-     }
-
-        Log.d("DISC","3333");
-      getActivity().stopService(new Intent(getActivity().getApplicationContext(), GPSLocator.class));
+        getActivity().stopService(new Intent(getActivity().getApplicationContext(), GPSLocator.class));
         if (  mServiceConnectedGPS) {
-            Log.d("DISC","444");
-            getActivity().unbindService(mServconnGPS);
+           getActivity().unbindService(mServconnGPS);
         }
 
     }
     private class MapSetter extends TimerTask {
-
-        @Override
+         @Override
         public void run() {
-
             getActivity().runOnUiThread(new Runnable(){
 
                 @Override
@@ -311,7 +278,6 @@ Log.d("DISC","111");
                     getBumpsWithLevel();
                 }});
         }
-
     }
 
     private class SendBumpsToDb extends TimerTask {
@@ -320,27 +286,29 @@ Log.d("DISC","111");
         public void run() {
 
             getActivity().runOnUiThread(new Runnable(){
-
                 @Override
                 public void run() {
                     //ak je pripojenie na internet
                     if (isNetworkAvailable()) {
                         ArrayList<HashMap<Location, Float>> list = mLocnServAcc.getPossibleBumps();
                         //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
-                       Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
-                        //kazdy vytlk v zozname vytlkov uloz do databazy
+                          if (isEneableShowText())
+                            Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
+                      //  }
 
-                        for (HashMap<Location, Float> bump : list) {
+                        //kazdy vytlk v zozname vytlkov uloz do databazy
+                         for (HashMap<Location, Float> bump : list) {
                             saveBump(bump);
-                            Log.d("VLAKNO","prebehlo");
                         }
                         //vymaz zoznam
                         mLocnServAcc.getPossibleBumps().clear();
                     }
                     else {
-                       Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();
-                    }
-                }});
+                          if (isEneableShowText())
+                            Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();
+                      }
+                }}
+            );
         }
     }
 
@@ -349,16 +317,26 @@ Log.d("DISC","111");
         //ak je pripojenie na internet
         if (isNetworkAvailable()) {
             //pouzivatelovi sa zobrazi notifikacia Setting map
-            Toast.makeText(getActivity(), "Setting map", Toast.LENGTH_SHORT).show();
-            //level je globalna premenna, na zaklade ktorej sa filtruju zobrazovane vytlky
+             if (isEneableShowText())
+                Toast.makeText(getActivity(), "Setting map", Toast.LENGTH_SHORT).show();
 
-            mLocnServGPS.setLevel(level);
-            mLocnServGPS.updateMap();
+           //level je globalna premenna, na zaklade ktorej sa filtruju zobrazovane vytlky
+             mLocnServGPS.setLevel(level);
+             mLocnServGPS.updateMap();
         }
         else {
-          Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();
+           if (isEneableShowText())
+                Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();
         }
     }
 
-
+    public  boolean isEneableShowText() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean alarm = prefs.getBoolean("alarm", Boolean.parseBoolean(null));
+        if ((alarm) || (!alarm && MainActivity.isActivityVisible())) {
+            return true;
+        }
+        else
+            return false;
+    }
 }

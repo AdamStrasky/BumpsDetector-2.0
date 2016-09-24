@@ -1,19 +1,14 @@
 package com.example.monikas.navigationapp;
 
-import android.app.Fragment;
+
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.hardware.display.DisplayManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.PowerManager;
-import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.Display;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -57,7 +52,7 @@ public class GPSLocator extends Service implements LocationListener {
 
     public GPSLocator () {
 
-       MapFragment fragment = global_MapFragment ;
+        MapFragment fragment = global_MapFragment ;
         this.mGoogleApiClient = global_mGoogleApiClient;
 
         if (map == null) {
@@ -150,12 +145,8 @@ public class GPSLocator extends Service implements LocationListener {
         mCurrentLocation = location;
         //ak je zapnuta navigacia, obrazovka sa hybe spolu s meniacou sa polohou]
 
-        if (isNavigation() && MainActivity.isActivityVisible()) {
-            Log.d("ZAP","zapnuta");
+        if (isNavigation() && MainActivity.isActivityVisible())
             goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
-        }
-        else
-            Log.d("ZAP","vypnuta");
         }
 
 
@@ -167,12 +158,12 @@ public class GPSLocator extends Service implements LocationListener {
     }
 
     public IBinder onBind(Intent intent) {
-        Log.d("SVTEST", "GPS Loc service ONBIND");
+        Log.d("BIND_GPS", "GPS Loc service ONBIND");
         return mBinder;
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("SVTEST", "GPS Loc service ONSTARTCOMMAND");
+        Log.d("BIND_GPS", "GPS Loc service ONSTARTCOMMAND");
         return START_STICKY;
     }
 
@@ -181,7 +172,7 @@ public class GPSLocator extends Service implements LocationListener {
     private final IBinder mBinder = new LocalBinder();
     public class LocalBinder extends Binder {
         public GPSLocator getService() {
-            Log.d("SVTEST", "GPS service ONDESTROY");
+            Log.d("BIND_GPS", "GPS service ONDESTROY");
             return GPSLocator.this;
         }
     }
