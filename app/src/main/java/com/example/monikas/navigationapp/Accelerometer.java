@@ -7,6 +7,7 @@ package com.example.monikas.navigationapp;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.util.FloatMath;
 import android.util.Log;
 import android.view.Display;
@@ -125,6 +127,10 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         //pokial je znama aktualna pozicia a intenzita otrasu
                         if (unlock) {
                             Log.d("SVTEST", "sensor");
+
+                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                            Boolean imgSett = prefs.getBoolean("alarm", Boolean.parseBoolean(null));
+                            Log.d("SVTEST", "shared " +imgSett);
                             unlock = false;
                             result= detect(location, data);
                             unlock = true;

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference android:key="login" android:title="Prihlasovacie meno" />
+    <CheckBoxPreference android:key="autoLogin"
+        android:title="Automaticky prihlásiť"
+        android:defaultValue="true"/>
+</PreferenceScreen>

@@ -46,8 +46,6 @@
             </intent-filter>
         </activity>
 
-
-
         <service
             android:name=".Accelerometer"
             android:enabled="true"
@@ -55,9 +53,10 @@
         <service
             android:name=".GPSLocator"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true" />
 
-        </service>
+        <activity android:name=".SettingsActivity" />
+
 
     </application>
 

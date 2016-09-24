@@ -2,11 +2,13 @@ package com.example.monikas.navigationapp;
 
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Address;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -42,6 +44,7 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
         final EditText searchBar = (EditText) findViewById(R.id.location);
         searchBar.requestFocus();
+
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -175,6 +178,11 @@ public class MainActivity extends ActionBarActivity {
                 fragmentActivity.level = LARGE_BUMPS;
                 fragmentActivity.getBumpsWithLevel();
                 return true;
+
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+
 
             case R.id.exit:
                 if (fragmentActivity.isNetworkAvailable()) {
