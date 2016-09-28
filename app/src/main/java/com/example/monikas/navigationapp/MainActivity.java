@@ -7,12 +7,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,21 +18,15 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
@@ -48,18 +40,23 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
-
-
-
-
-    Button add_button;
+    private Float intensity = null;
+    LinearLayout confirm;
+    Button add_button, save_button, delete_button;;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-       final EditText searchBar = (EditText) findViewById(R.id.location);
-          add_button = (Button) findViewById(R.id.add_button);
+        final EditText searchBar = (EditText) findViewById(R.id.location);
+        add_button = (Button) findViewById(R.id.add_button);
+        save_button = (Button) findViewById(R.id.save_btn);
+        delete_button = (Button) findViewById(R.id.delete_btn);
+        confirm = (LinearLayout) findViewById(R.id.confirm);
+        confirm.setVisibility(View.INVISIBLE);
+        confirm.setOnClickListener(this);
+        save_button.setOnClickListener(this);
+        delete_button.setOnClickListener(this);
         add_button.setOnClickListener(this);
         searchBar.requestFocus();
 
@@ -74,8 +71,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         });
         context = this;
 
-
-
         FragmentManager fragmentManager = getFragmentManager();
         fragmentActivity = (FragmentActivity) fragmentManager.findFragmentByTag(FRAGMENTACTIVITY_TAG);
 
@@ -89,23 +84,27 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
 
+    public GoogleApiClient getmGoogleApiClient() {
+        return mGoogleApiClient;
+    }
+
+    public void setmGoogleApiClient(GoogleApiClient mGoogleApiClient) {
+        this.mGoogleApiClient = mGoogleApiClient;
+    }
 
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.add_button:
                 AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
-                builderSingle.setIcon(R.drawable.ic_launcher);
-                builderSingle.setTitle("Select type of bumps");
-
+                builderSingle.setTitle("Select type of bump");
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
-                        MainActivity.this,
-                        android.R.layout.select_dialog_singlechoice);
+                        MainActivity.this,android.R.layout.select_dialog_singlechoice);
                 arrayAdapter.add("Large");
                 arrayAdapter.add("Medium");
                 arrayAdapter.add("Normal");
 
                 builderSingle.setNegativeButton(
-                        "cancel",
+                        "Cancel",
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -113,49 +112,53 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                             }
                         });
 
-
-
                 builderSingle.setAdapter(
                         arrayAdapter,
                         new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                fragmentActivity.gps.setUpMap();
-                              /*  String strName = arrayAdapter.getItem(which);
-                                AlertDialog.Builder builderInner = new AlertDialog.Builder(
-                                        MainActivity.this);
-                                //   builderInner.setMessage(strName);
-                                builderInner.setTitle("Select on map a bump");
+                            public void onClick(DialogInterface dialog, int select) {
+                                // vybrana intenzita noveho vytlku
+                                if (select== 0)
+                                    intensity =10.f;
+                                else if (select== 0)
+                                    intensity =6.f;
+                                else
+                                    intensity =0.f;
+                                // spustenie listenera na mapu
+                                fragmentActivity.gps.setUpMap(true);
+                                confirm.setVisibility(View.VISIBLE);
+                                add_button.setVisibility(View.INVISIBLE);
 
-                                builderInner.setPositiveButton(
-                                        "Ok",
-                                        new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int which) {
-
-
-                                                dialog.dismiss();
-                                            }
-                                        });
-
-                                builderInner.setNegativeButton(
-                                        "cancel",
-                                        new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                dialog.dismiss();
-                                            }
-                                        });
-                                builderInner.show();*/
                             }
                         });
                 builderSingle.show();
+                break;
+
+            case R.id.save_btn:
+                add_button.setVisibility(View.VISIBLE);
+                confirm.setVisibility(View.INVISIBLE);
+                // vrati polohu  kde som stlačil na mape
+                LatLng convert_location =  fragmentActivity.gps.setUpMap(false);
+                //vytvorenie markera
+                fragmentActivity.gps.addBumpToMap (convert_location,1);
+                if (convert_location != null) {
+                    Location location = new Location("new");
+                    location.setLatitude(convert_location.latitude);
+                    location.setLongitude(convert_location.longitude);
+                    location.setTime(new Date().getTime());
+                    // vytvori novy vytlk
+                    new Bump(location, intensity);
+                    Toast.makeText(this, "New bump added", Toast.LENGTH_LONG).show();
+                }
+                break;
+            case R.id.delete_btn:
+                add_button.setVisibility(View.VISIBLE);
+                confirm.setVisibility(View.INVISIBLE);
+                // disable listener na klik
+                fragmentActivity.gps.setUpMap(false);
+                break;
         }
     }
-
-
 
     public static boolean isActivityVisible() {
         return activityVisible;
