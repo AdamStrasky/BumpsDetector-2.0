@@ -1,28 +1,42 @@
 package com.example.monikas.navigationapp;
 
+import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
     private GoogleApiClient mGoogleApiClient;
     private Context context;
@@ -36,11 +50,17 @@ public class MainActivity extends ActionBarActivity {
     public static final String PREF_FILE_NAME = "Settings";
 
 
+
+
+    Button add_button;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final EditText searchBar = (EditText) findViewById(R.id.location);
+       final EditText searchBar = (EditText) findViewById(R.id.location);
+          add_button = (Button) findViewById(R.id.add_button);
+        add_button.setOnClickListener(this);
         searchBar.requestFocus();
 
         searchBar.setOnClickListener(new View.OnClickListener() {
@@ -54,6 +74,8 @@ public class MainActivity extends ActionBarActivity {
         });
         context = this;
 
+
+
         FragmentManager fragmentManager = getFragmentManager();
         fragmentActivity = (FragmentActivity) fragmentManager.findFragmentByTag(FRAGMENTACTIVITY_TAG);
 
@@ -65,6 +87,75 @@ public class MainActivity extends ActionBarActivity {
         }
 
     }
+
+
+
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.add_button:
+                AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
+                builderSingle.setIcon(R.drawable.ic_launcher);
+                builderSingle.setTitle("Select type of bumps");
+
+                final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                        MainActivity.this,
+                        android.R.layout.select_dialog_singlechoice);
+                arrayAdapter.add("Large");
+                arrayAdapter.add("Medium");
+                arrayAdapter.add("Normal");
+
+                builderSingle.setNegativeButton(
+                        "cancel",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+
+
+                builderSingle.setAdapter(
+                        arrayAdapter,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                fragmentActivity.gps.setUpMap();
+                              /*  String strName = arrayAdapter.getItem(which);
+                                AlertDialog.Builder builderInner = new AlertDialog.Builder(
+                                        MainActivity.this);
+                                //   builderInner.setMessage(strName);
+                                builderInner.setTitle("Select on map a bump");
+
+                                builderInner.setPositiveButton(
+                                        "Ok",
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(
+                                                    DialogInterface dialog,
+                                                    int which) {
+
+
+                                                dialog.dismiss();
+                                            }
+                                        });
+
+                                builderInner.setNegativeButton(
+                                        "cancel",
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                dialog.dismiss();
+                                            }
+                                        });
+                                builderInner.show();*/
+                            }
+                        });
+                builderSingle.show();
+        }
+    }
+
+
 
     public static boolean isActivityVisible() {
         return activityVisible;

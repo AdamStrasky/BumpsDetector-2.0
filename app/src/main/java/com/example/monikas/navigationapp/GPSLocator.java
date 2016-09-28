@@ -1,14 +1,19 @@
 package com.example.monikas.navigationapp;
 
 
+import android.app.AlertDialog;
 import android.app.Service;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -18,9 +23,11 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -31,8 +38,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
@@ -50,6 +59,12 @@ public class GPSLocator extends Service implements LocationListener {
     private PolylineOptions road;
     private float level;
 
+    private GoogleMap mMap;
+    private LatLng latLng;
+    private Marker marker;
+    Geocoder geocoder;
+
+
     public GPSLocator () {
 
         MapFragment fragment = global_MapFragment ;
@@ -62,6 +77,96 @@ public class GPSLocator extends Service implements LocationListener {
             map.setTrafficEnabled(true);
             startLocationUpdates();
         }
+
+        geocoder = new Geocoder(this, Locale.getDefault());
+     //   if (map != null) {
+       //     setUpMap();
+        //}
+       // setUpMapIfNeeded();
+    }
+
+
+    /*private void setUpMapIfNeeded() {
+        // Do a null check to confirm that we have not already instantiated the map.
+        if (mMap == null) {
+            // Try to obtain the map from the SupportMapFragment.
+            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
+                    .getMap();
+            // Check if we were successful in obtaining the map.
+
+        }
+    }*/
+
+    public void setUpMap() {
+
+      //  map.setMyLocationEnabled(true);
+      //  map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+      //  map.getUiSettings().setMapToolbarEnabled(false);
+
+        map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+            @Override
+            public void onMapClick(LatLng point) {
+                //save current location
+                latLng = point;
+
+                List<Address> addresses = new ArrayList<>();
+                try {
+                    addresses = geocoder.getFromLocation(point.latitude, point.longitude, 1);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                android.location.Address address = addresses.get(0);
+
+                if (address != null) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                        sb.append(address.getAddressLine(i) + "\n");
+                    }
+                    //   Toast.makeText(MainActivity.this, sb.toString(), Toast.LENGTH_LONG).show();
+                }
+
+                //remove previously placed Marker
+                if (marker != null) {
+                    marker.remove();
+                }
+
+                //place marker where user just clicked
+                marker = map.addMarker(new MarkerOptions().position(point).title("Marker")
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+
+              /*  AlertDialog.Builder builderInner = new AlertDialog.Builder(GPSLocator.this);
+                //   builderInner.setMessage(strName);
+                builderInner.setTitle("Select on map a bump");
+
+                builderInner.setPositiveButton(
+                        "Ok",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(
+                                    DialogInterface dialog,
+                                    int which) {
+
+
+                                dialog.dismiss();
+                            }
+                        });
+
+                builderInner.setNegativeButton(
+                        "cancel",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                builderInner.show();*/
+
+            }
+        });
+
+
     }
 
     public void setRoad(PolylineOptions road) {
