@@ -21,14 +21,15 @@ public class Bump {
     private float intensity;
     private Location location;
     private int rating;
-
-    public Bump(Location location, float delta) {
+    private int manual;
+    public Bump(Location location, float delta ,Integer manual ) {
         this.intensity = delta;
         this.location = location;
         rating = 1;
         if (isBetween(intensity,0,6)) rating = 1;
         if (isBetween(intensity,6,10)) rating = 2;
         if (isBetween(intensity,10,10000)) rating = 3;
+        this.manual=manual;
         new CreateNewBump().execute();
     }
 
@@ -48,6 +49,8 @@ public class Bump {
             params.add(new BasicNameValuePair("longitude", longitude));
             params.add(new BasicNameValuePair("intensity", Float.toString(intensity)));
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
+            params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
+
             jsonParser.makeHttpRequest(url_create_product, "POST", params);
             Log.d("BUMP","makeHttpRequest");
             return null;

@@ -225,13 +225,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     }
 
-    public void saveBump(HashMap<Location, Float> bump) {
+    public void saveBump(HashMap<Location, Float> bump, Integer manual) {
         Iterator it = bump.entrySet().iterator();
         while (it.hasNext()) {
             HashMap.Entry pair = (HashMap.Entry)it.next();
             Location loc = (Location) pair.getKey();
             float data = (float) pair.getValue();
-            new Bump(loc, data);
+            new Bump(loc, data , manual);
             it.remove();
         }
     }
@@ -298,11 +298,16 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                       //  }
 
                         //kazdy vytlk v zozname vytlkov uloz do databazy
+                         int i=0 ;
                          for (HashMap<Location, Float> bump : list) {
-                            saveBump(bump);
-                        }
+                             if (!accelerometer.getBumpsManual().isEmpty()) {
+                                 saveBump(bump, accelerometer.getBumpsManual().get(i));
+                             }
+                             i++;
+                         }
                         //vymaz zoznam
                         mLocnServAcc.getPossibleBumps().clear();
+                        mLocnServAcc.getBumpsManual().clear();
                     }
                     else {
                           if (isEneableShowText())

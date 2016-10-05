@@ -92,11 +92,13 @@ public class GPSLocator extends Service implements LocationListener {
                      // vytvorenie markera
                      marker = map.addMarker(new MarkerOptions().position(point).title("Selected point")
                          .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+
                 }
             });
             return null;
         }
      }
+
 
     public void setRoad(PolylineOptions road) {
         this.road = road;
@@ -141,17 +143,33 @@ public class GPSLocator extends Service implements LocationListener {
     }
 
     //icon dowloaded from http://www.flaticon.com/free-icon/map-pin_34493
-    public void addBumpToMap (LatLng position, int count) {
+    public void addBumpToMap (LatLng position, int count, int manual ) {
         if (position == null) {
             return;
         }
-        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.bump);
-        map.addMarker(new MarkerOptions()
-                .alpha(0.8f)
-                .flat(false)
-                .position(position)                                                                        // at the location you needed
-                .title("Number of detections: " + count)
-                .icon(icon));
+
+
+          /////////////////////////////////////////////////////
+        if (manual == 0 ) {
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.bump);
+            map.addMarker(new MarkerOptions()
+                    .alpha(0.8f)
+                    .flat(false)
+                    .position(position)                                                                        // at the location you needed
+                    .title("Number of detections: " + count )
+                    .icon(icon));
+      }
+        else {
+            BitmapDescriptor icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA);
+            map.addMarker(new MarkerOptions()
+                    .alpha(0.8f)
+                    .flat(false)
+                    .position(position)                                                                        // at the location you needed
+                    .title("Manually added " +
+                            "Number of detections:" + count )
+                    .icon(icon));
+
+       }
 
     }
 
@@ -228,11 +246,15 @@ public class GPSLocator extends Service implements LocationListener {
             String url_all_bumps = "http://sport.fiit.ngnlab.eu/get_all_bumps.php";
             String latitude = String.valueOf(getmCurrentLocation().getLatitude());
             String longitude = String.valueOf(getmCurrentLocation().getLongitude());
+
             List<NameValuePair> params = new ArrayList<NameValuePair>();
+            //int manual=1;
             //parametre su aktualna pozicia a level vytlkov, ktore chceme zobrazit
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
             params.add(new BasicNameValuePair("level", String.valueOf(level)));
+         //   params.add(new BasicNameValuePair("manual", String.valueOf(manual))); // neviem či použijem
+
             JSONObject json = jsonParser.makeHttpRequest(url_all_bumps, "POST", params);
             try {
                 int success = json.getInt("success");
@@ -261,13 +283,20 @@ public class GPSLocator extends Service implements LocationListener {
                 double latitude = 0;
                 double longitude = 0;
                 int count = 0;
+                int hj;
+                int manual = 0;
                 if (c != null) {
                     try {
                         latitude = c.getDouble("latitude");
                         longitude = c.getDouble("longitude");
                         count = c.getInt("count");
-                        //vytlk sa prida do mapy
-                        addBumpToMap(new LatLng(latitude, longitude), count);
+                        if(c.isNull("manual") ) {
+                            manual = 0;
+                        } else
+                           manual = c.getInt("manual") ;
+
+                                //vytlk sa prida do mapy*/
+                        addBumpToMap(new LatLng(latitude, longitude), count, manual );
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }

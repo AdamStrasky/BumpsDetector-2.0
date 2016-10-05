@@ -40,6 +40,10 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private Sensor mAccelerometer;
     private float THRESHOLD = 4.5f;
     private ArrayList<HashMap<Location, Float>> possibleBumps;
+
+
+
+    private ArrayList <Integer> BumpsManual;
     private float priorityX = 0.0f;
     private float priorityY = 0.0f;
     private float priorityZ = 0.0f;
@@ -58,11 +62,33 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         possibleBumps = new ArrayList<>();
+        BumpsManual = new ArrayList<>();
     }
 
      public ArrayList<HashMap<Location, Float>> getPossibleBumps() {
-        return possibleBumps;
+         return possibleBumps;
     }
+
+
+    public void addPossibleBumps(Location location, Float data) {
+        HashMap<Location, Float> hashToArray = new HashMap();
+        hashToArray.put(location,data);
+        possibleBumps.add(hashToArray);
+    }
+
+    public ArrayList<Integer> getBumpsManual() {
+        return BumpsManual;
+    }
+
+    public void setBumpsManual(ArrayList<Integer> bumpsManual) {
+        BumpsManual = bumpsManual;
+    }
+
+    public void addBumpsManual(int manual) {
+        BumpsManual.add(manual);
+    }
+
+
 
     @Override
     //pri zmene dat z akcelerometra nam metoda dava tieto data v premennej event.values[]
@@ -203,6 +229,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
             hashToArray.put(location,data);
             //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
             possibleBumps.add(hashToArray);
+            BumpsManual.add(0);
         }
         return result;
     }

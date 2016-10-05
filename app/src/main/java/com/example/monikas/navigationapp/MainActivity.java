@@ -23,9 +23,15 @@ import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+
+import org.w3c.dom.Document;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+
+import static com.google.maps.android.PolyUtil.isLocationOnEdge;
 
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
@@ -140,15 +146,52 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 // vrati polohu  kde som stlačil na mape
                 LatLng convert_location =  fragmentActivity.gps.setUpMap(false);
                 //vytvorenie markera
-                fragmentActivity.gps.addBumpToMap (convert_location,1);
+                fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
                     Location location = new Location("new");
                     location.setLatitude(convert_location.latitude);
                     location.setLongitude(convert_location.longitude);
                     location.setTime(new Date().getTime());
+                    fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
+                    // manuálny výtlk
+                    fragmentActivity.accelerometer.addBumpsManual(1);
+
                     // vytvori novy vytlk
-                    new Bump(location, intensity);
-                    Toast.makeText(this, "New bump added", Toast.LENGTH_LONG).show();
+
+                 /*   Address address = null;
+                    EditText text = (EditText) findViewById(R.id.location);
+                    String locations = text.getText().toString();
+                    LatLng to_position=null;
+                    LatLng myPosition=null;
+                        try {
+                            address = Route.findLocality(locations, this);
+                            if (address == null) {
+                                if (isEneableShowText())
+                                    Toast.makeText(this, "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
+                            }
+                            else {
+                                 to_position = new LatLng(address.getLatitude(),address.getLongitude());
+                                 myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
+
+                            }
+                        }
+                        catch (Exception e) {
+                            if (isEneableShowText())
+                                Toast.makeText(this, "Unable to find location!", Toast.LENGTH_LONG).show();
+                        }
+
+
+                    Route md = new Route();
+                    LatLng from = fragmentActivity.gps.getCurrentLatLng();
+                    LatLng to = convert_location;
+                    Document doc = md.getDocument(myPosition, to_position);
+                    ArrayList<LatLng> directionPoint = md.getDirection(doc);
+
+                    boolean value = isLocationOnEdge(convert_location,directionPoint,true,2.0);
+
+                    //    new Bump(location, intensity);
+                    Toast.makeText(this, "New bump added" + value, Toast.LENGTH_LONG).show();*/
+                    Toast.makeText(this, "New bump added" , Toast.LENGTH_LONG).show();
                 }
                 break;
             case R.id.delete_btn:
@@ -286,10 +329,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         @Override
         protected String doInBackground(Void... params) {
+            int i= 0;
             for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
-                fragmentActivity.saveBump(bump);
+                if (!fragmentActivity.accelerometer.getBumpsManual().isEmpty()) {
+                    fragmentActivity.saveBump(bump, fragmentActivity.accelerometer.getBumpsManual().get(i));
+                    i++;
+                }
             }
             fragmentActivity.accelerometer.getPossibleBumps().clear();
+            fragmentActivity.accelerometer.getBumpsManual().clear();
             return null;
         }
     }
