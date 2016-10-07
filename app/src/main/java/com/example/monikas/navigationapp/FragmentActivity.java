@@ -6,16 +6,20 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -27,12 +31,22 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.example.monikas.navigationapp.DatabaseOpenHelper.DATABASE_NAME;
+import static com.example.monikas.navigationapp.Provider.bumps_collision.TABLE_NAME_COLLISIONS;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
 public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -62,8 +76,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     private  GPSLocator mLocnServGPS = null;
     protected boolean isVisible;
     LocationManager locationManager;
+    SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
-
+    private JSONArray bumps;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,6 +90,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         }
 
+
+
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
         
@@ -85,6 +102,250 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             initialization();
         }
 
+        int version =0;
+        File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
+        try {
+            version = getDbVersionFromFile(dbpath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Log.d("versionTTT", String.valueOf(version));
+        boolean flag = false ;
+        if (version == 0) {
+            version = 1;
+            flag= true;
+        }
+
+        databaseHelper = new DatabaseOpenHelper(getActivity(),version);
+        sb = databaseHelper.getWritableDatabase();
+
+        if (!flag) {
+            sb.beginTransaction();
+            databaseHelper.onUpgrade(sb, version, version + 1);
+            sb.setTransactionSuccessful();
+            sb.endTransaction();
+        }
+        new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
+        new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
+
+    }
+
+  /*  int version =0;
+    File dbpath = this.getDatabasePath(DATABASE_NAME);
+    try {
+        version = getDbVersionFromFile(dbpath);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    databaseHelper = new DatabaseOpenHelper(this,version+1);
+    sb = databaseHelper.getWritableDatabase();
+
+    for (int i =1; i < 10 ; i++)
+    insertSampleEntry(sb,i);*/
+     public  void insertSampleEntry(SQLiteDatabase db, int rating, int count, String last_modified, double latitude, double longitude, int manual) {
+         Log.d("rating", String.valueOf(rating));
+      ContentValues contentValues = new ContentValues();
+      contentValues.put(Provider.bumps_detect.COUNT, count);
+      contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
+      contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
+      contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
+      contentValues.put(Provider.bumps_detect.MANUAL, manual);
+      contentValues.put(Provider.bumps_detect.RATING, rating);
+      db.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
+
+  }
+
+    class Get_Bumps extends AsyncTask<String, Void, JSONArray> {
+
+        private JSONParser jsonParser = new JSONParser();
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        protected JSONArray doInBackground(String... args) {
+            JSONObject json = jsonParser.makeHttpRequest(args[0], "GET", null);
+            try {
+                int success = json.getInt("success");
+                if (success == 1) {
+                    bumps = json.getJSONArray("bumps");
+                    //v pripade uspechu nam poziadavka vrati zoznam vytlkov
+                    return bumps;
+                } else {
+                    return null;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(JSONArray array) {
+            sb.beginTransaction();
+            for (int i = 0; i < bumps.length(); i++) {
+                JSONObject c = null;
+                try {
+                    c = bumps.getJSONObject(i);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                double latitude = 0;
+                double longitude = 0;
+                int index = 0, count = 0, rating = 0, b_id = 0, manual = 0;
+                String last_modified = null;
+                if (c != null) {
+                    try {
+
+                        b_id = c.getInt("b_id");
+                        rating = c.getInt("rating");
+                        count = c.getInt("count");
+                        last_modified = c.getString("last_modified");
+                        latitude = c.getDouble("latitude");
+                        longitude = c.getDouble("longitude");
+                        if (c.isNull("manual")) {
+                            manual = 0;
+                        } else
+                            manual = c.getInt("manual");
+
+
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
+                        contentValues.put(Provider.bumps_detect.COUNT, count);
+                        contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
+                        contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
+                        contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
+                        contentValues.put(Provider.bumps_detect.MANUAL, manual);
+                        contentValues.put(Provider.bumps_detect.RATING, rating);
+                        sb.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
+
+
+
+
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            sb.setTransactionSuccessful();
+            sb.endTransaction();
+            Log.d("adasfgwed","safvgtgasdc");
+            //getAllPlace();
+        }
+    }
+
+    class Get_Collisions extends AsyncTask<String, Void, JSONArray> {
+
+        private JSONParser jsonParser = new JSONParser();
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        protected JSONArray doInBackground(String... args) {
+            JSONObject json = jsonParser.makeHttpRequest(args[0], "GET", null);
+            try {
+                int success = json.getInt("success");
+                if (success == 1) {
+                    bumps = json.getJSONArray("bumps");
+                    //v pripade uspechu nam poziadavka vrati zoznam vytlkov
+                    return bumps;
+                } else {
+                    return null;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(JSONArray array) {
+            sb.beginTransaction();
+            for (int i = 0; i < bumps.length(); i++) {
+                JSONObject c = null;
+                try {
+                    c = bumps.getJSONObject(i);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                double intensity = 0;
+                int  c_id =0, b_id=0;
+                String created_at = null;
+                if (c != null) {
+                    try {
+                        b_id= c.getInt("b_id");
+                        c_id= c.getInt("c_id");
+                        created_at = c.getString("created_at");
+                        intensity = c.getDouble("intensity");
+
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
+                        contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
+                        contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
+                        sb.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            sb.setTransactionSuccessful();
+            sb.endTransaction();
+          // getAllPlace2();
+        }
+    }
+
+
+    public ArrayList<HashMap<String, String>> getAllPlace() {
+        ArrayList<HashMap<String, String>> wordList;
+        wordList = new ArrayList<HashMap<String, String>>();
+        Cursor cursor =  sb.query(TABLE_NAME_BUMPS, null, null, null, null, null, null);
+    //    Log.d("yxcvbnmzzzz,","saghjnbvg");
+        if (cursor.moveToFirst()) {
+            do {
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("b_id_bumps", cursor.getString(0));
+              //  Log.d("yxcvbnmzzzz,",cursor.getString(0));
+                map.put("count", cursor.getString(1));
+                map.put("last_modified", cursor.getString(2));
+                Log.d("yxcvbnmzzzz,",cursor.getString(2));
+                map.put("latitude", cursor.getString(3));
+                map.put("longtitude", cursor.getString(4));
+                map.put("manual", cursor.getString(5));
+                map.put("rating", cursor.getString(6));
+                wordList.add(map);
+            } while (cursor.moveToNext());
+        }
+
+        // return contact list
+        return wordList;
+    }
+
+    public ArrayList<HashMap<String, String>> getAllPlace2() {
+        ArrayList<HashMap<String, String>> wordList;
+        wordList = new ArrayList<HashMap<String, String>>();
+        Cursor cursor =  sb.query(TABLE_NAME_COLLISIONS, null, null, null, null, null, null);
+        if (cursor.moveToFirst()) {
+            do {
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("c_id", cursor.getString(0));
+                map.put("B_ID_COLLISIONS", cursor.getString(1));
+                map.put("intensity", cursor.getString(2));
+                map.put("created_at", cursor.getString(3));
+                wordList.add(map);
+            } while (cursor.moveToNext());
+        }
+        // return contact list
+        return wordList;
+    }
+
+    private static int getDbVersionFromFile(File file) throws Exception {
+        RandomAccessFile fp = new RandomAccessFile(file,"r");
+        fp.seek(60);
+        byte[] buff = new byte[4];
+        fp.read(buff, 0, 4);
+        return ByteBuffer.wrap(buff).getInt();
     }
 
     private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
@@ -261,6 +522,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
             }
         }, 10000);
+
 
     }
 

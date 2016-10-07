@@ -52,10 +52,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
     private Float intensity = null;
-    SQLiteDatabase sb;
     LinearLayout confirm;
-    Button add_button, save_button, delete_button;;
-    DatabaseOpenHelper databaseHelper;
+    Button add_button, save_button, delete_button;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,29 +70,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         delete_button.setOnClickListener(this);
         add_button.setOnClickListener(this);
 
-        int version =0;
-        File dbpath = this.getDatabasePath(DATABASE_NAME);
-        try {
-            version = getDbVersionFromFile(dbpath);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-        boolean flag = false ;
-         if (version == 0) {
-             version = 1;
-            flag= true;
-         }
-
-        databaseHelper = new DatabaseOpenHelper(this,version);
-        sb = databaseHelper.getWritableDatabase();
-
-        if (!flag) {
-            sb.beginTransaction();
-            databaseHelper.onUpgrade(sb, version, version + 1);
-            sb.setTransactionSuccessful();
-            sb.endTransaction();
-        }
 
         searchBar.requestFocus();
 
@@ -117,14 +94,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
-    }
-
-    private static int getDbVersionFromFile(File file) throws Exception {
-        RandomAccessFile fp = new RandomAccessFile(file,"r");
-        fp.seek(60);
-        byte[] buff = new byte[4];
-        fp.read(buff, 0, 4);
-        return ByteBuffer.wrap(buff).getInt();
     }
 
     public GoogleApiClient getmGoogleApiClient() {
@@ -189,22 +158,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     location.setLatitude(convert_location.latitude);
                     location.setLongitude(convert_location.longitude);
                     location.setTime(new Date().getTime());
-                    int version =0;
-                    File dbpath = this.getDatabasePath(DATABASE_NAME);
-                    try {
-                        version = getDbVersionFromFile(dbpath);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    databaseHelper = new DatabaseOpenHelper(this,version+1);
-                    sb = databaseHelper.getWritableDatabase();
 
-                    for (int i =1; i < 10 ; i++)
-                        insertSampleEntry(sb,i);
 
-                  //  fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
+                   fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
                     // manuálny výtlk
-                  //  fragmentActivity.accelerometer.addBumpsManual(1);
+                   fragmentActivity.accelerometer.addBumpsManual(1);
 
 
                     // vytvori novy vytlk
@@ -267,43 +225,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
 
-    public  void insertSampleEntry(SQLiteDatabase db,int i) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(Provider.bumps_detect.COUNT, 5);
-        contentValues.put(Provider.bumps_detect.LAST_MODIFIED, "2015-04-18 22:03:39");
-        contentValues.put(Provider.bumps_detect.LATITUDE, 8.1497250);
-        contentValues.put(Provider.bumps_detect.LONGTITUDE, 17.0504067);
-        contentValues.put(Provider.bumps_detect.MANUAL, 0);
-        contentValues.put(Provider.bumps_detect.RATING, 3);
-        db.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
-
-    }
-
-    public ArrayList<HashMap<String, String>> getAllPlace() {
-        ArrayList<HashMap<String, String>> wordList;
-        wordList = new ArrayList<HashMap<String, String>>();
-        Cursor cursor =  sb.query(TABLE_NAME_BUMPS, null, null, null, null, null, null);
-        if (cursor.moveToFirst()) {
-            do {
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put("b_id", cursor.getString(0));
-                Log.d("yxcvbnmzzzz,",cursor.getString(0));
-                map.put("count", cursor.getString(1));
-                map.put("last_modified", cursor.getString(2));
-                map.put("latitude", cursor.getString(3));
-                map.put("longtitude", cursor.getString(4));
-                map.put("manual", cursor.getString(5));
-                map.put("rating", cursor.getString(6));
-                wordList.add(map);
-            } while (cursor.moveToNext());
-        }
-
-        // return contact list
-        return wordList;
-    }
 
 
-     public void onClick_Search(View v) throws IOException {
+    public void onClick_Search(View v) throws IOException {
 
         Address address = null;
         EditText text = (EditText) findViewById(R.id.location);

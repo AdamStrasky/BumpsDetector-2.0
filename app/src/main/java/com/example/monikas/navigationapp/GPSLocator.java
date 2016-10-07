@@ -210,8 +210,6 @@ public class GPSLocator extends Service implements LocationListener {
         //ak je nejaka trasa, vykresli ju
         if (road != null) map.addPolyline(road);
         new GetAllBumps().execute();
-        new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
-        new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
     }
 
     public IBinder onBind(Intent intent) {
@@ -306,116 +304,6 @@ public class GPSLocator extends Service implements LocationListener {
             }
         }
     }
-        class Get_Bumps extends AsyncTask<String, Void, JSONArray> {
 
-            private JSONParser jsonParser = new JSONParser();
-
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-            }
-
-            protected JSONArray doInBackground(String... args) {
-                JSONObject json = jsonParser.makeHttpRequest(args[0], "GET", null);
-                try {
-                    int success = json.getInt("success");
-                    if (success == 1) {
-                        bumps = json.getJSONArray("bumps");
-                        //v pripade uspechu nam poziadavka vrati zoznam vytlkov
-                        return bumps;
-                    } else {
-                        return null;
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            protected void onPostExecute(JSONArray array) {
-
-                for (int i = 0; i < bumps.length(); i++) {
-                    JSONObject c = null;
-                    try {
-                        c = bumps.getJSONObject(i);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    double latitude = 0;
-                    double longitude = 0;
-                    int index = 0, count = 0, rating = 0, b_id = 0, manual = 0;
-                    String last_modified = null;
-                    if (c != null) {
-                        try {
-                            b_id = c.getInt("b_id");
-                            rating = c.getInt("rating");
-                            count = c.getInt("count");
-                            last_modified = c.getString("last_modified");
-                            latitude = c.getDouble("latitude");
-                            longitude = c.getDouble("longitude");
-                            if (c.isNull("manual")) {
-                                manual = 0;
-                            } else
-                                manual = c.getInt("manual");
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-
-            class Get_Collisions extends AsyncTask<String, Void, JSONArray> {
-
-                private JSONParser jsonParser = new JSONParser();
-
-                @Override
-                protected void onPreExecute() {
-                    super.onPreExecute();
-                }
-
-                protected JSONArray doInBackground(String... args) {
-                    JSONObject json = jsonParser.makeHttpRequest(args[0], "GET", null);
-                    try {
-                        int success = json.getInt("success");
-                        if (success == 1) {
-                            bumps = json.getJSONArray("bumps");
-                            //v pripade uspechu nam poziadavka vrati zoznam vytlkov
-                            return bumps;
-                        } else {
-                            return null;
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-
-                protected void onPostExecute(JSONArray array) {
-
-                    for (int i = 0; i < bumps.length(); i++) {
-                        JSONObject c = null;
-                        try {
-                            c = bumps.getJSONObject(i);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        double intensity = 0;
-                        int  c_id =0, b_id=0;
-                        String created_at = null;
-                        if (c != null) {
-                            try {
-                                b_id= c.getInt("b_id");
-                                c_id= c.getInt("c_id");
-                                created_at = c.getString("created_at");
-                                intensity = c.getDouble("intensity");
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
-        }
 
 }

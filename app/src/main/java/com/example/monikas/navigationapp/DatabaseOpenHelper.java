@@ -47,7 +47,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
 
         private String createTableSqlBumps() {
             String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
-                    + "%s INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "%s INTEGER PRIMARY KEY ,"
                     + "%s INTEGER,"
                     + "%s DATETIME,"
                     + "%s DOUBLE,"
@@ -60,7 +60,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
 
         private String createTableSqlCollisions() {
              String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
-                + "%s INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "%s INTEGER PRIMARY KEY ,"
                 + "%s INTEGER,"
                 + "%s DOUBLE,"
                 + "%s DATETIME"
