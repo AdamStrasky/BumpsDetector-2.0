@@ -33,7 +33,9 @@ import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
+
+public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleApiClient mGoogleApiClient;
     private Context context;
@@ -60,6 +62,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     private  GPSLocator mLocnServGPS = null;
     protected boolean isVisible;
     LocationManager locationManager;
+    DatabaseOpenHelper databaseHelper;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +74,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 Toast.makeText(getActivity(), "Network is disabled. Please, connect to network.", Toast.LENGTH_SHORT).show();
 
         }
+
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
         
@@ -79,6 +84,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             GPS_FLAG = false;
             initialization();
         }
+
     }
 
     private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
@@ -252,6 +258,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 new Timer().schedule(new MapSetter(), 0, 120000);   //120000
                 //vytlky sa do dabatazy odosielaju kazdu minutu
                 new Timer().schedule(new SendBumpsToDb(), 0, 60000);
+
             }
         }, 10000);
 
@@ -269,6 +276,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
 
     }
+
+
     private class MapSetter extends TimerTask {
          @Override
         public void run() {
