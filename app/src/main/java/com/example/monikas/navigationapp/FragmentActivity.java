@@ -4,13 +4,18 @@ package com.example.monikas.navigationapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.LoaderManager;
+import android.content.AsyncQueryHandler;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.Loader;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -19,6 +24,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,11 +51,13 @@ import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.example.monikas.navigationapp.BumpContentProvider.CONTENT_URI;
 import static com.example.monikas.navigationapp.DatabaseOpenHelper.DATABASE_NAME;
 import static com.example.monikas.navigationapp.Provider.bumps_collision.TABLE_NAME_COLLISIONS;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
+import static java.security.AccessController.getContext;
 
-public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class FragmentActivity extends Fragment  implements LoaderManager.LoaderCallbacks<Cursor>,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleApiClient mGoogleApiClient;
     private Context context;
@@ -79,6 +87,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
+    private static final int URI_MATCH_NOTES = 0;
+    private static final int NOTES_LOADER_ID = 0;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,6 +101,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
 
 
+    //    getActivity().getSupportLoaderManager().initLoader(0, savedInstanceState, this);
+      getLoaderManager().initLoader(1, Bundle.EMPTY, this);
+       // getActivity().getSupportLoaderManager().initLoader(0, null, this);
 
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
@@ -103,7 +116,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
 
         upgrade_database();
-        new Timer().schedule(new Regular_upgrade(), 30000, 30000);// 3600000
+
+        new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
     }
 
     public void upgrade_database(){
@@ -131,6 +145,50 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
         new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
         new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.d("aaaaaaaaaaaaaaa,","eeeeeeeeeeeeeeeeeeee");
+
+        CursorLoader loader = new CursorLoader(
+                this.getActivity(),
+                CONTENT_URI,
+                null,
+                null,
+                null,
+                null);
+        return loader;
+        //return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        Log.d("aaaaaaaaaaaaaaa,","aaaaaaaaaaaaaaa");
+        ArrayList<HashMap<String, String>> wordList;
+        wordList = new ArrayList<HashMap<String, String>>();
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                do {
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    map.put("b_id_bumps", cursor.getString(0));
+                    Log.d("yxcvbnmzzzz,", cursor.getString(0));
+                    map.put("count", cursor.getString(1));
+                    map.put("last_modified", cursor.getString(2));
+                    Log.d("yxcvbnmzzzz,", cursor.getString(2));
+                    map.put("latitude", cursor.getString(3));
+                    map.put("longtitude", cursor.getString(4));
+                    map.put("manual", cursor.getString(5));
+                    map.put("rating", cursor.getString(6));
+                    wordList.add(map);
+                } while (cursor.moveToNext());
+            }
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        Log.d("aaaaaaaaaaaaaaa,","ffffffffffffffffffff");
     }
 
     private class Regular_upgrade extends TimerTask {
@@ -197,6 +255,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             sb.endTransaction();
             new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
             new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
+         //   getLoaderManager().restartLoader(0, null, this);
+           // query.setNotificationUri( getActivity().getContentResolver(), CONTENT_URI)
+          //  getActivity().getContentResolver().notifyChange(CONTENT_URI, null);
         }
     }
 
@@ -242,6 +303,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
 
         protected void onPostExecute(JSONArray array) {
+
             sb.beginTransaction();
             for (int i = 0; i < bumps.length(); i++) {
                 JSONObject c = null;
@@ -254,6 +316,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 double longitude = 0;
                 int index = 0, count = 0, rating = 0, b_id = 0, manual = 0;
                 String last_modified = null;
+
+
+
+
+
                 if (c != null) {
                     try {
 
@@ -290,8 +357,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
             sb.setTransactionSuccessful();
             sb.endTransaction();
+          Uri uri = BumpContentProvider.CONTENT_URI;
+            //getContext().getContentResolver().notifyChange(uri, null);
+         //   getContext().getContentResolver().notifyChange(uri, null, false);
+
+
+            Cursor tutorials = getActivity().managedQuery(
+                    BumpContentProvider.CONTENT_URI, null, null, null, null);
+         //   getActivity().getContentResolver().notifyChange(CONTENT_URI, null);
             Log.d("adasfgwed","safvgtgasdc");
-            getAllPlace();
+
+
         }
     }
 
@@ -352,6 +428,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
             sb.setTransactionSuccessful();
             sb.endTransaction();
+
+
+
+
           // getAllPlace2();
         }
     }
@@ -407,7 +487,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         return wordList;
     }
 
-    private static int getDbVersionFromFile(File file) throws Exception {
+    public static int getDbVersionFromFile(File file) throws Exception {
         RandomAccessFile fp = new RandomAccessFile(file,"r");
         fp.seek(60);
         byte[] buff = new byte[4];
