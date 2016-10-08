@@ -235,6 +235,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         protected ArrayList<HashMap<String, String>> doInBackground(String... args) {
 
             ArrayList<HashMap<String, String>> List = new ArrayList<HashMap<String, String>>();
+            int version = 0;
+            File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
+            try {
+                version = getDbVersionFromFile(dbpath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            databaseHelper = new DatabaseOpenHelper(getActivity(),version);
+            sb = databaseHelper.getWritableDatabase();
 
             sb.beginTransaction();
             Cursor cursor =  sb.query(TABLE_NAME_BUMPS, null, null, null, null, null, null);
@@ -613,8 +622,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
              mLocnServGPS.updateMap();
         }
         else {
-           if (isEneableShowText())
+            mLocnServGPS.updateNoInternetMap();
+            new Database_Bump().execute();
+          /* if (isEneableShowText())
                 Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();
+                */
         }
     }
 

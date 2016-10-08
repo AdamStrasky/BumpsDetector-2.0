@@ -212,6 +212,11 @@ public class GPSLocator extends Service implements LocationListener {
         new GetAllBumps().execute();
     }
 
+    public void updateNoInternetMap () {
+        map.clear();
+    }
+
+
     public IBinder onBind(Intent intent) {
         Log.d("BIND_GPS", "GPS Loc service ONBIND");
         return mBinder;
