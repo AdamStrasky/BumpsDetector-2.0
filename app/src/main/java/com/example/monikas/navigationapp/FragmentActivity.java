@@ -102,6 +102,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             initialization();
         }
 
+        upgrade_database();
+        new Timer().schedule(new Regular_upgrade(), 30000, 30000);// 3600000
+    }
+
+    public void upgrade_database(){
         int version =0;
         File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
         try {
@@ -109,7 +114,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.d("versionTTT", String.valueOf(version));
         boolean flag = false ;
         if (version == 0) {
             version = 1;
@@ -127,8 +131,76 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
         new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
         new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
-
     }
+
+    private class Regular_upgrade extends TimerTask {
+
+        @Override
+        public void run() {
+         /*   Log.d("yxcvbnmzzzzasdfghjkl,","yxcvbnmzzzz,");
+            int version =0;
+            File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
+            try {
+                version = getDbVersionFromFile(dbpath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            sb.beginTransaction();
+            databaseHelper = new DatabaseOpenHelper(getActivity(),version+1);
+            sb = databaseHelper.getWritableDatabase();
+            sb.setTransactionSuccessful();
+            sb.endTransaction();
+            new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
+            new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");*/
+
+            /*   Log.d("yxcvbnmzzzzasdfghjkl,","yxcvbnmzzzz,");
+            int version =0;
+            File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
+            try {
+                version = getDbVersionFromFile(dbpath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.d("yxcvbnmzzzzasdfghjkl,", String.valueOf(version));
+            boolean flag = false ;
+            if (version == 0) {
+                version = 1;
+                flag= true;
+            }
+
+            databaseHelper = new DatabaseOpenHelper(getActivity(),version);
+            sb = databaseHelper.getWritableDatabase();
+
+            if (!flag) {
+                sb.beginTransaction();
+                databaseHelper.onUpgrade(sb, version, version + 1);
+                sb.setTransactionSuccessful();
+                sb.endTransaction();
+            }
+            new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
+            new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");*/
+              Log.d("yxcvbnmzzzzasdfghjkl,","yxcvbnmzzzz,");
+            int version =0;
+            File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
+            try {
+                version = getDbVersionFromFile(dbpath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.d("yaaaaadsdaffefv#kj", String.valueOf(version));
+            sb.beginTransaction();
+            databaseHelper.onUpgrade(sb, version, version + 1);
+            sb.setVersion(version + 1);
+           // databaseHelper = new DatabaseOpenHelper(getActivity(),version+1);
+           // sb = databaseHelper.getWritableDatabase();
+            sb.setTransactionSuccessful();
+            sb.endTransaction();
+            new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
+            new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
+        }
+    }
+
+
 
   /*  int version =0;
     File dbpath = this.getDatabasePath(DATABASE_NAME);
@@ -142,18 +214,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     for (int i =1; i < 10 ; i++)
     insertSampleEntry(sb,i);*/
-     public  void insertSampleEntry(SQLiteDatabase db, int rating, int count, String last_modified, double latitude, double longitude, int manual) {
-         Log.d("rating", String.valueOf(rating));
-      ContentValues contentValues = new ContentValues();
-      contentValues.put(Provider.bumps_detect.COUNT, count);
-      contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
-      contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
-      contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
-      contentValues.put(Provider.bumps_detect.MANUAL, manual);
-      contentValues.put(Provider.bumps_detect.RATING, rating);
-      db.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
-
-  }
 
     class Get_Bumps extends AsyncTask<String, Void, JSONArray> {
 
@@ -231,7 +291,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             sb.setTransactionSuccessful();
             sb.endTransaction();
             Log.d("adasfgwed","safvgtgasdc");
-            //getAllPlace();
+            getAllPlace();
         }
     }
 
@@ -300,13 +360,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public ArrayList<HashMap<String, String>> getAllPlace() {
         ArrayList<HashMap<String, String>> wordList;
         wordList = new ArrayList<HashMap<String, String>>();
+
+        sb.beginTransaction();
         Cursor cursor =  sb.query(TABLE_NAME_BUMPS, null, null, null, null, null, null);
     //    Log.d("yxcvbnmzzzz,","saghjnbvg");
         if (cursor.moveToFirst()) {
             do {
                 HashMap<String, String> map = new HashMap<String, String>();
                 map.put("b_id_bumps", cursor.getString(0));
-              //  Log.d("yxcvbnmzzzz,",cursor.getString(0));
+                 Log.d("yxcvbnmzzzz,",cursor.getString(0));
                 map.put("count", cursor.getString(1));
                 map.put("last_modified", cursor.getString(2));
                 Log.d("yxcvbnmzzzz,",cursor.getString(2));
@@ -317,6 +379,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 wordList.add(map);
             } while (cursor.moveToNext());
         }
+        sb.setTransactionSuccessful();
+        sb.endTransaction();
 
         // return contact list
         return wordList;
@@ -325,6 +389,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public ArrayList<HashMap<String, String>> getAllPlace2() {
         ArrayList<HashMap<String, String>> wordList;
         wordList = new ArrayList<HashMap<String, String>>();
+        sb.beginTransaction();
         Cursor cursor =  sb.query(TABLE_NAME_COLLISIONS, null, null, null, null, null, null);
         if (cursor.moveToFirst()) {
             do {
@@ -336,6 +401,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 wordList.add(map);
             } while (cursor.moveToNext());
         }
+        sb.setTransactionSuccessful();
+        sb.endTransaction();
         // return contact list
         return wordList;
     }
