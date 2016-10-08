@@ -3,7 +3,6 @@ package com.example.monikas.navigationapp;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.B_ID_BUMPS;
@@ -19,8 +18,6 @@ import static  com.example.monikas.navigationapp.Provider.bumps_collision.C_ID;
 import static  com.example.monikas.navigationapp.Provider.bumps_collision.B_ID_COLLISIONS;
 import static  com.example.monikas.navigationapp.Provider.bumps_collision.INTENSITY;
 import static  com.example.monikas.navigationapp.Provider.bumps_collision.CRETED_AT;
-
-
 
 /**
  * Created by Adam on 6.10.2016.
@@ -76,7 +73,6 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
             db.execSQL(query);
             query = "DROP TABLE IF EXISTS " + TABLE_NAME_COLLISIONS;
             db.execSQL(query);
-            Log.d("yaaaaadsdaffefv#kj","yaaaaadsdaffefv");
             onCreate(db);
         }
 }

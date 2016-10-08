@@ -4,18 +4,13 @@ package com.example.monikas.navigationapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.app.LoaderManager;
-import android.content.AsyncQueryHandler;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.Loader;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -24,7 +19,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,6 +31,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,13 +46,10 @@ import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.example.monikas.navigationapp.BumpContentProvider.CONTENT_URI;
 import static com.example.monikas.navigationapp.DatabaseOpenHelper.DATABASE_NAME;
-import static com.example.monikas.navigationapp.Provider.bumps_collision.TABLE_NAME_COLLISIONS;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
-import static java.security.AccessController.getContext;
 
-public class FragmentActivity extends Fragment  implements LoaderManager.LoaderCallbacks<Cursor>,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleApiClient mGoogleApiClient;
     private Context context;
@@ -87,8 +79,6 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
-    private static final int URI_MATCH_NOTES = 0;
-    private static final int NOTES_LOADER_ID = 0;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,11 +90,6 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
 
         }
 
-
-    //    getActivity().getSupportLoaderManager().initLoader(0, savedInstanceState, this);
-      getLoaderManager().initLoader(1, Bundle.EMPTY, this);
-       // getActivity().getSupportLoaderManager().initLoader(0, null, this);
-
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
         
@@ -115,13 +100,13 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
             initialization();
         }
 
+      if (isNetworkAvailable())
         upgrade_database();
-
         new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
     }
 
     public void upgrade_database(){
-        int version =0;
+        int version = 0;
         File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
         try {
             version = getDbVersionFromFile(dbpath);
@@ -133,7 +118,6 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
             version = 1;
             flag= true;
         }
-
         databaseHelper = new DatabaseOpenHelper(getActivity(),version);
         sb = databaseHelper.getWritableDatabase();
 
@@ -142,150 +126,49 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
             databaseHelper.onUpgrade(sb, version, version + 1);
             sb.setTransactionSuccessful();
             sb.endTransaction();
-        }
+       }
+
         new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
         new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.d("aaaaaaaaaaaaaaa,","eeeeeeeeeeeeeeeeeeee");
-
-        CursorLoader loader = new CursorLoader(
-                this.getActivity(),
-                CONTENT_URI,
-                null,
-                null,
-                null,
-                null);
-        return loader;
-        //return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        Log.d("aaaaaaaaaaaaaaa,","aaaaaaaaaaaaaaa");
-        ArrayList<HashMap<String, String>> wordList;
-        wordList = new ArrayList<HashMap<String, String>>();
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                do {
-                    HashMap<String, String> map = new HashMap<String, String>();
-                    map.put("b_id_bumps", cursor.getString(0));
-                    Log.d("yxcvbnmzzzz,", cursor.getString(0));
-                    map.put("count", cursor.getString(1));
-                    map.put("last_modified", cursor.getString(2));
-                    Log.d("yxcvbnmzzzz,", cursor.getString(2));
-                    map.put("latitude", cursor.getString(3));
-                    map.put("longtitude", cursor.getString(4));
-                    map.put("manual", cursor.getString(5));
-                    map.put("rating", cursor.getString(6));
-                    wordList.add(map);
-                } while (cursor.moveToNext());
-            }
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        Log.d("aaaaaaaaaaaaaaa,","ffffffffffffffffffff");
+       // new Database_Bump().execute();
     }
 
     private class Regular_upgrade extends TimerTask {
 
         @Override
         public void run() {
-         /*   Log.d("yxcvbnmzzzzasdfghjkl,","yxcvbnmzzzz,");
-            int version =0;
-            File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
-            try {
-                version = getDbVersionFromFile(dbpath);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            sb.beginTransaction();
-            databaseHelper = new DatabaseOpenHelper(getActivity(),version+1);
-            sb = databaseHelper.getWritableDatabase();
-            sb.setTransactionSuccessful();
-            sb.endTransaction();
-            new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
-            new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");*/
 
-            /*   Log.d("yxcvbnmzzzzasdfghjkl,","yxcvbnmzzzz,");
-            int version =0;
-            File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
-            try {
-                version = getDbVersionFromFile(dbpath);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            Log.d("yxcvbnmzzzzasdfghjkl,", String.valueOf(version));
-            boolean flag = false ;
-            if (version == 0) {
-                version = 1;
-                flag= true;
-            }
+            if (isNetworkAvailable()) {
+                int version = 0;
+                File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
+                try {
+                    version = getDbVersionFromFile(dbpath);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                databaseHelper = new DatabaseOpenHelper(getActivity(),version);
+                sb = databaseHelper.getWritableDatabase();
 
-            databaseHelper = new DatabaseOpenHelper(getActivity(),version);
-            sb = databaseHelper.getWritableDatabase();
 
-            if (!flag) {
                 sb.beginTransaction();
                 databaseHelper.onUpgrade(sb, version, version + 1);
+                sb.setVersion(version + 1);
                 sb.setTransactionSuccessful();
                 sb.endTransaction();
+
+                new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
+                new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
+                // new Database_Bump().execute();
             }
-            new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
-            new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");*/
-              Log.d("yxcvbnmzzzzasdfghjkl,","yxcvbnmzzzz,");
-            int version =0;
-            File dbpath = getActivity().getDatabasePath(DATABASE_NAME);
-            try {
-                version = getDbVersionFromFile(dbpath);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            Log.d("yaaaaadsdaffefv#kj", String.valueOf(version));
-            sb.beginTransaction();
-            databaseHelper.onUpgrade(sb, version, version + 1);
-            sb.setVersion(version + 1);
-           // databaseHelper = new DatabaseOpenHelper(getActivity(),version+1);
-           // sb = databaseHelper.getWritableDatabase();
-            sb.setTransactionSuccessful();
-            sb.endTransaction();
-            new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
-            new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
-         //   getLoaderManager().restartLoader(0, null, this);
-           // query.setNotificationUri( getActivity().getContentResolver(), CONTENT_URI)
-          //  getActivity().getContentResolver().notifyChange(CONTENT_URI, null);
+
         }
     }
 
+       class Get_Bumps extends AsyncTask<String, Void, JSONArray> {
 
+         private JSONParser jsonParser = new JSONParser();
 
-  /*  int version =0;
-    File dbpath = this.getDatabasePath(DATABASE_NAME);
-    try {
-        version = getDbVersionFromFile(dbpath);
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-    databaseHelper = new DatabaseOpenHelper(this,version+1);
-    sb = databaseHelper.getWritableDatabase();
-
-    for (int i =1; i < 10 ; i++)
-    insertSampleEntry(sb,i);*/
-
-    class Get_Bumps extends AsyncTask<String, Void, JSONArray> {
-
-        private JSONParser jsonParser = new JSONParser();
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        protected JSONArray doInBackground(String... args) {
+           protected JSONArray doInBackground(String... args) {
             JSONObject json = jsonParser.makeHttpRequest(args[0], "GET", null);
             try {
                 int success = json.getInt("success");
@@ -303,7 +186,6 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
         }
 
         protected void onPostExecute(JSONArray array) {
-
             sb.beginTransaction();
             for (int i = 0; i < bumps.length(); i++) {
                 JSONObject c = null;
@@ -314,16 +196,10 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
                 }
                 double latitude = 0;
                 double longitude = 0;
-                int index = 0, count = 0, rating = 0, b_id = 0, manual = 0;
+                int count = 0, rating = 0, b_id = 0, manual = 0;
                 String last_modified = null;
-
-
-
-
-
                 if (c != null) {
                     try {
-
                         b_id = c.getInt("b_id");
                         rating = c.getInt("rating");
                         count = c.getInt("count");
@@ -334,8 +210,6 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
                             manual = 0;
                         } else
                             manual = c.getInt("manual");
-
-
                         ContentValues contentValues = new ContentValues();
                         contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
                         contentValues.put(Provider.bumps_detect.COUNT, count);
@@ -345,11 +219,6 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
                         contentValues.put(Provider.bumps_detect.MANUAL, manual);
                         contentValues.put(Provider.bumps_detect.RATING, rating);
                         sb.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
-
-
-
-
-
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -357,28 +226,54 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
             }
             sb.setTransactionSuccessful();
             sb.endTransaction();
-          Uri uri = BumpContentProvider.CONTENT_URI;
-            //getContext().getContentResolver().notifyChange(uri, null);
-         //   getContext().getContentResolver().notifyChange(uri, null, false);
-
-
-            Cursor tutorials = getActivity().managedQuery(
-                    BumpContentProvider.CONTENT_URI, null, null, null, null);
-         //   getActivity().getContentResolver().notifyChange(CONTENT_URI, null);
-            Log.d("adasfgwed","safvgtgasdc");
-
-
         }
     }
+
+
+    class Database_Bump extends AsyncTask<String, Void, ArrayList<HashMap<String, String>>> {
+
+        protected ArrayList<HashMap<String, String>> doInBackground(String... args) {
+
+            ArrayList<HashMap<String, String>> List = new ArrayList<HashMap<String, String>>();
+
+            sb.beginTransaction();
+            Cursor cursor =  sb.query(TABLE_NAME_BUMPS, null, null, null, null, null, null);
+
+            if (cursor.moveToFirst()) {
+                do {
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    map.put("b_id_bumps", cursor.getString(0));
+                    map.put("count", cursor.getString(1));
+                    map.put("last_modified", cursor.getString(2));
+                    map.put("latitude", cursor.getString(3));
+                    map.put("longtitude", cursor.getString(4));
+                    map.put("manual", cursor.getString(5));
+                    map.put("rating", cursor.getString(6));
+                    List.add(map);
+                } while (cursor.moveToNext());
+            }
+            sb.setTransactionSuccessful();
+            sb.endTransaction();
+
+            return List;
+        }
+
+        protected void onPostExecute(ArrayList<HashMap<String, String>> array) {
+                for (int i=0 ; i < array.size(); i++) {
+                    int count = Integer.parseInt(array.get(i).get("count"));
+                    int manual = Integer.parseInt(array.get(i).get("manual"));
+                    double latitude = Double.parseDouble(array.get(i).get("latitude"));
+                    double longitude =Double.parseDouble(array.get(i).get("longtitude"));
+                    LatLng location = new LatLng(latitude, longitude);
+                    gps.addBumpToMap (location, count, 1);
+                }
+        }
+    }
+
 
     class Get_Collisions extends AsyncTask<String, Void, JSONArray> {
 
         private JSONParser jsonParser = new JSONParser();
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
 
         protected JSONArray doInBackground(String... args) {
             JSONObject json = jsonParser.makeHttpRequest(args[0], "GET", null);
@@ -415,8 +310,8 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
                         c_id= c.getInt("c_id");
                         created_at = c.getString("created_at");
                         intensity = c.getDouble("intensity");
-
                         ContentValues contentValues = new ContentValues();
+                        contentValues.put(Provider.bumps_collision.C_ID, c_id);
                         contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
                         contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
                         contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
@@ -428,66 +323,35 @@ public class FragmentActivity extends Fragment  implements LoaderManager.LoaderC
             }
             sb.setTransactionSuccessful();
             sb.endTransaction();
-
-
-
-
-          // getAllPlace2();
         }
     }
 
 
-    public ArrayList<HashMap<String, String>> getAllPlace() {
-        ArrayList<HashMap<String, String>> wordList;
-        wordList = new ArrayList<HashMap<String, String>>();
+    public ArrayList<HashMap<String, String>> getAllBumps() {
+        ArrayList<HashMap<String, String>> List = new ArrayList<HashMap<String, String>>();
 
         sb.beginTransaction();
         Cursor cursor =  sb.query(TABLE_NAME_BUMPS, null, null, null, null, null, null);
-    //    Log.d("yxcvbnmzzzz,","saghjnbvg");
+
         if (cursor.moveToFirst()) {
             do {
                 HashMap<String, String> map = new HashMap<String, String>();
                 map.put("b_id_bumps", cursor.getString(0));
-                 Log.d("yxcvbnmzzzz,",cursor.getString(0));
                 map.put("count", cursor.getString(1));
                 map.put("last_modified", cursor.getString(2));
-                Log.d("yxcvbnmzzzz,",cursor.getString(2));
                 map.put("latitude", cursor.getString(3));
                 map.put("longtitude", cursor.getString(4));
                 map.put("manual", cursor.getString(5));
                 map.put("rating", cursor.getString(6));
-                wordList.add(map);
+                List.add(map);
             } while (cursor.moveToNext());
         }
         sb.setTransactionSuccessful();
         sb.endTransaction();
-
-        // return contact list
-        return wordList;
+        return List;
     }
 
-    public ArrayList<HashMap<String, String>> getAllPlace2() {
-        ArrayList<HashMap<String, String>> wordList;
-        wordList = new ArrayList<HashMap<String, String>>();
-        sb.beginTransaction();
-        Cursor cursor =  sb.query(TABLE_NAME_COLLISIONS, null, null, null, null, null, null);
-        if (cursor.moveToFirst()) {
-            do {
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put("c_id", cursor.getString(0));
-                map.put("B_ID_COLLISIONS", cursor.getString(1));
-                map.put("intensity", cursor.getString(2));
-                map.put("created_at", cursor.getString(3));
-                wordList.add(map);
-            } while (cursor.moveToNext());
-        }
-        sb.setTransactionSuccessful();
-        sb.endTransaction();
-        // return contact list
-        return wordList;
-    }
-
-    public static int getDbVersionFromFile(File file) throws Exception {
+    private static int getDbVersionFromFile(File file) throws Exception {
         RandomAccessFile fp = new RandomAccessFile(file,"r");
         fp.seek(60);
         byte[] buff = new byte[4];

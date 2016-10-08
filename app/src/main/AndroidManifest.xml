@@ -57,11 +57,7 @@
 
         <activity android:name=".SettingsActivity" />
 
-        <provider
-            android:name=".BumpContentProvider"
-            android:authorities="com.example.monikas.navigationapp.BumpContentProvider"
-            android:enabled="true"
-            android:exported="false"></provider>
+
     </application>
 
 </manifest>
