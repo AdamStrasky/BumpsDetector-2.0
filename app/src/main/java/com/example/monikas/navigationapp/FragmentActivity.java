@@ -323,7 +323,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                     if (isBetween(intensity,0,6)) rating = 1;
                                     if (isBetween(intensity,6,10)) rating = 2;
                                     if (isBetween(intensity,10,10000)) rating = 3;
-   sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
+                sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
 
                                   /*  Log.d("afaghtryjkujyht", "rating  "+ String.valueOf(rating));
                                     ContentValues cv = new ContentValues();
@@ -707,7 +707,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                new Timer().schedule(new SendBumpsToDb(), 0, 60000);
 
             }
-        }, 20000);
+        }, 15000);
 
 
     }
@@ -787,8 +787,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 flagAktualizuj=false;
                 Log.d("afaghtryjkujyht","mam povolenie WIFI");
                 mLocnServGPS.setLevel(level);
-                mLocnServGPS.updateMap();  // posunut cistenie mapy
-                LatLng convert_location =  gps.getCurrentLatLng();
+                 LatLng convert_location =  gps.getCurrentLatLng();
                 getAllBumps2(convert_location.latitude,convert_location.longitude,1);
 
             }
