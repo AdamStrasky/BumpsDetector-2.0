@@ -160,6 +160,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     location.setTime(new Date().getTime());
 
 
+                    /// doplnit jednotk una yaklade netu
+                    fragmentActivity.getAllBumps2(convert_location.latitude,convert_location.longitude,1);
+
+                 //    fragmentActivity.getAllBumps(convert_location.latitude,convert_location.longitude);
                //    fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
                     // manuálny výtlk
                 //   fragmentActivity.accelerometer.addBumpsManual(1);
@@ -306,17 +310,23 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
             case R.id.all_bumps:
                 fragmentActivity.level = ALL_BUMPS;
-                fragmentActivity.getBumpsWithLevel();
+                LatLng convert_location =  fragmentActivity.gps.getCurrentLatLng();
+                fragmentActivity.getAllBumps(convert_location.latitude,convert_location.longitude);
+             //   fragmentActivity.getAllBumps();
                 return true;
 
             case R.id.medium_bumps:
                 fragmentActivity.level = MEDIUM_BUMPS;
-                fragmentActivity.getBumpsWithLevel();
+                LatLng convert_location1 =  fragmentActivity.gps.getCurrentLatLng();
+                fragmentActivity.getAllBumps(convert_location1.latitude,convert_location1.longitude);
+             //   fragmentActivity.getAllBumps();
                 return true;
 
             case R.id.large_bumps:
                 fragmentActivity.level = LARGE_BUMPS;
-                fragmentActivity.getBumpsWithLevel();
+                LatLng convert_location2 =  fragmentActivity.gps.getCurrentLatLng();
+                fragmentActivity.getAllBumps(convert_location2.latitude,convert_location2.longitude);
+               // fragmentActivity.getAllBumps();
                 return true;
 
             case R.id.action_settings:

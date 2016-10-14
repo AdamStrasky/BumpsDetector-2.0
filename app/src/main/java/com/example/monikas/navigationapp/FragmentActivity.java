@@ -26,26 +26,32 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
-
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.example.monikas.navigationapp.Bump.isBetween;
 import static com.example.monikas.navigationapp.DatabaseOpenHelper.DATABASE_NAME;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
@@ -66,7 +72,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     //level defaultne nastaveny pre zobrazovanie vsetkych vytlkov
     public float level = ALL_BUMPS;
     public static int ZOOM_LEVEL = 18;
-
+    JSONParser jsonParser = new JSONParser();
     boolean mServiceConnectedAcc = false;
     boolean mBoundAcc = false;
     private Accelerometer mLocnServAcc = null;
@@ -79,6 +85,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,9 +107,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             initialization();
         }
 
-      if (isNetworkAvailable())
-        upgrade_database();
-        new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
+     if (isNetworkAvailable())
+      upgrade_database();
+     //   new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
     }
 
     public void upgrade_database(){
@@ -121,15 +128,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         databaseHelper = new DatabaseOpenHelper(getActivity(),version);
         sb = databaseHelper.getWritableDatabase();
 
-        if (!flag) {
+      /*  if (!flag) {
             sb.beginTransaction();
             databaseHelper.onUpgrade(sb, version, version + 1);
             sb.setTransactionSuccessful();
             sb.endTransaction();
-       }
+       }*/
 
-        new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
-        new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
+      //  new Get_Bumps().execute("http://sport.fiit.ngnlab.eu/get_bumps.php");
+       // new Get_Collisions().execute("http://sport.fiit.ngnlab.eu/get_collisions.php");
        // new Database_Bump().execute();
     }
 
@@ -336,28 +343,364 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 
 
-    public ArrayList<HashMap<String, String>> getAllBumps() {
+    public ArrayList<HashMap<String, String>> getAllBumps(Double latitude, Double longitude) {
         ArrayList<HashMap<String, String>> List = new ArrayList<HashMap<String, String>>();
 
+/*        "SELECT latitude,longitude,count FROM my_bumps WHERE rating/count >= '$level' AND " +
+                "last_modified between date_sub(now(),INTERVAL 40 WEEK) and now() and " +
+                "((ROUND(latitude,0)=ROUND('$latitude',0)) AND (ROUND(longitude,0)=ROUND('$longitude',0)))"
+        */
+        SimpleDateFormat databaseDateTimeFormate,format1;
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        databaseDateTimeFormate = new SimpleDateFormat("yyyy-MM-dd");
+        String now = databaseDateTimeFormate.format(cal.getTime());
+        cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
+        format1 = new SimpleDateFormat("yyyy-MM-dd");
+        String ago = format1.format(cal.getTime());
+        LatLng convert_location =  gps.getCurrentLatLng();
+
         sb.beginTransaction();
-        Cursor cursor =  sb.query(TABLE_NAME_BUMPS, null, null, null, null, null, null);
+        String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
+              " ( last_modified BETWEEN '"+ago+" 23:59:59' AND '"+now+" 00:00:00') and  "
+                + " (ROUND(latitude,0)==ROUND("+latitude+",0) and ROUND(longitude,0)==ROUND("+longitude+",0)) ";
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+        Cursor cursor = database.rawQuery(selectQuery, null);
 
         if (cursor.moveToFirst()) {
             do {
                 HashMap<String, String> map = new HashMap<String, String>();
-                map.put("b_id_bumps", cursor.getString(0));
-                map.put("count", cursor.getString(1));
-                map.put("last_modified", cursor.getString(2));
-                map.put("latitude", cursor.getString(3));
-                map.put("longtitude", cursor.getString(4));
-                map.put("manual", cursor.getString(5));
-                map.put("rating", cursor.getString(6));
+                gps.addBumpToMap(new LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
                 List.add(map);
             } while (cursor.moveToNext());
         }
         sb.setTransactionSuccessful();
         sb.endTransaction();
         return List;
+    }
+
+    private double langt;
+    private double longti;
+    private int nets,b_idV,c_idV,updates ;
+
+
+
+    public void getAllBumps3(Double lang, Double longt,Integer update ) {
+        Log.d("afaghtryjkujyht", " getAllBumps3  ");
+        SimpleDateFormat databaseDateTimeFormate,format1;
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        databaseDateTimeFormate = new SimpleDateFormat("yyyy-MM-dd");
+        String now = databaseDateTimeFormate.format(cal.getTime());
+        cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
+        format1 = new SimpleDateFormat("yyyy-MM-dd");
+        String ago = format1.format(cal.getTime());
+
+        sb.beginTransaction();
+        String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                + " where (last_modified BETWEEN '"+ago+" 23:59:59' AND '"+now+" 00:00:00') and  "
+                + " (ROUND(latitude,0)==ROUND("+lang+",0) and ROUND(longitude,0)==ROUND("+longt+",0)))"
+                + " ORDER BY c_id DESC LIMIT 1 ";
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+        Cursor cursor = database.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                c_idV =cursor.getInt(0);
+
+                Log.d("afaghtryjkujyht", " Maxnumber1   "+ String.valueOf(c_idV));
+            } while (cursor.moveToNext());
+
+        }
+
+        sb.setTransactionSuccessful();
+        sb.endTransaction();
+        updates = update;
+        new MaxNumber1().execute();
+
+    }
+
+    class MaxNumber1 extends AsyncTask<String, Void, JSONArray> {
+
+        protected JSONArray doInBackground(String... args) {
+
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("latitude", String.valueOf(langt)));
+            params.add(new BasicNameValuePair("longitude", String.valueOf(longti)));
+            params.add(new BasicNameValuePair("b_id", String.valueOf(b_idV)));
+            params.add(new BasicNameValuePair("net", String.valueOf(nets)));
+            params.add(new BasicNameValuePair("c_id", String.valueOf(c_idV)));
+
+            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_collisions.php", "POST", params);
+
+            try {
+                int success = json.getInt("success");
+
+                if (success == 0) {
+                    Log.d("afaghtryjkujyht", " Maxnumber1  stahovnie ");
+                    bumps = json.getJSONArray("bumps");
+                    return bumps;
+                } else if (success == 1) {
+                    JSONArray vvc = new JSONArray();
+                    Log.d("afaghtryjkujyht", " Maxnumber1  update ");
+                    vvc.put(0, "update");
+                    bumps = vvc;
+                    return bumps;
+                } else {
+                    Log.d("afaghtryjkujyht", " Maxnumber1  no update ");
+                    return null;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(JSONArray array) {
+
+            if (array == null) {
+                Log.d("afaghtryjkujyht", "not update ");
+                if (updates == 1) {
+                    Log.d("afaghtryjkujyht", "ale vzvolam  update ");
+                    GetUpdateAction();
+                }
+
+                return;
+            }
+
+            try {
+                if (array.get(0).equals("update")) {
+                   Log.d("afaghtryjkujyht", "not update ");
+                    GetUpdateAction();
+                } else {
+                    Log.d("afaghtryjkujyht", "insertujem nove hodnotz  ");
+                    sb.beginTransaction();
+                    for (int i = 0; i < bumps.length(); i++) {
+                        JSONObject c = null;
+                        try {
+                            c = bumps.getJSONObject(i);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        int c_id = 0;
+                        int b_id;
+                        int intensity = 0;
+                        String created_at;
+
+                        if (c != null) {
+                            try {
+                                c_id = c.getInt("c_id");
+                                b_id = c.getInt("b_id");
+                                intensity = c.getInt("intensity");
+                                created_at = c.getString("created_at");
+                                Log.d("afaghtryjkujyht", String.valueOf(b_id));
+
+                                ContentValues contentValues = new ContentValues();
+                                contentValues.put(Provider.bumps_collision.C_ID, c_id);
+                                contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
+                                contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
+                                contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
+                                sb.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
+
+                                if (b_id <= b_idV) {
+                                    int rating=0;
+                                    if (isBetween(intensity,0,6)) rating = 1;
+                                    if (isBetween(intensity,6,10)) rating = 2;
+                                    if (isBetween(intensity,10,10000)) rating = 3;
+
+
+                                    ContentValues cv = new ContentValues();
+                                    cv.put("rating","rating +"+rating);
+                                    cv.put("count","count + 1");
+                                    sb.update(Provider.bumps_detect.TABLE_NAME_BUMPS, cv, "b_id_bumps="+b_id, null);
+                                }
+
+
+
+                             //    iba dat update na c _id
+                             //   sb.update(Provider.bumps_collision.TABLE_NAME_COLLISIONS,);
+                            //
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    sb.setTransactionSuccessful();
+                    sb.endTransaction();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+
+
+
+
+    public void getAllBumps2(Double lang, Double longt, Integer net) {
+        Log.d("afaghtryjkujyht", "getAllBumps2 ");
+        SimpleDateFormat databaseDateTimeFormate,format1;
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        databaseDateTimeFormate = new SimpleDateFormat("yyyy-MM-dd");
+        String now = databaseDateTimeFormate.format(cal.getTime());
+        cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
+        format1 = new SimpleDateFormat("yyyy-MM-dd");
+        String ago = format1.format(cal.getTime());
+
+        sb.beginTransaction();
+        String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+       + " where (last_modified BETWEEN '"+ago+" 23:59:59' AND '"+now+" 00:00:00') and  "
+       + " (ROUND(latitude,0)==ROUND("+lang+",0) and ROUND(longitude,0)==ROUND("+longt+",0))"
+       + " ORDER BY b_id_bumps DESC LIMIT 1 ";
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+        Cursor cursor = database.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                b_idV =cursor.getInt(0);
+                Log.d("afaghtryjkujyht", "max b_id " +String.valueOf(b_idV));
+            } while (cursor.moveToNext());
+
+        }
+        nets =net ;  ///  zmenit
+        b_idV=0;// zmenit
+        langt=lang;
+        longti=longt;
+        sb.setTransactionSuccessful();
+        sb.endTransaction();
+        new MaxNumber().execute();
+
+    }
+
+    class MaxNumber extends AsyncTask<String, Void, JSONArray> {
+
+        protected JSONArray doInBackground(String... args) {
+
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("latitude", String.valueOf(langt)));
+            params.add(new BasicNameValuePair("longitude", String.valueOf(longti)));
+            params.add(new BasicNameValuePair("b_id", String.valueOf(b_idV)));
+            params.add(new BasicNameValuePair("net", String.valueOf(nets)));
+
+            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_bumps.php", "POST", params);
+
+            try {
+                 int success = json.getInt("success");
+
+                if (success == 0) {
+                    Log.d("afaghtryjkujyht", " MaxNumber stiahnute data");
+                    bumps = json.getJSONArray("bumps");
+                     return bumps;
+                } else if (success == 1) {
+                    JSONArray vvc = new JSONArray();
+                    Log.d("afaghtryjkujyht", "MaxNumber  data na stiahnutie ");
+                    vvc.put(0, "update");
+                    bumps = vvc;
+                    return bumps;
+                } else {
+                    Log.d("afaghtryjkujyht", "MaxNumber ziadne na stiahnutie data");
+                    return null;
+
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(JSONArray array) {
+
+            if (array == null) {
+                Log.d("afaghtryjkujyht", " MaxNumber not update ");
+                getAllBumps3(langt,longti,0);
+                return;
+            }
+
+            try {
+                if (array.get(0).equals("update")) {
+                    Log.d("afaghtryjkujyht", " MaxNumber  update ");
+                    getAllBumps3(langt,longti,1);
+
+                } else {
+                    Log.d("afaghtryjkujyht", " MaxNumber  insert ");
+               //     sb.beginTransaction();
+                    for (int i = 0; i < bumps.length(); i++) {
+                        JSONObject c = null;
+                        try {
+                            c = bumps.getJSONObject(i);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        double latitude = 0;
+                        double longitude = 0;
+                        int count = 0;
+                        int b_id, rating;
+                        int manual = 0;
+                        String last_modified;
+
+                        if (c != null) {
+                            try {
+
+                                latitude = c.getDouble("latitude");
+                                longitude = c.getDouble("longitude");
+                                count = c.getInt("count");
+                                b_id = c.getInt("b_id");
+                                Log.d("INFO", String.valueOf(b_id));
+                                rating = c.getInt("rating");
+                                last_modified = c.getString("last_modified");
+                                if (c.isNull("manual")) {
+                                    manual = 0;
+                                } else
+                                    manual = c.getInt("manual");
+                              /*  ContentValues contentValues = new ContentValues();
+                                contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
+                                contentValues.put(Provider.bumps_detect.COUNT, count);
+                                contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
+                                contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
+                                contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
+                                contentValues.put(Provider.bumps_detect.MANUAL, manual);
+                                contentValues.put(Provider.bumps_detect.RATING, rating);
+                                sb.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);*/
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                  //  sb.setTransactionSuccessful();
+                  //  sb.endTransaction();
+                    getAllBumps3(langt,longti,0);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+
+
+    private void GetUpdateAction(){
+        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+        alert.setMessage("Update for new data is ready. Would you like to download it?");
+        alert.setCancelable(false);
+        alert.setPositiveButton("YES ",
+                new DialogInterface.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int id){
+                        LatLng convert_location =  gps.getCurrentLatLng();
+                        getAllBumps2(convert_location.latitude,convert_location.longitude,1);
+                    }
+                });
+        alert.setNegativeButton("NO ",
+                new DialogInterface.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int id){
+                        dialog.cancel();
+                    }
+                });
+        alert.show();
     }
 
     private static int getDbVersionFromFile(File file) throws Exception {
@@ -536,12 +879,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
                 }
                 //mapa sa nastavuje kazde 2 minuty
-                new Timer().schedule(new MapSetter(), 0, 120000);   //120000
+              //  new Timer().schedule(new MapSetter(), 0, 120000);   //120000
                 //vytlky sa do dabatazy odosielaju kazdu minutu
                 new Timer().schedule(new SendBumpsToDb(), 0, 60000);
 
             }
-        }, 10000);
+        }, 20000);
 
 
     }
@@ -638,5 +981,30 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
         else
             return false;
+    }
+
+    public  boolean isEneableDownload() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean net = prefs.getBoolean("net", Boolean.parseBoolean(null));
+        if (net) {
+            return true;
+        }
+        else
+            return false;
+    }
+
+    public boolean isConnectedWIFI() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+
+        boolean NisConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        if (NisConnected) {
+            if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI)
+                return true;
+             else
+                return false;
+        }
+        return false;
     }
 }
