@@ -7,5 +7,5 @@
         android:defaultValue="true"/>
     <CheckBoxPreference android:key="net"
         android:title="Download only wifi"
-        android:defaultValue="true"/>
+        android:defaultValue="false"/>
 </PreferenceScreen>

@@ -209,7 +209,7 @@ public class GPSLocator extends Service implements LocationListener {
         map.clear();
         //ak je nejaka trasa, vykresli ju
         if (road != null) map.addPolyline(road);
-        new GetAllBumps().execute();
+      //  new GetAllBumps().execute();
     }
 
     public void updateNoInternetMap () {

@@ -159,14 +159,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     location.setLongitude(convert_location.longitude);
                     location.setTime(new Date().getTime());
 
-
+                  //  fragmentActivity.getAllBumpsALL();
                     /// doplnit jednotk una yaklade netu
-                    fragmentActivity.getAllBumps2(convert_location.latitude,convert_location.longitude,1);
+                 //   fragmentActivity.getAllBumps2(convert_location.latitude,convert_location.longitude,1);
 
                  //    fragmentActivity.getAllBumps(convert_location.latitude,convert_location.longitude);
-               //    fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
+                    fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
                     // manuálny výtlk
-                //   fragmentActivity.accelerometer.addBumpsManual(1);
+                    fragmentActivity.accelerometer.addBumpsManual(1);
 
 
                     // vytvori novy vytlk
