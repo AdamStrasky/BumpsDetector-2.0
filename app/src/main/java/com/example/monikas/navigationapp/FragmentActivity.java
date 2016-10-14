@@ -84,12 +84,23 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
+    private int ssave=0;
     private  boolean flagAktualizuj= false;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         upgrade_database();
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        if (prefs.contains("save"))
+            ssave =prefs.getInt("alarm",0);
+        else {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt("save",0);
+        }
+
         flagAktualizuj= true ;
         if (!isNetworkAvailable()){
             if (isEneableShowText())
@@ -176,8 +187,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         if (cursor.moveToFirst()) {
             do {
                Log.d("addgdsfbcs","id "+ cursor.getInt(0));
-                Log.d("addgdsfbcs","id "+ cursor.getInt(1));
-                Log.d("addgdsfbcs","id "+ cursor.getInt(2));
+               // Log.d("addgdsfbcs","id "+ cursor.getInt(1));
+              //  Log.d("addgdsfbcs","id "+ cursor.getInt(2));
             } while (cursor.moveToNext());
         }
         sb.setTransactionSuccessful();
@@ -192,7 +203,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     private double langt;
     private double longti;
-    private int nets,b_idV,c_idV,updates ;
+    private int nets,b_idV,c_idV,updates ,loaded = 0, save = 0  ;
 
 
 
@@ -263,8 +274,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
+                JSONArray vvc = new JSONArray();
+                try {
+                    vvc.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return vvc;
             }
-            return null;
+
         }
 
         protected void onPostExecute(JSONArray array) {
@@ -283,10 +301,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
 
             try {
-                if (array.get(0).equals("update")) {
+                if (array.get(0).equals("error")) {
+                    LatLng convert_location =  gps.getCurrentLatLng();
+                    getAllBumps(convert_location.latitude,convert_location.longitude);
+                    return;
+
+                } else  if (array.get(0).equals("update")) {
                    Log.d("afaghtryjkujyht", "not update ");
                     GetUpdateAction();
                 } else {
+                    Boolean error = false ;
+                   //8969835689365863782
                     Log.d("afaghtryjkujyht", "insertujem nove hodnotz  ");
                     sb.beginTransaction();
                     for (int i = 0; i < bumps.length(); i++) {
@@ -309,6 +334,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 intensity = c.getInt("intensity");
                                 created_at = c.getString("created_at");
                                 Log.d("afaghtryjkujyht", "nove collision "+ String.valueOf(c_id));
+                             /*   if (i  == 30)
+                                    b_id = c.getInt("dfffs");*/
+
+
 
                                 ContentValues contentValues = new ContentValues();
                                 contentValues.put(Provider.bumps_collision.C_ID, c_id);
@@ -317,13 +346,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
                                 sb.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
 
+
+
                                 if (b_id <= b_idV) {
                                     Log.d("afaghtryjkujyht", "updatujem collision "+ String.valueOf(b_id));
                                     int rating=0;
                                     if (isBetween(intensity,0,6)) rating = 1;
                                     if (isBetween(intensity,6,10)) rating = 2;
                                     if (isBetween(intensity,10,10000)) rating = 3;
-                sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
+                                sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
 
                                   /*  Log.d("afaghtryjkujyht", "rating  "+ String.valueOf(rating));
                                     ContentValues cv = new ContentValues();
@@ -339,13 +370,36 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                             //
                             } catch (JSONException e) {
                                 e.printStackTrace();
+                                Log.d("afaghtryjkujyht","chzba pocas ");
+                                error= true;
                             }
                         }
                     }
-                    sb.setTransactionSuccessful();
-                    sb.endTransaction();
+                    if (!error) {
+
+                        sb.setTransactionSuccessful();
+                        sb.endTransaction();
+                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                        SharedPreferences.Editor editor = preferences.edit();
+                        ssave=b_idV;
+                        editor.putInt("save",b_idV);
+                        editor.apply();
+
+                        getAllBumpsALL();
+                        /////////  //  getAllBumps3(langt, longti, 0);
+                        Log.d("afaghtryjkujyht","v poriadku");
+
+                        //    getAllBumpsALL();
+                    }
+                    else {
+                        sb.endTransaction();
+                        Log.d("afaghtryjkujyht","chzba na konci");
+                        getAllBumpsALL();
+
+                    }
                     LatLng convert_location =  gps.getCurrentLatLng();
                     getAllBumps(convert_location.latitude,convert_location.longitude);
+
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -408,13 +462,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
             try {
                  int success = json.getInt("success");
-
+                JSONArray vvc = new JSONArray();
                 if (success == 0) {
                     Log.d("afaghtryjkujyht", " MaxNumber stiahnute data");
                     bumps = json.getJSONArray("bumps");
                      return bumps;
                 } else if (success == 1) {
-                    JSONArray vvc = new JSONArray();
+
                     Log.d("afaghtryjkujyht", "MaxNumber  data na stiahnutie ");
                     vvc.put(0, "update");
                     bumps = vvc;
@@ -426,11 +480,19 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
+                JSONArray vvc = new JSONArray();
+                try {
+                    vvc.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return vvc;
             }
-            return null;
+
         }
 
         protected void onPostExecute(JSONArray array) {
+
 
             if (array == null) {
                 Log.d("afaghtryjkujyht", " MaxNumber not update ");
@@ -439,11 +501,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
 
             try {
-                if (array.get(0).equals("update")) {
+                if (array.get(0).equals("error")) {
+                    return;
+
+                } else  if (array.get(0).equals("update")) {
                     Log.d("afaghtryjkujyht", " MaxNumber  update ");
                     getAllBumps3(langt,longti,1);
 
-                } else {
+                }
+                else
+                {
+                    Boolean error = false ;
                     Log.d("afaghtryjkujyht", " MaxNumber  insert ");
                 sb.beginTransaction();
                     for (int i = 0; i < bumps.length(); i++) {
@@ -458,11 +526,14 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         int count = 0;
                         int b_id, rating;
                         int manual = 0;
+                        boolean latitude1;
                         String last_modified;
 
                         if (c != null) {
                             try {
 
+                             /*   if (i  == 30)
+                                    latitude1 = c.getBoolean("dfffs");*/
                                 latitude = c.getDouble("latitude");
                                 longitude = c.getDouble("longitude");
                                 count = c.getInt("count");
@@ -485,13 +556,27 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 contentValues.put(Provider.bumps_detect.RATING, rating);
                                 sb.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
                             } catch (JSONException e) {
+                                Log.d("afaghtryjkujyht","chzba pocas ");
+                                error= true;
                                 e.printStackTrace();
-                            }
+                              }
                         }
                     }
-                   sb.setTransactionSuccessful();
-                    sb.endTransaction();
-                    getAllBumps3(langt,longti,0);
+                    if (!error) {
+                        sb.setTransactionSuccessful();
+                        sb.endTransaction();
+
+                    /////////  //  getAllBumps3(langt, longti, 0);
+                        Log.d("afaghtryjkujyht","v poriadku");
+                        getAllBumps3(langt, longti, 0);
+                    //    getAllBumpsALL();
+                    }
+                    else {
+                        sb.endTransaction();
+                        Log.d("afaghtryjkujyht","chzba na konci");
+                        getAllBumpsALL();
+                        return;
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -707,7 +792,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                new Timer().schedule(new SendBumpsToDb(), 0, 60000);
 
             }
-        }, 15000);
+        },10000);
 
 
     }
