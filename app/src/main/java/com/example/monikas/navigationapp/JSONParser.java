@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import org.apache.http.HttpEntity;
@@ -47,7 +45,6 @@ public class JSONParser {
             if (method == "GET") {
                 DefaultHttpClient httpClient = new DefaultHttpClient();
                 HttpGet request = new HttpGet(url);
-            //    request.setURI(url);
                 HttpResponse response = httpClient.execute(request);
                 HttpEntity httpEntity = response.getEntity();
                 is = httpEntity.getContent();

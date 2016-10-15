@@ -41,7 +41,7 @@ import static com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
-    private GoogleApiClient mGoogleApiClient;
+
     private Context context;
     private final float ALL_BUMPS = 1.0f;
     private final float MEDIUM_BUMPS = 1.5f;
@@ -71,9 +71,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         add_button.setOnClickListener(this);
 
 
-
-        searchBar.requestFocus();
-
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -94,14 +91,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
-    }
-
-    public GoogleApiClient getmGoogleApiClient() {
-        return mGoogleApiClient;
-    }
-
-    public void setmGoogleApiClient(GoogleApiClient mGoogleApiClient) {
-        this.mGoogleApiClient = mGoogleApiClient;
     }
 
     public void onClick(View v) {
@@ -158,52 +147,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     location.setLatitude(convert_location.latitude);
                     location.setLongitude(convert_location.longitude);
                     location.setTime(new Date().getTime());
-
-                  //  fragmentActivity.getAllBumpsALL();
-                    /// doplnit jednotk una yaklade netu
-                 //   fragmentActivity.getAllBumps2(convert_location.latitude,convert_location.longitude,1);
-
-                 //    fragmentActivity.getAllBumps(convert_location.latitude,convert_location.longitude);
                     fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
-                    // manuálny výtlk
                     fragmentActivity.accelerometer.addBumpsManual(1);
-
-
-                    // vytvori novy vytlk
-
-                 /*   Address address = null;
-                    EditText text = (EditText) findViewById(R.id.location);
-                    String locations = text.getText().toString();
-                    LatLng to_position=null;
-                    LatLng myPosition=null;
-                        try {
-                            address = Route.findLocality(locations, this);
-                            if (address == null) {
-                                if (isEneableShowText())
-                                    Toast.makeText(this, "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
-                            }
-                            else {
-                                 to_position = new LatLng(address.getLatitude(),address.getLongitude());
-                                 myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
-
-                            }
-                        }
-                        catch (Exception e) {
-                            if (isEneableShowText())
-                                Toast.makeText(this, "Unable to find location!", Toast.LENGTH_LONG).show();
-                        }
-
-
-                    Route md = new Route();
-                    LatLng from = fragmentActivity.gps.getCurrentLatLng();
-                    LatLng to = convert_location;
-                    Document doc = md.getDocument(myPosition, to_position);
-                    ArrayList<LatLng> directionPoint = md.getDirection(doc);
-
-                    boolean value = isLocationOnEdge(convert_location,directionPoint,true,2.0);
-
-                    //    new Bump(location, intensity);
-                    Toast.makeText(this, "New bump added" + value, Toast.LENGTH_LONG).show();*/
                     Toast.makeText(this, "New bump added" , Toast.LENGTH_LONG).show();
                 }
                 break;
@@ -312,21 +257,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 fragmentActivity.level = ALL_BUMPS;
                 LatLng convert_location =  fragmentActivity.gps.getCurrentLatLng();
                 fragmentActivity.getAllBumps(convert_location.latitude,convert_location.longitude);
-             //   fragmentActivity.getAllBumps();
                 return true;
 
             case R.id.medium_bumps:
                 fragmentActivity.level = MEDIUM_BUMPS;
                 LatLng convert_location1 =  fragmentActivity.gps.getCurrentLatLng();
                 fragmentActivity.getAllBumps(convert_location1.latitude,convert_location1.longitude);
-             //   fragmentActivity.getAllBumps();
                 return true;
 
             case R.id.large_bumps:
                 fragmentActivity.level = LARGE_BUMPS;
                 LatLng convert_location2 =  fragmentActivity.gps.getCurrentLatLng();
                 fragmentActivity.getAllBumps(convert_location2.latitude,convert_location2.longitude);
-               // fragmentActivity.getAllBumps();
                 return true;
 
             case R.id.action_settings:
