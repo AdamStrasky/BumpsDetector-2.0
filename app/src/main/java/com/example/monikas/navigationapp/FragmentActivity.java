@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static android.content.Context.MODE_PRIVATE;
 import static com.example.monikas.navigationapp.Bump.isBetween;
 import static com.example.monikas.navigationapp.DatabaseOpenHelper.DATABASE_NAME;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
@@ -92,14 +93,22 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         setRetainInstance(true);
         upgrade_database();
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        if (prefs.contains("save"))
-            ssave =prefs.getInt("alarm",0);
-        else {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putInt("save",0);
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        if (sharedPref.contains("save")) {
+             ssave = sharedPref.getInt("save", 0);
         }
+        else {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putInt("save", 0);
+            ssave = 0;
+            editor.commit();
+        }
+
+
+        Integer id = sharedPref.getInt("save", 0);
+        Log.d("afaghtryjkujyht", "ulozil sasfsdfsdf "+id );
+
 
         flagAktualizuj= true ;
         if (!isNetworkAvailable()){
@@ -143,6 +152,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     public ArrayList<HashMap<String, String>> getAllBumps(Double latitude, Double longitude) {
         gps.updateMap();
+
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+
+        Integer id = sharedPref.getInt("save", 0);
+        Log.d("afaghtryjkujyht", String.valueOf(id));
+
         ArrayList<HashMap<String, String>> List = new ArrayList<HashMap<String, String>>();
         Log.d("afaghtryjkujyht","načitam z databazy");
 /*        "SELECT latitude,longitude,count FROM my_bumps WHERE rating/count >= '$level' AND " +
@@ -187,8 +202,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         if (cursor.moveToFirst()) {
             do {
                Log.d("addgdsfbcs","id "+ cursor.getInt(0));
-               // Log.d("addgdsfbcs","id "+ cursor.getInt(1));
-              //  Log.d("addgdsfbcs","id "+ cursor.getInt(2));
+               Log.d("addgdsfbcs","rating "+ cursor.getInt(1));
+               Log.d("addgdsfbcs","count "+ cursor.getInt(2));
             } while (cursor.moveToNext());
         }
         sb.setTransactionSuccessful();
@@ -203,7 +218,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     private double langt;
     private double longti;
-    private int nets,b_idV,c_idV,updates ,loaded = 0, save = 0  ;
+    private int nets,b_idV,c_idV,updates ,loaded = 0, save = 0, Maxcislo =0 ;
 
 
 
@@ -320,6 +335,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                             c = bumps.getJSONObject(i);
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            error= true;
                         }
 
                         int c_id = 0;
@@ -334,9 +350,48 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 intensity = c.getInt("intensity");
                                 created_at = c.getString("created_at");
                                 Log.d("afaghtryjkujyht", "nove collision "+ String.valueOf(c_id));
-                             /*   if (i  == 30)
+                          /*   if (i  == 0)
                                     b_id = c.getInt("dfffs");*/
 
+
+                                Log.d("afaghtryjkujyht", "b_id collision " + String.valueOf(b_id));
+                                Log.d("afaghtryjkujyht", "b_id collision " + String.valueOf(b_idV));
+                                Log.d("afaghtryjkujyht", "b_id collision " + String.valueOf(ssave));
+
+                                if (b_id <= ssave) {
+                                    Log.d("afaghtryjkujyht", "updatujem collision "+ String.valueOf(b_id));
+                                    int rating=0;
+                                    if (isBetween(intensity,0,6)) rating = 1;
+                                    if (isBetween(intensity,6,10)) rating = 2;
+                                    if (isBetween(intensity,10,10000)) rating = 3;
+                                    sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
+                                }
+
+
+                               if (b_id <= b_idV  && ssave < b_id) {
+
+                                    Log.d("afaghtryjkujyht", "updatujem collision " + String.valueOf(b_id));
+                                    int rating = 0;
+                                    if (isBetween(intensity, 0, 6)) rating = 1;
+                                    if (isBetween(intensity, 6, 10)) rating = 2;
+                                    if (isBetween(intensity, 10, 10000)) rating = 3;
+
+
+
+                                    Cursor cursor = null;
+                                    String sql ="SELECT * FROM collisions WHERE b_id_collisions="+b_id;
+                                    cursor= sb.rawQuery(sql,null);
+                                    Log.d("Cursor Count : ", String.valueOf(cursor.getCount()));
+
+                                    if(cursor.getCount()>0){
+                                        Log.d(" afaghtryjkujyht","pridavam"+ b_id);
+                                        sql=     "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1 WHERE b_id_bumps=" + b_id;
+                                    }else{
+                                        Log.d(" afaghtryjkujyht","nastavujem na "+ b_id);
+                                         sql=   "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1 WHERE b_id_bumps=" + b_id ;
+                                    }
+                                    cursor= sb.rawQuery(sql,null);
+                                }
 
 
                                 ContentValues contentValues = new ContentValues();
@@ -348,20 +403,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
 
 
-                                if (b_id <= b_idV) {
-                                    Log.d("afaghtryjkujyht", "updatujem collision "+ String.valueOf(b_id));
-                                    int rating=0;
-                                    if (isBetween(intensity,0,6)) rating = 1;
-                                    if (isBetween(intensity,6,10)) rating = 2;
-                                    if (isBetween(intensity,10,10000)) rating = 3;
-                                sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
+
+
 
                                   /*  Log.d("afaghtryjkujyht", "rating  "+ String.valueOf(rating));
                                     ContentValues cv = new ContentValues();
                                     cv.put("rating",100);
                                     cv.put("count","count + 1");
                                     sb.update(Provider.bumps_detect.TABLE_NAME_BUMPS, cv, "b_id_bumps=="+b_id, null);*/
-                                }
+
 
 
 
@@ -379,15 +429,19 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
                         sb.setTransactionSuccessful();
                         sb.endTransaction();
-                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                        SharedPreferences.Editor editor = preferences.edit();
-                        ssave=b_idV;
-                        editor.putInt("save",b_idV);
-                        editor.apply();
+                        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putInt("save", Maxcislo);
+                        ssave=Maxcislo;
+                        editor.commit();
 
-                        getAllBumpsALL();
-                        /////////  //  getAllBumps3(langt, longti, 0);
-                        Log.d("afaghtryjkujyht","v poriadku");
+
+                        Integer id = sharedPref.getInt("save", 0);
+                         Log.d("afaghtryjkujyht", "ulozil sasfsdfsdf "+id );
+                      //  Log.d("afaghtryjkujyht", String.valueOf(id));
+
+
+
 
                         //    getAllBumpsALL();
                     }
@@ -397,6 +451,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         getAllBumpsALL();
 
                     }
+
                     LatLng convert_location =  gps.getCurrentLatLng();
                     getAllBumps(convert_location.latitude,convert_location.longitude);
 
@@ -423,6 +478,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         format1 = new SimpleDateFormat("yyyy-MM-dd");
         String ago = format1.format(cal.getTime());
 
+
         sb.beginTransaction();
         String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
        + " where (last_modified BETWEEN '"+ago+" 00:00:00' AND '"+now+" 23:59:59') and  "
@@ -447,6 +503,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         new MaxNumber().execute();
 
     }
+
+
 
     class MaxNumber extends AsyncTask<String, Void, JSONArray> {
 
@@ -519,6 +577,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         try {
                             c = bumps.getJSONObject(i);
                         } catch (JSONException e) {
+                            error= true;
                             e.printStackTrace();
                         }
                         double latitude = 0;
@@ -532,12 +591,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         if (c != null) {
                             try {
 
-                             /*   if (i  == 30)
-                                    latitude1 = c.getBoolean("dfffs");*/
+                            //  if (i  == 0)
+                             //       latitude1 = c.getBoolean("dfffs");
                                 latitude = c.getDouble("latitude");
                                 longitude = c.getDouble("longitude");
                                 count = c.getInt("count");
                                 b_id = c.getInt("b_id");
+                                 Maxcislo = b_id;
                                 Log.d("afaghtryjkujyht","vkladam inset "+String.valueOf(b_id));
                              //   Log.d("INFO", String.valueOf(b_id));
                                 rating = c.getInt("rating");
