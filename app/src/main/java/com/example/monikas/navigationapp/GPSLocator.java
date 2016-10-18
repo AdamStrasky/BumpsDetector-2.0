@@ -179,7 +179,10 @@ public class GPSLocator extends Service implements LocationListener {
     }
 
     public LatLng getCurrentLatLng() {
-        return new LatLng(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude());
+        if (mCurrentLocation == null )
+            return null ;
+            else
+      return new LatLng(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude());
     }
 
 

@@ -53,10 +53,25 @@ public class JSONParser {
 
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+            try {
+                return jObj.put("send",0);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         } catch (ClientProtocolException e) {
             e.printStackTrace();
+            try {
+                return jObj.put("send",0);
+            } catch (JSONException e1) {
+                e1.printStackTrace();
+            }
         } catch (IOException e) {
             e.printStackTrace();
+            try {
+                return jObj.put("send",0);
+            } catch (JSONException e1) {
+                e1.printStackTrace();
+            }
         }
 
         try {

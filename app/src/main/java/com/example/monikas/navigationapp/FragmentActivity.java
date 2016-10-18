@@ -47,6 +47,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -80,6 +82,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     LocationManager locationManager;
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
+    Object syncToken;
     private JSONArray bumps;
     private int loaded_index;
     private  boolean regular_update = false;
@@ -709,17 +712,34 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             Toast.makeText(getActivity(), "GoogliApiClient connection failed", Toast.LENGTH_LONG).show();
 
     }
+    private Bump  Handler;
+    public void saveBump(final HashMap<Location, Float> bump, final Integer manual) {
 
-    public void saveBump(HashMap<Location, Float> bump, Integer manual) {
+
         Iterator it = bump.entrySet().iterator();
-        while (it.hasNext()) {
+       // while (it.hasNext()) {
             HashMap.Entry pair = (HashMap.Entry)it.next();
             Location loc = (Location) pair.getKey();
             float data = (float) pair.getValue();
-            new Bump(loc, data , manual);
+
+            Handler =  new Bump(loc, data , manual);
+            Handler.getOneIteam(new CallBackReturn() {
+                public void callback( String results) {
+                    if (results.equals(""))   { //
+                        saveBump(bump, manual);
+                        }
+                    else {
+                        // vlo6im
+                    }
+
+                }
+            });
+
             it.remove();
-        }
+   //    }
     }
+
+
 
      private void initialization() {
 
@@ -730,13 +750,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             @Override
             public void run() {
                 Activity activity = getActivity();
-                if(activity != null) {
-                    mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
+                if(activity != null && mLocnServGPS.getCurrentLatLng()!=null ) {
+                     mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
                 }
                 //mapa sa nastavuje kazde 2 minuty
                   new Timer().schedule(new MapSetter(), 0, 120000);   //120000
                 //vytlky sa do dabatazy odosielaju kazdu minutu
-               new Timer().schedule(new SendBumpsToDb(), 0, 60000);
+               new Timer().schedule(new SendBumpsToDb(), 0, 30000);
 
             }
         },10000);
@@ -780,23 +800,21 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 public void run() {
                     //ak je pripojenie na internet
                     if (isNetworkAvailable()) {
-                        ArrayList<HashMap<Location, Float>> list = mLocnServAcc.getPossibleBumps();
-                        //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
-                          if (isEneableShowText())
-                            Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
-                      //  }
+                         if (!(isEneableDownload() && !isConnectedWIFI())) {
 
-                        //kazdy vytlk v zozname vytlkov uloz do databazy
-                         int i=0 ;
-                         for (HashMap<Location, Float> bump : list) {
-                             if (!accelerometer.getBumpsManual().isEmpty()) {
-                                 saveBump(bump, accelerometer.getBumpsManual().get(i));
-                             }
-                             i++;
+                             ArrayList<HashMap<Location, Float>> list = mLocnServAcc.getPossibleBumps();
+                             //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
+                             if (isEneableShowText())
+                                 Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
+                             //  }
+                                  if (!list.isEmpty()) {
+                                      savea(list, accelerometer.getBumpsManual());
+
+                                      mLocnServAcc.getPossibleBumps().clear();
+                                      mLocnServAcc.getBumpsManual().clear();
+                                  }
+
                          }
-                        //vymaz zoznam
-                        mLocnServAcc.getPossibleBumps().clear();
-                        mLocnServAcc.getBumpsManual().clear();
                     }
                     else {
                           if (isEneableShowText())
@@ -806,7 +824,36 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             );
         }
     }
+    public void savea(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual) {
+        Log.d("asdfgsa", "spustam savea");
+        if (!list.isEmpty()) {///
+             Iterator it = list.get(0).entrySet().iterator();
+            HashMap.Entry pair = (HashMap.Entry) it.next();    //next
+            Location loc = (Location) pair.getKey();
+            float data = (float) pair.getValue();
+            Log.d("asdfgsa", String.valueOf(loc.getLatitude()));
 
+            Handler = new Bump(loc, data,bumpsManual.get(0));
+            list.remove(0);
+            Handler.getOneIteam(new CallBackReturn() {
+                public void callback(String results) {
+                    if (results.equals("success")) {
+                        Log.d("asdfgsa","success");
+                        bumpsManual.remove(0);
+                        // vymažem z databazy
+                        savea(list, bumpsManual);
+                    } else {
+                        Log.d("asdfgsa","error");
+                        bumpsManual.remove(0);
+                         savea(list, bumpsManual);
+                    }
+
+                }
+            });
+
+
+        }
+    }
 
     public void getBumpsWithLevel() {
         //ak je pripojenie na internet
@@ -841,7 +888,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         // nemám internet, čítam z databazy
         else {
             LatLng convert_location =  gps.getCurrentLatLng();
-            getAllBumps(convert_location.latitude,convert_location.longitude);
+            if (convert_location!= null)
+             getAllBumps(convert_location.latitude,convert_location.longitude);
         }
     }
 

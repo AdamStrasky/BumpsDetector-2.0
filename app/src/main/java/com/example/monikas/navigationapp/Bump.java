@@ -10,9 +10,12 @@ import android.util.Log;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class Bump {
 
@@ -22,7 +25,8 @@ public class Bump {
     private Location location;
     private int rating;
     private int manual;
-    public Bump(Location location, float delta ,Integer manual ) {
+
+    public   Bump(Location location, float delta ,Integer manual ) {
         this.intensity = delta;
         this.location = location;
         rating = 1;
@@ -30,7 +34,7 @@ public class Bump {
         if (isBetween(intensity,6,10)) rating = 2;
         if (isBetween(intensity,10,10000)) rating = 3;
         this.manual=manual;
-        new CreateNewBump().execute();
+
     }
 
     public static boolean isBetween(float x, float from, float to) {
@@ -38,7 +42,24 @@ public class Bump {
     }
 
 
+    public void getOneIteam(final CallBackReturn returnMethod) {
+        Log.d("asdfgsa", "spustam getOneIteam ");
+      CreateNewBump apiObj = new CreateNewBump();
+        String aaa  = null;
+
+        try {
+             aaa = apiObj.execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        Log.d("asdfgsa", "vraciam  " +aaa);
+            returnMethod.callback(aaa);
+    }
+
     class CreateNewBump extends AsyncTask<String, String, String> {
+    //    public IApiAccessResponse delegate=null;
 
         protected String doInBackground(String... args) {
             String latitude = String.valueOf(location.getLatitude());
@@ -51,10 +72,16 @@ public class Bump {
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
 
-            jsonParser.makeHttpRequest(url_create_product, "POST", params);
-            Log.d("BUMP","makeHttpRequest");
-            return null;
+            JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
+            Log.d("BUMP", "makeHttpRequest");
+
+            int success = 1;
+            if (!json.has("send"))
+                return "success";
+            else
+                return "error";
         }
+
     }
 
 }
