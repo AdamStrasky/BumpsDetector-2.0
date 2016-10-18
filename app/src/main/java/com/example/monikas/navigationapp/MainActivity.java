@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import static com.example.monikas.navigationapp.DatabaseOpenHelper.DATABASE_NAME;
 import static com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
@@ -278,7 +279,52 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
             case R.id.exit:
                 if (fragmentActivity.isNetworkAvailable()) {
-                     new EndAsyncTask().execute();
+                      if (!(fragmentActivity.isEneableDownload() && !fragmentActivity.isConnectedWIFI())) {
+                          int i = 0;
+                          for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
+                              if (!fragmentActivity.accelerometer.getBumpsManual().isEmpty()) {
+                                  fragmentActivity.saveBump(bump, fragmentActivity.accelerometer.getBumpsManual().get(i));
+                                  i++;
+                              }
+                          }
+                          fragmentActivity.accelerometer.getPossibleBumps().clear();
+                          fragmentActivity.accelerometer.getBumpsManual().clear();
+                      }
+
+                } else {
+                     ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
+                     ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
+                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                     SQLiteDatabase  sb = databaseHelper.getWritableDatabase();
+                     sb.beginTransaction();
+                     int i=0;
+                        for (HashMap<Location, Float> bump : list) {
+                            Iterator it = bump.entrySet().iterator();
+                            while (it.hasNext()) {
+                                HashMap.Entry pair = (HashMap.Entry) it.next();
+                                Location loc = (Location) pair.getKey();
+                                float data = (float) pair.getValue();
+                                String sql = "SELECT * FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                        + " and intensity=" + data+ " and manual="+bumpsManual.get(i);
+
+                                Cursor cursor = null;
+                                cursor = sb.rawQuery(sql, null);
+
+                                if (cursor.getCount() == 0) {
+                                    Log.d("asdasda", "vkladam ");
+                                    ContentValues contentValues = new ContentValues();
+                                    contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
+                                    contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
+                                    contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
+                                    contentValues.put(Provider.new_bumps.INTENSITY, data);
+                                    sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+
+                                }
+                            }
+                            i++;
+                        }
+                    sb.setTransactionSuccessful();
+                    sb.endTransaction();
                 }
                 fragmentActivity.stop_servise();
                 onDestroy();
@@ -286,23 +332,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
             default:
                 return super.onOptionsItemSelected(item);
-        }
-    }
-
-    private class EndAsyncTask extends AsyncTask<Void, Void, String> {
-
-        @Override
-        protected String doInBackground(Void... params) {
-            int i= 0;
-            for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
-                if (!fragmentActivity.accelerometer.getBumpsManual().isEmpty()) {
-                    fragmentActivity.saveBump(bump, fragmentActivity.accelerometer.getBumpsManual().get(i));
-                    i++;
-                }
-            }
-            fragmentActivity.accelerometer.getPossibleBumps().clear();
-            fragmentActivity.accelerometer.getBumpsManual().clear();
-            return null;
         }
     }
 

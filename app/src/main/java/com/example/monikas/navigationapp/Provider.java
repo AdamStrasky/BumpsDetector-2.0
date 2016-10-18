@@ -25,4 +25,12 @@ public interface Provider {
         public static final String INTENSITY = "intensity";
         public static final String CRETED_AT = "created_at";
     }
+
+    public interface new_bumps extends BaseColumns {
+        public static final String TABLE_NAME_NEW_BUMPS = "new_bumps";
+        public static final String LATITUDE = "latitude";
+        public static final String LONGTITUDE = "longitude";
+        public static final String INTENSITY = "intensity";
+        public static final String MANUAL = "manual";
+    }
 }

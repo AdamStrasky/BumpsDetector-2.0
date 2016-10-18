@@ -111,7 +111,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             initialization();
         }
         // pravidelný update ak nemám povolený internet
-        new Timer().schedule(new Regular_upgrade(), 180000, 180000);// 3600000
+        new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
     }
 
     public void get_loaded_index (){
@@ -170,6 +170,36 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 gps.addBumpToMap(new LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
             } while (cursor.moveToNext());
         }
+     if (updatesA!=2  && updatesA!=1 )
+         updatesA=3;
+
+        ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
+        ArrayList<Integer> bumpsManual = accelerometer.getBumpsManual();
+        updatesA=0;
+
+         int rating;
+        int i=0;
+        if (list.size()> 0) {
+            for (HashMap<Location, Float> bump : list) {
+                Iterator it = bump.entrySet().iterator();
+                while (it.hasNext()) {
+                    HashMap.Entry pair = (HashMap.Entry) it.next();
+                    Location loc = (Location) pair.getKey();
+                    float data = (float) pair.getValue();
+                    rating = 1;
+                    if (isBetween(data, 0, 6)) rating = 1;
+                    if (isBetween(data, 6, 10)) rating = 2;
+                    if (isBetween(data, 10, 10000)) rating = 3;
+                        if  (rating == level)
+                      gps.addBumpToMap(new LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
+                    i++;
+                }
+            }
+        }
+
+
+
+
         sb.setTransactionSuccessful();
         sb.endTransaction();
     }
@@ -273,7 +303,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
             if (array == null) {
                 // collision nemaju update ale bumps ano
-                if (updates == 1) {
+                if (updates == 1 || updatesA==1) {
                     GetUpdateAction();
                 }else {
                     // načítam vytlky na mapu
@@ -474,7 +504,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
             try {
                 if (array.get(0).equals("error")) {
-                    // nastala chyba
+                    updatesA=0;
                     return;
 
                 } else  if (array.get(0).equals("update")) {
@@ -531,6 +561,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         sb.endTransaction();
                         get_max_collision(lang_database, longt_database, 0);
                     } else {
+                        updatesA=0;
                         // nastala chyba, načitaj uložene vytlky
                         sb.endTransaction();
                         getAllBumpsALL();
@@ -551,15 +582,24 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         alert.setPositiveButton("YES ",
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
-                        // ak povolim, stiahnem data
-                        LatLng convert_location =  gps.getCurrentLatLng();
-                        get_max_bumps(convert_location.latitude,convert_location.longitude,1);
+                        dialog.cancel();
+                    if (   updatesA==1  ){
+                        Log.d("adsad","updatesA==1");
+                        savea(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual(),0);
+                    }
+
+                        if (updates==1) {
+                            // ak povolim, stiahnem data
+                            LatLng convert_location = gps.getCurrentLatLng();
+                            get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
+                        }
                     }
                 });
         alert.setNegativeButton("NO ",
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
+                        updatesA=0;
                         // ak nepovolim, zobrazím aké mam doteraz
                         LatLng convert_location =  gps.getCurrentLatLng();
                         getAllBumps(convert_location.latitude,convert_location.longitude);
@@ -753,15 +793,48 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 if(activity != null && mLocnServGPS.getCurrentLatLng()!=null ) {
                      mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
                 }
-                //mapa sa nastavuje kazde 2 minuty
-                  new Timer().schedule(new MapSetter(), 0, 120000);   //120000
+                nacitajDB();
+
                 //vytlky sa do dabatazy odosielaju kazdu minutu
-               new Timer().schedule(new SendBumpsToDb(), 0, 30000);
+                  new Timer().schedule(new SendBumpsToDb(), 0, 30000);
+
+                //mapa sa nastavuje kazde 2 minuty
+                 new Timer().schedule(new MapSetter(), 0, 30000);   //120000
+
 
             }
         },10000);
 
 
+    }
+
+    public void nacitajDB(){
+        sb.beginTransaction();
+        String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+        Cursor cursor = database.rawQuery(selectQuery, null);
+        HashMap<Location, Float> hashToArray = new HashMap();
+
+        if (cursor.moveToFirst()) {
+            do {
+                Location location = new Location("new");
+                location.setLatitude(cursor.getDouble(0));
+                location.setLongitude(cursor.getDouble(1));
+                location.setTime(new Date().getTime());
+
+                hashToArray.put(location, (float) cursor.getDouble(2));
+                accelerometer.addPossibleBumps(location,(float) cursor.getDouble(2));
+                //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
+                accelerometer.addBumpsManual(cursor.getInt(3));
+
+
+                Log.d("TEST","latitude "+ cursor.getDouble(0));
+                Log.d("TEST","longitude "+ cursor.getDouble(1));
+                Log.d("TEST","intensity "+ cursor.getDouble(2));
+            } while (cursor.moveToNext());
+        }
+        sb.setTransactionSuccessful();
+        sb.endTransaction();
     }
 
     public void stop_servise(){
@@ -789,7 +862,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 }});
         }
     }
-
+ private int updatesA=0;
     private class SendBumpsToDb extends TimerTask {
 
         @Override
@@ -808,12 +881,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                  Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
                              //  }
                                   if (!list.isEmpty()) {
-                                      savea(list, accelerometer.getBumpsManual());
+                                      if (updatesA!=1 && updatesA!=3 ) {
+                                          updatesA=2;
+                                      savea(list, accelerometer.getBumpsManual(),0);
 
                                       mLocnServAcc.getPossibleBumps().clear();
                                       mLocnServAcc.getBumpsManual().clear();
+                                      }
                                   }
 
+                         }else {
+                          //  updatesA = 2 ;
                          }
                     }
                     else {
@@ -824,28 +902,38 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             );
         }
     }
-    public void savea(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual) {
+    public void savea( final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual,final Integer por) {
         Log.d("asdfgsa", "spustam savea");
-        if (!list.isEmpty()) {///
-             Iterator it = list.get(0).entrySet().iterator();
+        if (list.size() >  por) {///
+            Log.d("asdfgsa", String.valueOf(list.size()));
+            Log.d("asdfgsa", String.valueOf(por));
+            Iterator it = list.get(por).entrySet().iterator();
             HashMap.Entry pair = (HashMap.Entry) it.next();    //next
-            Location loc = (Location) pair.getKey();
-            float data = (float) pair.getValue();
+            final Location loc = (Location) pair.getKey();
+            final float data = (float) pair.getValue();
             Log.d("asdfgsa", String.valueOf(loc.getLatitude()));
 
-            Handler = new Bump(loc, data,bumpsManual.get(0));
-            list.remove(0);
+            Handler = new Bump(loc, data,bumpsManual.get(por));
+
             Handler.getOneIteam(new CallBackReturn() {
+
                 public void callback(String results) {
                     if (results.equals("success")) {
-                        Log.d("asdfgsa","success");
-                        bumpsManual.remove(0);
-                        // vymažem z databazy
-                        savea(list, bumpsManual);
+                        Log.d("v","success");
+                        ArrayList<HashMap<Location, Float>> lista=list;
+                        ArrayList<Integer> bumpsManuala =bumpsManual;
+                        lista.remove(0);
+                        bumpsManuala.remove(0);
+                        Log.d("asdfgsa", String.valueOf(lista.size()));
+                      //  bumpsManual.remove(por);
+                      // list.remove(por);
+                        sb.execSQL("DELETE FROM new_bumps WHERE latitude="+loc.getLatitude() +" and  longitude="+loc.getLongitude()
+                                +" and intensity="+ data );
+                        savea(lista, bumpsManuala,por);
                     } else {
                         Log.d("asdfgsa","error");
-                        bumpsManual.remove(0);
-                         savea(list, bumpsManual);
+                        // bumpsManual.remove(0);
+                        savea(list, bumpsManual,por+1);
                     }
 
                 }
@@ -853,6 +941,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
 
         }
+        else {
+            updatesA=0;
+            Log.d("asdfgsa", "koncim");
+            if (list.size() > 0) {
+                mLocnServAcc.getPossibleBumps().addAll(list);
+                mLocnServAcc.getBumpsManual().addAll(bumpsManual);
+            } else {
+                Log.d("asdfgsa", "praydne");
+            }
+        }
+
     }
 
     public void getBumpsWithLevel() {
@@ -872,6 +971,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
             /// ak je to prve spustenie alebo pravidelný update
             else if (regular_update) {
+                Log.d("adsadasd","asdasdsa");
+               if ( accelerometer.getPossibleBumps()!=null  && accelerometer.getPossibleBumps().size() >0 && updatesA!=2  && updatesA!=3) {
+                   Log.d("adsadasd", String.valueOf(accelerometer.getPossibleBumps().size()));
+                   updatesA = 1;
+               }
                  regular_update =false;
                 LatLng convert_location =  gps.getCurrentLatLng();
                 get_max_bumps(convert_location.latitude,convert_location.longitude,0);

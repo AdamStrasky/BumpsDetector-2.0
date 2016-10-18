@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import static android.provider.BaseColumns._ID;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.B_ID_BUMPS;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.COUNT;
@@ -18,6 +19,7 @@ import static  com.example.monikas.navigationapp.Provider.bumps_collision.C_ID;
 import static  com.example.monikas.navigationapp.Provider.bumps_collision.B_ID_COLLISIONS;
 import static  com.example.monikas.navigationapp.Provider.bumps_collision.INTENSITY;
 import static  com.example.monikas.navigationapp.Provider.bumps_collision.CRETED_AT;
+import static com.example.monikas.navigationapp.Provider.new_bumps.TABLE_NAME_NEW_BUMPS;
 
 /**
  * Created by Adam on 6.10.2016.
@@ -41,6 +43,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(createTableSqlBumps());
             db.execSQL(createTableSqlCollisions());
+            db.execSQL(createTableSqlNewBump());
          }
 
         private String createTableSqlBumps() {
@@ -65,6 +68,19 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                 + ")";
             return String.format(sqlTemplate, TABLE_NAME_COLLISIONS, C_ID, B_ID_COLLISIONS, INTENSITY,CRETED_AT);
      }
+
+    private String createTableSqlNewBump() {
+        String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
+                + "%s INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "%s DOUBLE,"
+                + "%s DOUBLE,"
+                + "%s DOUBLE,"
+                + "%s INTEGER"
+                + ")";
+        return String.format(sqlTemplate, TABLE_NAME_NEW_BUMPS,_ID, LATITUDE, LONGTITUDE, INTENSITY,MANUAL);
+    }
+
+
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
