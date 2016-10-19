@@ -10,7 +10,6 @@ import android.util.Log;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -42,25 +41,20 @@ public class Bump {
     }
 
 
-    public void getOneIteam(final CallBackReturn returnMethod) {
-        Log.d("asdfgsa", "spustam getOneIteam ");
-      CreateNewBump apiObj = new CreateNewBump();
-        String aaa  = null;
+    public void getResponse (final CallBackReturn returnMethod) {
+        CreateNewBump obj = new CreateNewBump();
+        String response  = null;
 
         try {
-             aaa = apiObj.execute().get();
-        } catch (InterruptedException e) {
+            response = obj.execute().get();
+        } catch (InterruptedException | ExecutionException e ) {
             e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        Log.d("asdfgsa", "vraciam  " +aaa);
-            returnMethod.callback(aaa);
+
+        }Log.d("TEST",response);
+     returnMethod.callback(response);
     }
 
     class CreateNewBump extends AsyncTask<String, String, String> {
-    //    public IApiAccessResponse delegate=null;
-
         protected String doInBackground(String... args) {
             String latitude = String.valueOf(location.getLatitude());
             String longitude = String.valueOf(location.getLongitude());
@@ -73,9 +67,7 @@ public class Bump {
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
 
             JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
-            Log.d("BUMP", "makeHttpRequest");
 
-            int success = 1;
             if (!json.has("send"))
                 return "success";
             else

@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -24,21 +23,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-import com.google.android.gms.common.api.GoogleApiClient;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import static com.example.monikas.navigationapp.DatabaseOpenHelper.DATABASE_NAME;
-import static com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
@@ -280,15 +273,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.exit:
                 if (fragmentActivity.isNetworkAvailable()) {
                       if (!(fragmentActivity.isEneableDownload() && !fragmentActivity.isConnectedWIFI())) {
-                          int i = 0;
-                          for (HashMap<Location, Float> bump : fragmentActivity.accelerometer.getPossibleBumps()) {
-                              if (!fragmentActivity.accelerometer.getBumpsManual().isEmpty()) {
-                                  fragmentActivity.saveBump(bump, fragmentActivity.accelerometer.getBumpsManual().get(i));
-                                  i++;
+                          if (! fragmentActivity.accelerometer.getPossibleBumps().isEmpty()) {
+                              if (!fragmentActivity.updatesLock) {
+                                  fragmentActivity.updatesLock = true;
+                                  ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
+                                  lista.addAll(fragmentActivity.accelerometer.getPossibleBumps());
+                                  ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
+                                  bumpsManual.addAll(fragmentActivity.accelerometer.getBumpsManual());
+                                  fragmentActivity.accelerometer.getPossibleBumps().clear();
+                                  fragmentActivity.accelerometer.getBumpsManual().clear();
+                                  fragmentActivity.saveBump(lista, bumpsManual, 0);
                               }
                           }
-                          fragmentActivity.accelerometer.getPossibleBumps().clear();
-                          fragmentActivity.accelerometer.getBumpsManual().clear();
                       }
 
                 } else {

@@ -14,7 +14,6 @@ public class AccData {
         this.x = x;
         this.y = y;
         this.z = z;
-
     }
 
     public float getX() {

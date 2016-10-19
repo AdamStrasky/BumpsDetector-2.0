@@ -1,6 +1,5 @@
 package com.example.monikas.navigationapp;
 
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -47,8 +46,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -82,7 +79,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     LocationManager locationManager;
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
-    Object syncToken;
     private JSONArray bumps;
     private int loaded_index;
     private  boolean regular_update = false;
@@ -134,7 +130,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 
     private class Regular_upgrade extends TimerTask {
-
         @Override
         public void run() {
             regular_update = true;
@@ -170,17 +165,19 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 gps.addBumpToMap(new LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
             } while (cursor.moveToNext());
         }
-     if (updatesA!=2  && updatesA!=1 )
-         updatesA=3;
+       if( !updatesLock)
+           updatesLock=true;
+         notSendBumps(accelerometer.getPossibleBumps(),accelerometer.getBumpsManual());
+         sb.setTransactionSuccessful();
+         sb.endTransaction();
+    }
 
-        ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
-        ArrayList<Integer> bumpsManual = accelerometer.getBumpsManual();
-        updatesA=0;
-
-         int rating;
+    public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
+        updatesLock=false;
+        int rating;
         int i=0;
-        if (list.size()> 0) {
-            for (HashMap<Location, Float> bump : list) {
+        if (bumps.size()> 0) {
+            for (HashMap<Location, Float> bump : bumps) {
                 Iterator it = bump.entrySet().iterator();
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
@@ -190,18 +187,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     if (isBetween(data, 0, 6)) rating = 1;
                     if (isBetween(data, 6, 10)) rating = 2;
                     if (isBetween(data, 10, 10000)) rating = 3;
-                        if  (rating == level)
-                      gps.addBumpToMap(new LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
+                    if (rating == level)
+                        gps.addBumpToMap(new LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
                     i++;
                 }
             }
         }
-
-
-
-
-        sb.setTransactionSuccessful();
-        sb.endTransaction();
     }
 
     ///////// pomocna funkcia, možem zmazať
@@ -303,7 +294,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
             if (array == null) {
                 // collision nemaju update ale bumps ano
-                if (updates == 1 || updatesA==1) {
+                if (updates == 1 || regularUpdatesLock) {
                     GetUpdateAction();
                 }else {
                     // načítam vytlky na mapu
@@ -504,7 +495,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
             try {
                 if (array.get(0).equals("error")) {
-                    updatesA=0;
                     return;
 
                 } else  if (array.get(0).equals("update")) {
@@ -529,6 +519,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
                         if (c != null) {
                             try {
+
+                                Log.d("asdasd", String.valueOf(c.getDouble("latitude")));
                                 latitude = c.getDouble("latitude");
                                 longitude = c.getDouble("longitude");
                                 count = c.getInt("count");
@@ -561,7 +553,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         sb.endTransaction();
                         get_max_collision(lang_database, longt_database, 0);
                     } else {
-                        updatesA=0;
                         // nastala chyba, načitaj uložene vytlky
                         sb.endTransaction();
                         getAllBumpsALL();
@@ -583,23 +574,28 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
-                    if (   updatesA==1  ){
-                        Log.d("adsad","updatesA==1");
-                        savea(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual(),0);
+                    if (!updatesLock && regularUpdatesLock){
+                        updatesLock=true;
+                        ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
+                        bumpList.addAll(accelerometer.getPossibleBumps());
+                        ArrayList<Integer> bumpsManual = new ArrayList<Integer> ();
+                        bumpsManual.addAll(  accelerometer.getBumpsManual());
+                        accelerometer.getPossibleBumps().clear();
+                        accelerometer.getBumpsManual().clear();
+                        saveBump(bumpList, bumpsManual,0);
                     }
-
-                        if (updates==1) {
+                    if (updates==1) {
                             // ak povolim, stiahnem data
-                            LatLng convert_location = gps.getCurrentLatLng();
-                            get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
-                        }
+                        LatLng convert_location = gps.getCurrentLatLng();
+                        get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
+                    }
                     }
                 });
         alert.setNegativeButton("NO ",
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
-                        updatesA=0;
+                        regularUpdatesLock =false;
                         // ak nepovolim, zobrazím aké mam doteraz
                         LatLng convert_location =  gps.getCurrentLatLng();
                         getAllBumps(convert_location.latitude,convert_location.longitude);
@@ -753,34 +749,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     }
     private Bump  Handler;
-    public void saveBump(final HashMap<Location, Float> bump, final Integer manual) {
-
-
-        Iterator it = bump.entrySet().iterator();
-       // while (it.hasNext()) {
-            HashMap.Entry pair = (HashMap.Entry)it.next();
-            Location loc = (Location) pair.getKey();
-            float data = (float) pair.getValue();
-
-            Handler =  new Bump(loc, data , manual);
-            Handler.getOneIteam(new CallBackReturn() {
-                public void callback( String results) {
-                    if (results.equals(""))   { //
-                        saveBump(bump, manual);
-                        }
-                    else {
-                        // vlo6im
-                    }
-
-                }
-            });
-
-            it.remove();
-   //    }
-    }
-
-
-
      private void initialization() {
 
         buildGoogleApiClient();
@@ -862,7 +830,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 }});
         }
     }
- private int updatesA=0;
+ public  boolean updatesLock = false;
+    private boolean regularUpdatesLock = false;
     private class SendBumpsToDb extends TimerTask {
 
         @Override
@@ -875,24 +844,26 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     if (isNetworkAvailable()) {
                          if (!(isEneableDownload() && !isConnectedWIFI())) {
 
-                             ArrayList<HashMap<Location, Float>> list = mLocnServAcc.getPossibleBumps();
+                             ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
                              //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
                              if (isEneableShowText())
                                  Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
-                             //  }
-                                  if (!list.isEmpty()) {
-                                      if (updatesA!=1 && updatesA!=3 ) {
-                                          updatesA=2;
-                                      savea(list, accelerometer.getBumpsManual(),0);
 
-                                      mLocnServAcc.getPossibleBumps().clear();
-                                      mLocnServAcc.getBumpsManual().clear();
-                                      }
-                                  }
+                             if (!list.isEmpty()) {
+                                if (!updatesLock ) {
 
-                         }else {
-                          //  updatesA = 2 ;
-                         }
+                                    updatesLock =true;
+                                    regularUpdatesLock=false;
+                                    ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
+                                    lista.addAll(accelerometer.getPossibleBumps());
+                                    ArrayList<Integer> bumpsManual = new ArrayList<Integer> ();
+                                    bumpsManual.addAll(  accelerometer.getBumpsManual());
+                                    accelerometer.getPossibleBumps().clear();
+                                    accelerometer.getBumpsManual().clear();
+                                    saveBump(lista, bumpsManual,0);
+                                }
+                             }
+                        }
                     }
                     else {
                           if (isEneableShowText())
@@ -902,53 +873,39 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             );
         }
     }
-    public void savea( final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual,final Integer por) {
-        Log.d("asdfgsa", "spustam savea");
-        if (list.size() >  por) {///
-            Log.d("asdfgsa", String.valueOf(list.size()));
-            Log.d("asdfgsa", String.valueOf(por));
-            Iterator it = list.get(por).entrySet().iterator();
+    public void saveBump(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual, final Integer sequel) {
+
+        if (list.size() >  sequel) {
+            Iterator it = list.get(sequel).entrySet().iterator();
             HashMap.Entry pair = (HashMap.Entry) it.next();    //next
             final Location loc = (Location) pair.getKey();
             final float data = (float) pair.getValue();
-            Log.d("asdfgsa", String.valueOf(loc.getLatitude()));
-
-            Handler = new Bump(loc, data,bumpsManual.get(por));
-
-            Handler.getOneIteam(new CallBackReturn() {
-
+            Handler = new Bump(loc, data,bumpsManual.get(sequel));
+            Handler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
-                    if (results.equals("success")) {
-                        Log.d("v","success");
+                    if ( results.equals("success")) {
                         ArrayList<HashMap<Location, Float>> lista=list;
-                        ArrayList<Integer> bumpsManuala =bumpsManual;
-                        lista.remove(0);
-                        bumpsManuala.remove(0);
-                        Log.d("asdfgsa", String.valueOf(lista.size()));
-                      //  bumpsManual.remove(por);
-                      // list.remove(por);
+                        ArrayList<Integer> bumpsManuala=bumpsManual;
+                        lista.remove(sequel);
                         sb.execSQL("DELETE FROM new_bumps WHERE latitude="+loc.getLatitude() +" and  longitude="+loc.getLongitude()
                                 +" and intensity="+ data );
-                        savea(lista, bumpsManuala,por);
+                        saveBump(lista, bumpsManuala,sequel);
                     } else {
                         Log.d("asdfgsa","error");
-                        // bumpsManual.remove(0);
-                        savea(list, bumpsManual,por+1);
+                        saveBump(list, bumpsManual,sequel+1);
                     }
 
                 }
             });
 
-
         }
         else {
-            updatesA=0;
-            Log.d("asdfgsa", "koncim");
-            if (list.size() > 0) {
+            updatesLock=false;
+           if (list.size() > 0) {
                 mLocnServAcc.getPossibleBumps().addAll(list);
                 mLocnServAcc.getBumpsManual().addAll(bumpsManual);
             } else {
-                Log.d("asdfgsa", "praydne");
+
             }
         }
 
@@ -971,10 +928,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
             /// ak je to prve spustenie alebo pravidelný update
             else if (regular_update) {
-                Log.d("adsadasd","asdasdsa");
-               if ( accelerometer.getPossibleBumps()!=null  && accelerometer.getPossibleBumps().size() >0 && updatesA!=2  && updatesA!=3) {
-                   Log.d("adsadasd", String.valueOf(accelerometer.getPossibleBumps().size()));
-                   updatesA = 1;
+             if ( accelerometer.getPossibleBumps()!=null  && accelerometer.getPossibleBumps().size() >0 ) {
+                regularUpdatesLock = true;
                }
                  regular_update =false;
                 LatLng convert_location =  gps.getCurrentLatLng();

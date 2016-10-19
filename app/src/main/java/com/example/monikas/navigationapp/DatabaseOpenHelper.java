@@ -67,23 +67,21 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                 + "%s DATETIME"
                 + ")";
             return String.format(sqlTemplate, TABLE_NAME_COLLISIONS, C_ID, B_ID_COLLISIONS, INTENSITY,CRETED_AT);
-     }
+        }
 
-    private String createTableSqlNewBump() {
-        String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
+         private String createTableSqlNewBump() {
+         String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
                 + "%s INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "%s DOUBLE,"
                 + "%s DOUBLE,"
                 + "%s DOUBLE,"
                 + "%s INTEGER"
                 + ")";
-        return String.format(sqlTemplate, TABLE_NAME_NEW_BUMPS,_ID, LATITUDE, LONGTITUDE, INTENSITY,MANUAL);
-    }
-
-
+            return String.format(sqlTemplate, TABLE_NAME_NEW_BUMPS,_ID, LATITUDE, LONGTITUDE, INTENSITY,MANUAL);
+        }
 
         @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             String query;
             query = "DROP TABLE IF EXISTS " + TABLE_NAME_BUMPS;
             db.execSQL(query);

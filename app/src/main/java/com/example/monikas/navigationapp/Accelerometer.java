@@ -40,9 +40,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private Sensor mAccelerometer;
     private float THRESHOLD = 4.5f;
     private ArrayList<HashMap<Location, Float>> possibleBumps;
-
-
-
     private ArrayList <Integer> BumpsManual;
     private float priorityX = 0.0f;
     private float priorityY = 0.0f;
@@ -80,15 +77,9 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
         return BumpsManual;
     }
 
-    public void setBumpsManual(ArrayList<Integer> bumpsManual) {
-        BumpsManual = bumpsManual;
-    }
-
     public void addBumpsManual(int manual) {
         BumpsManual.add(manual);
     }
-
-
 
     @Override
     //pri zmene dat z akcelerometra nam metoda dava tieto data v premennej event.values[]

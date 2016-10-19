@@ -60,18 +60,11 @@ public class JSONParser {
             }
         } catch (ClientProtocolException e) {
             e.printStackTrace();
-            try {
-                return jObj.put("send",0);
-            } catch (JSONException e1) {
-                e1.printStackTrace();
-            }
+
         } catch (IOException e) {
             e.printStackTrace();
-            try {
-                return jObj.put("send",0);
-            } catch (JSONException e1) {
-                e1.printStackTrace();
-            }
+
+
         }
 
         try {
@@ -84,11 +77,7 @@ public class JSONParser {
             is.close();
             json = sb.toString();
         } catch (Exception e) {
-            try {
-                return jObj.put("send",0);
-            } catch (JSONException e1) {
-                e1.printStackTrace();
-            }
+
             Log.e("Buffer Error", "Error converting result " + e.toString());
         }
 
@@ -98,11 +87,7 @@ public class JSONParser {
         } catch (JSONException e) {
 
             Log.e("JSON Parser", "Error parsing data " + e.toString());
-            try {
-                return jObj.put("send",0);
-            } catch (JSONException e1) {
-                e1.printStackTrace();
-            }
+
         }
         return jObj;
     }
