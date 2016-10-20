@@ -235,9 +235,9 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
         float b1 = lat_b / pk;
         float b2 = lng_b / pk;
 
-        float t1 = FloatMath.cos(a1)*FloatMath.cos(a2)*FloatMath.cos(b1)*FloatMath.cos(b2);
-        float t2 = FloatMath.cos(a1)*FloatMath.sin(a2)*FloatMath.cos(b1)*FloatMath.sin(b2);
-        float t3 = FloatMath.sin(a1)*FloatMath.sin(b1);
+        double t1 = Math.cos(a1)*Math.cos(a2)*Math.cos(b1)*Math.cos(b2);
+        double t2 = Math.cos(a1)*Math.sin(a2)*Math.cos(b1)*Math.sin(b2);
+        double t3 = Math.sin(a1)*Math.sin(b1);
         double tt = Math.acos(t1 + t2 + t3);
 
         return 6366000*tt;

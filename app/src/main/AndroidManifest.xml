@@ -54,7 +54,7 @@
             android:name=".GPSLocator"
             android:enabled="true"
             android:exported="true" />
-
+        <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
         <activity android:name=".SettingsActivity" />
 
 
