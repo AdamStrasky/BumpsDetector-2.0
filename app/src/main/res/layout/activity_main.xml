@@ -86,8 +86,6 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         mapbox:style_url="mapbox://styles/mapbox/streets-v9"
-        mapbox:center_latitude="40.73581"
-        mapbox:center_longitude="-73.99155"
         mapbox:zoom="11"/>
        />
 

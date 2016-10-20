@@ -23,6 +23,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -35,6 +37,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
@@ -55,7 +59,8 @@ import static com.example.monikas.navigationapp.Bump.isBetween;
 import static com.example.monikas.navigationapp.MainActivity.mapView;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
-public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, MapboxMap.OnMyLocationChangeListener
+    {
 
     private GoogleApiClient mGoogleApiClient;
     public GPSLocator gps = null;
@@ -84,6 +89,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
     private int loaded_index;
+        private MapboxMap map;
     private  boolean regular_update = false;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,16 +97,25 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         setRetainInstance(true);
 
        mapView.onCreate(savedInstanceState);
-      /* mapView.getMapAsync(new OnMapReadyCallback() {
+       mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
-            public void onMapReady(MapboxMap mapboxMap) {
+            public void onMapReady(final MapboxMap mapboxMap) {
+                map = mapboxMap;
+
+                mapboxMap.setOnMyLocationChangeListener(FragmentActivity.this);
+                mapboxMap.setMyLocationEnabled(true);
+
+
+
+
              // mapboxMap.setStyle(Style.MAPBOX_STREETS);
              ///   mapboxMap.addMarker(new MarkerOptions()
                    //     .position(new com.mapbox.mapboxsdk.geometry.LatLng(52.6885, 70.1395))
                    //     .title("Hello World!")
                      //   .snippet("Welcome to the marker."));
             }
-        });*/
+        });
+
 
 
         initialization_database();
@@ -146,7 +161,16 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         sb = databaseHelper.getWritableDatabase();
     }
 
-    private class Regular_upgrade extends TimerTask {
+        @Override
+        public void onMyLocationChange(@Nullable Location location) {
+            if (location != null) {
+                if (gps != null && gps.getCurrentLatLng()!= null) {
+                 map.easeCamera(CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude)));
+                }
+            }
+        }
+
+        private class Regular_upgrade extends TimerTask {
         @Override
         public void run() {
             regular_update = true;
@@ -786,10 +810,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 nacitajDB();
 
                 //vytlky sa do dabatazy odosielaju kazdu minutu
-                  new Timer().schedule(new SendBumpsToDb(), 0, 30000);
+                  new Timer().schedule(new SendBumpsToDb(), 0, 180000);
 
                 //mapa sa nastavuje kazde 2 minuty
-                 new Timer().schedule(new MapSetter(), 0, 30000);   //120000
+                 new Timer().schedule(new MapSetter(), 0, 180000);   //120000
 
 
             }
