@@ -55,32 +55,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private Float intensity = null;
     LinearLayout confirm;
     Button add_button, save_button, delete_button;
-    private MapView mapView = null;
+    public static MapView mapView = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
+
         MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
 
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(MapboxMap mapboxMap) {
-              /*  mapboxMap.setStyle(Style.MAPBOX_STREETS);
-                mapboxMap.addMarker(new MarkerOptions()
-                        .position(new com.mapbox.mapboxsdk.geometry.LatLng(52.6885, 70.1395))
-                        .title("Hello World!")
-                        .snippet("Welcome to the marker."));*/
-            }
-        });
-
-
-
-
 
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);

@@ -35,6 +35,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -50,6 +52,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static com.example.monikas.navigationapp.Bump.isBetween;
+import static com.example.monikas.navigationapp.MainActivity.mapView;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
 public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -86,6 +89,20 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+       mapView.onCreate(savedInstanceState);
+      /* mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(MapboxMap mapboxMap) {
+             // mapboxMap.setStyle(Style.MAPBOX_STREETS);
+             ///   mapboxMap.addMarker(new MarkerOptions()
+                   //     .position(new com.mapbox.mapboxsdk.geometry.LatLng(52.6885, 70.1395))
+                   //     .title("Hello World!")
+                     //   .snippet("Welcome to the marker."));
+            }
+        });*/
+
+
         initialization_database();
         get_loaded_index();
         // ak sa pripojím na internet požiam o update
@@ -167,7 +184,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
        if( !updatesLock)
            updatesLock=true;
-         notSendBumps(accelerometer.getPossibleBumps(),accelerometer.getBumpsManual());
+        if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
+            notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
+        }else
+            updatesLock=false;
          sb.setTransactionSuccessful();
          sb.endTransaction();
     }
@@ -298,8 +318,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     GetUpdateAction();
                 }else {
                     // načítam vytlky na mapu
-                    LatLng convert_location =  gps.getCurrentLatLng();
-                    getAllBumps(convert_location.latitude,convert_location.longitude);
+                    if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
+                        LatLng convert_location = gps.getCurrentLatLng();
+                        getAllBumps(convert_location.latitude, convert_location.longitude);
+                    }
                 }
                 return;
             }
@@ -844,26 +866,28 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     if (isNetworkAvailable()) {
                          if (!(isEneableDownload() && !isConnectedWIFI())) {
 
-                             ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
-                             //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
-                             if (isEneableShowText())
-                                 Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
+                             if (accelerometer != null) {
+                                 ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
+                                 //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
+                                 if (isEneableShowText())
+                                     Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
 
-                             if (!list.isEmpty()) {
-                                if (!updatesLock ) {
+                                 if (!list.isEmpty()) {
+                                     if (!updatesLock) {
 
-                                    updatesLock =true;
-                                    regularUpdatesLock=false;
-                                    ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
-                                    lista.addAll(accelerometer.getPossibleBumps());
-                                    ArrayList<Integer> bumpsManual = new ArrayList<Integer> ();
-                                    bumpsManual.addAll(  accelerometer.getBumpsManual());
-                                    accelerometer.getPossibleBumps().clear();
-                                    accelerometer.getBumpsManual().clear();
-                                    saveBump(lista, bumpsManual,0);
-                                }
+                                         updatesLock = true;
+                                         regularUpdatesLock = false;
+                                         ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
+                                         lista.addAll(accelerometer.getPossibleBumps());
+                                         ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
+                                         bumpsManual.addAll(accelerometer.getBumpsManual());
+                                         accelerometer.getPossibleBumps().clear();
+                                         accelerometer.getBumpsManual().clear();
+                                         saveBump(lista, bumpsManual, 0);
+                                     }
+                                 }
                              }
-                        }
+                         }
                     }
                     else {
                           if (isEneableShowText())
@@ -884,9 +908,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             Handler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if ( results.equals("success")) {
-                        ArrayList<HashMap<Location, Float>> lista=list;
-                        ArrayList<Integer> bumpsManuala=bumpsManual;
-                        lista.remove(sequel);
+                        ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
+                        lista.addAll(list);
+                        ArrayList<Integer> bumpsManuala = new ArrayList<Integer> ();
+                        bumpsManuala.addAll(bumpsManual);
+                        int a =sequel;
+                        lista.remove(a);
+                        bumpsManuala.remove(a);
                         sb.execSQL("DELETE FROM new_bumps WHERE latitude="+loc.getLatitude() +" and  longitude="+loc.getLongitude()
                                 +" and intensity="+ data );
                         saveBump(lista, bumpsManuala,sequel);
@@ -922,9 +950,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                      Toast.makeText(getActivity(), "Setting map", Toast.LENGTH_SHORT).show();
                      regular_update =false;
                      mLocnServGPS.setLevel(level);
-                     LatLng convert_location =  gps.getCurrentLatLng();
-                     get_max_bumps(convert_location.latitude,convert_location.longitude,1);
+                Log.d("asdfgsa","pred null");
+                  gps = mLocnServGPS;
+                  if (gps!=null ) {
+                      Log.d("asdfgsa","po null  null");
+                      LatLng convert_location = gps.getCurrentLatLng();
 
+                      if (convert_location != null) {
+                          Log.d("asdfgsa","convert_location  null");
+                          get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
+                      }
+                  }
             }
             /// ak je to prve spustenie alebo pravidelný update
             else if (regular_update) {

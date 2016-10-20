@@ -109,40 +109,42 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                 LIFO.add(currentData);
             } else {
                 currentData = new AccData(x, y, z);
-                final Location location = global_gps.getmCurrentLocation();
-                //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
-                for (AccData temp : LIFO) {
-                    //pre kazdu os X,Y,Z sa vypocita zmena zrychlenia
-                    deltaX = Math.abs(temp.getX() - currentData.getX());
-                    deltaY = Math.abs(temp.getY() - currentData.getY());
-                    deltaZ = Math.abs(temp.getZ() - currentData.getZ());
-                    //na zaklade priorit jednotlivych osi sa vypocita celkova zmena zrychlenia
-                    delta = priorityX * deltaX + priorityY * deltaY + priorityZ * deltaZ;
-                    //ak je zmena vacsia ako THRESHOLD 4,5
-                    if (delta > THRESHOLD) {
-                        //staci ak zmena zrychlenia prekrocila THRESHOLD raz, je to vytlk
-                        isBump = true;
-                        break;
-                    }
-                }
-                if (isBump) {
-                    isBump = false;
-                    final Float data = new Float(delta);
-                    if (location != null && data != null) {
-                        //pokial je znama aktualna pozicia a intenzita otrasu
-                        if (unlock) {
-                            Log.d("ACC", "sensor Accelerometer");
-                            unlock = false;
-                            result = detect(location, data);
-                            unlock = true;
+                if (global_gps != null) {
+                    final Location location = global_gps.getmCurrentLocation();
+                    //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
+                    for (AccData temp : LIFO) {
+                        //pre kazdu os X,Y,Z sa vypocita zmena zrychlenia
+                        deltaX = Math.abs(temp.getX() - currentData.getX());
+                        deltaY = Math.abs(temp.getY() - currentData.getY());
+                        deltaZ = Math.abs(temp.getZ() - currentData.getZ());
+                        //na zaklade priorit jednotlivych osi sa vypocita celkova zmena zrychlenia
+                        delta = priorityX * deltaX + priorityY * deltaY + priorityZ * deltaZ;
+                        //ak je zmena vacsia ako THRESHOLD 4,5
+                        if (delta > THRESHOLD) {
+                            //staci ak zmena zrychlenia prekrocila THRESHOLD raz, je to vytlk
+                            isBump = true;
+                            break;
                         }
                     }
+                    if (isBump) {
+                        isBump = false;
+                        final Float data = new Float(delta);
+                        if (location != null && data != null) {
+                            //pokial je znama aktualna pozicia a intenzita otrasu
+                            if (unlock) {
+                                Log.d("ACC", "sensor Accelerometer");
+                                unlock = false;
+                                result = detect(location, data);
+                                unlock = true;
+                            }
+                        }
+                    }
+                    //najstarsi prvok z LIFO sa vymaze a ulozi sa na koniec najnovsi
+                    if (LIFO.size() >= LIFOsize) {
+                        LIFO.remove(0);
+                    }
+                    LIFO.add(currentData);
                 }
-                //najstarsi prvok z LIFO sa vymaze a ulozi sa na koniec najnovsi
-                if (LIFO.size() >= LIFOsize) {
-                    LIFO.remove(0);
-                }
-                LIFO.add(currentData);
             }
 
             return result;
