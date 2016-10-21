@@ -22,6 +22,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -33,6 +34,8 @@ import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.offline.OfflineManager;
+import com.mapbox.mapboxsdk.offline.OfflineRegion;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,6 +60,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     Button add_button, save_button, delete_button;
     public static MapView mapView = null;
 
+
+    public static ProgressBar progressBar;
+    public static Button downloadButton;
+    public static Button listButton;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +78,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
 
+        listButton = (Button) findViewById(R.id.list_button);
+        downloadButton = (Button) findViewById(R.id.download_button);
+        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);

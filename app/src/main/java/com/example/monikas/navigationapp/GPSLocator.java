@@ -8,6 +8,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -24,6 +25,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -37,11 +39,12 @@ import java.util.List;
 
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
+import static com.example.monikas.navigationapp.FragmentActivity.mapboxik;
 
 /**
  * Created by monikas on 24. 3. 2015.
  */
-public class GPSLocator extends Service implements LocationListener {
+public class GPSLocator extends Service implements LocationListener,  MapboxMap.OnMyLocationChangeListener{
 
     private Location mCurrentLocation;
     private GoogleApiClient mGoogleApiClient;
@@ -205,7 +208,8 @@ public class GPSLocator extends Service implements LocationListener {
 
         if (isNavigation() && MainActivity.isActivityVisible())
             goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
-        }
+            mapboxik.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(),getmCurrentLocation().getLongitude())));
+         }
 
 
     public void updateMap () {
@@ -225,6 +229,11 @@ public class GPSLocator extends Service implements LocationListener {
     }
 
     private final IBinder mBinder = new LocalBinder();
+
+    @Override
+    public void onMyLocationChange(@Nullable Location location) {
+
+    }
 
     public class LocalBinder extends Binder {
         public GPSLocator getService() {
