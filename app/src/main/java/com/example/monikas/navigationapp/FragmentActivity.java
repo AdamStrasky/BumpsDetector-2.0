@@ -133,18 +133,21 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         setRetainInstance(true);
 
        mapView.onCreate(savedInstanceState);
-       mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(final MapboxMap mapboxMap) {
 
-                mapboxik=mapboxMap;
-                mapboxMap.setMyLocationEnabled(true);
+            mapView.getMapAsync(new OnMapReadyCallback() {
+                @Override
+                public void onMapReady(final MapboxMap mapboxMap) {
+
+                    mapboxik = mapboxMap;
+                    mapboxMap.setMyLocationEnabled(true);
 
                 }
 
 
+            });
+        mapView.removeOnMapChangedListener(null);
 
-        });
+
 
 
         offlineManager = OfflineManager.getInstance(getActivity());
@@ -1462,9 +1465,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
         // nemám internet, čítam z databazy
         else {
-            LatLng convert_location =  gps.getCurrentLatLng();
-            if (convert_location!= null)
-             getAllBumps(convert_location.latitude,convert_location.longitude);
+            if (gps!=null && gps.getCurrentLatLng()!=null ) {
+                LatLng convert_location = gps.getCurrentLatLng();
+                if (convert_location != null)
+                    getAllBumps(convert_location.latitude, convert_location.longitude);
+            }
         }
     }
 

@@ -41,6 +41,7 @@ import java.util.List;
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
 import static com.example.monikas.navigationapp.FragmentActivity.mapboxik;
+import static com.example.monikas.navigationapp.MainActivity.mapView;
 
 /**
  * Created by monikas on 24. 3. 2015.
@@ -209,7 +210,8 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
         if (isNavigation() && MainActivity.isActivityVisible())
             goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
-            mapboxik.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(),getmCurrentLocation().getLongitude())));
+
+        mapboxik.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(),getmCurrentLocation().getLongitude())));
 
     }
 

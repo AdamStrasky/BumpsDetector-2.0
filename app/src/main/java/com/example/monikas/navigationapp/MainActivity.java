@@ -76,7 +76,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
 
-        mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
+         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
 
         listButton = (Button) findViewById(R.id.list_button);
         downloadButton = (Button) findViewById(R.id.download_button);
