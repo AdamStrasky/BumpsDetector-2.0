@@ -14,6 +14,8 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.PointF;
+import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -40,6 +42,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -55,6 +58,7 @@ import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -128,10 +132,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             @Override
             public void onMapReady(final MapboxMap mapboxMap) {
                 mapboxik = mapboxMap;
+                LatLngBounds aa =  mapboxik.getProjection().getVisibleRegion().latLngBounds;
+                Log.d("afafadf", String.valueOf(aa));
+             //   mapboxik.getBounds().contains(myMarker.getLatLng())
 
-         //     mapboxMap.setOnMyLocationChangeListener(FragmentActivity.this);
-               // mapboxik.setOnCameraChangeListener(GPSLocator.class);
-                mapboxMap.setMyLocationEnabled(true);
+          //      mapboxMap.setMyLocationEnabled(true);
 
 
 
@@ -144,9 +149,32 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
         });
 
-        offlineManager = OfflineManager.getInstance(getActivity());
+     /*   int viewportWidth = mapView.getWidth();
+        int viewportHeight = mapView.getHeight();
 
-        downloadButton.setOnClickListener(new View.OnClickListener() {
+        LatLng topLeft = mapView.fromScreenLocation(new PointF(0, 0));
+        LatLng topRight = mapView.fromScreenLocation(new PointF(viewportWidth, 0));
+        LatLng bottomRight = mapView.fromScreenLocation(new PointF(viewportWidth, viewportHeight));
+        LatLng bottomLeft = mapView.fromScreenLocation(new PointF(0, viewportHeight));*/
+
+
+        offlineManager = OfflineManager.getInstance(getActivity());
+       /* offlineRegion.setObserver(new OfflineRegion.OfflineRegionObserver() {
+            @Override
+            public void onStatusChanged(OfflineRegionStatus status) {
+                if (status.isComplete()) {
+                    Toast.makeText(MainActivity.this, "Done saving map.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            // ...
+
+        });*/
+
+
+
+
+                downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 downloadRegionDialog();
@@ -246,45 +274,67 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         // Start the progressBar
         startProgress();
-
-        // Create offline definition using the current
-        // style and boundaries of visible map area
-        String styleURL = mapboxik.getStyleUrl();
-        LatLngBounds bounds = mapboxik.getProjection().getVisibleRegion().latLngBounds;
-        double minZoom = mapboxik.getCameraPosition().zoom;
-        double maxZoom = mapboxik.getMaxZoom();
-        float pixelRatio = this.getResources().getDisplayMetrics().density;
-        OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
-                styleURL, bounds, minZoom, maxZoom, pixelRatio);
-
-        // Build a JSONObject using the user-defined offline region title,
-        // convert it into string, and use it to create a metadata variable.
-        // The metadata varaible will later be passed to createOfflineRegion()
-        byte[] metadata;
+        Address address = null;
+        LatLng to_position = null;
         try {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put(JSON_FIELD_REGION_NAME, regionName);
-            String json = jsonObject.toString();
-            metadata = json.getBytes(JSON_CHARSET);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to encode metadata: " + e.getMessage());
-            metadata = null;
+            address = Route.findLocality(regionName, getActivity());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        if (address == null) {
+            Log.d("yfadsfa","preco nebolo null");
+            endProgress("Unable to find location, wrong name!");
+           //Toast.makeText(getActivity(), "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
+        }
+        else {
+            to_position = new LatLng(address.getLatitude(), address.getLongitude());
 
-        // Create the offline region and launch the download
-        offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
-            @Override
-            public void onCreate(OfflineRegion offlineRegion) {
-                Log.d(TAG, "Offline region created: " + regionName);
-                FragmentActivity.this.offlineRegion = offlineRegion;/////////////////////////////
-                launchDownload();
+
+            // style and boundaries of visible map area
+            String styleURL = mapboxik.getStyleUrl();
+            LatLngBounds bounds = new LatLngBounds.Builder()
+                    .include(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude + 0.2, to_position.longitude + 0.2)) // Northeast
+                    .include(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude - 0.2, to_position.longitude - .2)) // Southwest
+                    .build();
+
+
+            //  LatLngBounds bounds = mapboxik.getProjection().getVisibleRegion().latLngBounds;
+            double minZoom = mapboxik.getCameraPosition().zoom;
+            double maxZoom = mapboxik.getMaxZoom();
+            float pixelRatio = this.getResources().getDisplayMetrics().density;
+            OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
+                    styleURL, bounds, minZoom, maxZoom, pixelRatio);
+
+            // Build a JSONObject using the user-defined offline region title,
+            // convert it into string, and use it to create a metadata variable.
+            // The metadata varaible will later be passed to createOfflineRegion()
+            byte[] metadata;
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put(JSON_FIELD_REGION_NAME, regionName);
+                String json = jsonObject.toString();
+                metadata = json.getBytes(JSON_CHARSET);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to encode metadata: " + e.getMessage());
+                metadata = null;
             }
 
-            @Override
-            public void onError(String error) {
-                Log.e(TAG, "Error: " + error);
-            }
-        });
+
+            // Create the offline region and launch the download
+            offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
+                @Override
+                public void onCreate(OfflineRegion offlineRegion) {
+                    Log.d(TAG, "Offline region created: " + regionName);
+                    FragmentActivity.this.offlineRegion = offlineRegion;/////////////////////////////
+                    launchDownload();
+                }
+
+                @Override
+                public void onError(String error) {
+                    Log.e(TAG, "Error: " + error);
+                }
+            });
+        }
     }
 
     private void launchDownload() {
@@ -326,8 +376,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
         });
 
+
+
         // Change the region state
         offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE);
+        Log.d("adasfgdasdyagea", "zapol sa offliene region ");
     }
 
     private void downloadedRegionList() {
@@ -1172,7 +1225,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         Cursor cursor = database.rawQuery(selectQuery, null);
         HashMap<Location, Float> hashToArray = new HashMap();
 
-        if (cursor.moveToFirst()) {
+        if (cursor!= null && cursor.moveToFirst()) {
             do {
                 Location location = new Location("new");
                 location.setLatitude(cursor.getDouble(0));

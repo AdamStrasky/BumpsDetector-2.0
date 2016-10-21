@@ -10,6 +10,8 @@ import android.util.Log;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -50,7 +52,13 @@ public class Bump {
         } catch (InterruptedException | ExecutionException e ) {
             e.printStackTrace();
 
-        }Log.d("TEST",response);
+
+
+        }
+        if (response!= null)
+        Log.d("TEST",response);
+        else
+            Log.d("TEST","wtf bolo to null co sa deje ");
      returnMethod.callback(response);
     }
 
@@ -59,6 +67,13 @@ public class Bump {
             String latitude = String.valueOf(location.getLatitude());
             String longitude = String.valueOf(location.getLongitude());
             List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+
+            Log.d("TEST", "latitude "+latitude );
+            Log.d("TEST", "longitude "+longitude );
+            Log.d("TEST", "intensity "+intensity );
+            Log.d("TEST", "rating "+rating );
+            Log.d("TEST", "rating "+rating );
             //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
@@ -66,13 +81,21 @@ public class Bump {
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
 
-            JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
 
-            if (!json.has("send"))
+            JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
+            int success = 0;
+            try {
+                 success = json.getInt("success");
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return "error";
+            }
+            if (success == 1) {
                 return "success";
+            }
             else
                 return "error";
-        }
+          }
 
     }
 
