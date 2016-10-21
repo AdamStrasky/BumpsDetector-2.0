@@ -1,5 +1,6 @@
 package com.example.monikas.navigationapp;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -21,6 +22,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -29,6 +31,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewStub;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -44,6 +48,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -108,7 +113,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         public static   MapboxMap mapboxik;
     private boolean isEndNotified;
     private int regionSelected;
-
+    private boolean mapNotification=true;
     // Offline objects
     private OfflineManager offlineManager;
     private OfflineRegion offlineRegion;
@@ -131,50 +136,20 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
        mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(final MapboxMap mapboxMap) {
-                mapboxik = mapboxMap;
-                LatLngBounds aa =  mapboxik.getProjection().getVisibleRegion().latLngBounds;
-                Log.d("afafadf", String.valueOf(aa));
-             //   mapboxik.getBounds().contains(myMarker.getLatLng())
 
-          //      mapboxMap.setMyLocationEnabled(true);
+                mapboxik=mapboxMap;
+                mapboxMap.setMyLocationEnabled(true);
 
+                }
 
 
 
-             // mapboxMap.setStyle(Style.MAPBOX_STREETS);
-             ///   mapboxMap.addMarker(new MarkerOptions()
-                   //     .position(new com.mapbox.mapboxsdk.geometry.LatLng(52.6885, 70.1395))
-                   //     .title("Hello World!")
-                     //   .snippet("Welcome to the marker."));
-            }
         });
-
-     /*   int viewportWidth = mapView.getWidth();
-        int viewportHeight = mapView.getHeight();
-
-        LatLng topLeft = mapView.fromScreenLocation(new PointF(0, 0));
-        LatLng topRight = mapView.fromScreenLocation(new PointF(viewportWidth, 0));
-        LatLng bottomRight = mapView.fromScreenLocation(new PointF(viewportWidth, viewportHeight));
-        LatLng bottomLeft = mapView.fromScreenLocation(new PointF(0, viewportHeight));*/
 
 
         offlineManager = OfflineManager.getInstance(getActivity());
-       /* offlineRegion.setObserver(new OfflineRegion.OfflineRegionObserver() {
-            @Override
-            public void onStatusChanged(OfflineRegionStatus status) {
-                if (status.isComplete()) {
-                    Toast.makeText(MainActivity.this, "Done saving map.", Toast.LENGTH_SHORT).show();
-                }
-            }
 
-            // ...
-
-        });*/
-
-
-
-
-                downloadButton.setOnClickListener(new View.OnClickListener() {
+            downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 downloadRegionDialog();
@@ -210,7 +185,50 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
         // pravidelný update ak nemám povolený internet
         new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
+        new Timer().schedule(new Regular_upgradeA(), 15000, 15000);// 3600000
     }
+
+    public  void murko ( ){
+        Log.d("adssvfasdf", "vola sa to alebo nie ");
+        gps=mLocnServGPS;
+        if (gps!=null && gps.getCurrentLatLng()!=null) {
+            offlineManager.listOfflineRegions(new OfflineManager.ListOfflineRegionsCallback() {
+                    @Override
+                     public void onList(final OfflineRegion[] offlineRegions) {
+                       if (offlineRegions == null || offlineRegions.length == 0) {
+                         return;
+                    }
+                    boolean isInMap= false;
+                    int aaa=0;
+                     for (OfflineRegion offlineRegion : offlineRegions) {
+                       Log.d("adssvfasdf", getRegionName(offlineRegion));
+                       LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[aaa].getDefinition()).getBounds();
+                         if (bounds.contains(new com.mapbox.mapboxsdk.geometry.LatLng(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude))) {
+                             isInMap=true;
+                              Log.d("adssvfasdf", "obsahuje");
+                         }
+                         else {
+                           Log.d("adssvfasdf", "neobsahuje ");
+                         }
+                         aaa++;
+                     }
+                     if(isInMap) {
+                         mapNotification=false;
+                      downloadRegionDialogA();
+                       }
+
+                    }
+
+                    @Override
+                     public void onError(String error) {
+                     }
+            }
+
+            );
+        }
+    }
+
+
 
     public void get_loaded_index (){
         //  najvyššie uložený index po uspešnej transakcie collision
@@ -225,9 +243,39 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
     }
 
+
     /////////////////////////////////////
 /////////////////////////////////
     ///////////////////////////////
+    private void downloadRegionDialogA() {
+
+        // Set up download interaction. Display a dialog
+        // when the user clicks download button and require
+        // a user-provided region name
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+
+
+        // Build the dialog box
+        builder.setTitle("Internet connection")
+               .setMessage("Your map is not available. Please connect to internet or download map of region if you want use a map")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        dialog.cancel();
+                    }
+                });
+
+
+        // Display the dialog
+        builder.show();
+    }
+
+
+
+
+
 
     private void downloadRegionDialog() {
         // Set up download interaction. Display a dialog
@@ -570,6 +618,16 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         @Override
         public void run() {
             regular_update = true;
+
+        }
+    }
+
+    private class Regular_upgradeA extends TimerTask {
+        @Override
+        public void run() {
+            if (mapNotification)
+                murko();
+
         }
     }
 
@@ -1219,7 +1277,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 
     public void nacitajDB(){
-        sb.beginTransaction();
+       /* sb.beginTransaction();
         String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
@@ -1233,7 +1291,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 location.setTime(new Date().getTime());
 
                 hashToArray.put(location, (float) cursor.getDouble(2));
-                accelerometer.addPossibleBumps(location,(float) cursor.getDouble(2));
+                Log.d("dasdas", String.valueOf(location));
+                Log.d("dasdas", String.valueOf(cursor.getDouble(2)));
+                accelerometer.addPossibleBumps(location, (float) cursor.getDouble(2));
                 //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
                 accelerometer.addBumpsManual(cursor.getInt(3));
 
@@ -1244,7 +1304,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             } while (cursor.moveToNext());
         }
         sb.setTransactionSuccessful();
-        sb.endTransaction();
+        sb.endTransaction();*/
     }
 
     public void stop_servise(){
