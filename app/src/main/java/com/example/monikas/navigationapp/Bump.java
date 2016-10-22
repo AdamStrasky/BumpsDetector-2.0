@@ -10,7 +10,6 @@ import android.util.Log;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,14 +26,14 @@ public class Bump {
     private int rating;
     private int manual;
 
-    public   Bump(Location location, float delta ,Integer manual ) {
+    public Bump(Location location, float delta, Integer manual) {
         this.intensity = delta;
         this.location = location;
         rating = 1;
-        if (isBetween(intensity,0,6)) rating = 1;
-        if (isBetween(intensity,6,10)) rating = 2;
-        if (isBetween(intensity,10,10000)) rating = 3;
-        this.manual=manual;
+        if (isBetween(intensity, 0, 6)) rating = 1;
+        if (isBetween(intensity, 6, 10)) rating = 2;
+        if (isBetween(intensity, 10, 10000)) rating = 3;
+        this.manual = manual;
 
     }
 
@@ -43,23 +42,22 @@ public class Bump {
     }
 
 
-    public void getResponse (final CallBackReturn returnMethod) {
+    public void getResponse(final CallBackReturn returnMethod) {
         CreateNewBump obj = new CreateNewBump();
-        String response  = null;
+        String response = null;
 
         try {
             response = obj.execute().get();
-        } catch (InterruptedException | ExecutionException e ) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
 
 
-
         }
-        if (response!= null)
-        Log.d("TEST",response);
+        if (response != null)
+            Log.d("BUMP", response);
         else
-            Log.d("TEST","wtf bolo to null co sa deje ");
-     returnMethod.callback(response);
+            Log.d("BUMP", "vratilo null");
+        returnMethod.callback(response);
     }
 
     class CreateNewBump extends AsyncTask<String, String, String> {
@@ -69,11 +67,11 @@ public class Bump {
             List<NameValuePair> params = new ArrayList<NameValuePair>();
 
 
-            Log.d("TEST", "latitude "+latitude );
-            Log.d("TEST", "longitude "+longitude );
-            Log.d("TEST", "intensity "+intensity );
-            Log.d("TEST", "rating "+rating );
-            Log.d("TEST", "rating "+rating );
+             Log.d("BUMP", "latitude " + latitude);
+             Log.d("BUMP", "longitude "+longitude );
+             Log.d("BUMP", "intensity "+intensity );
+             Log.d("BUMP", "rating "+rating );
+             Log.d("BUMP", "rating "+rating );
             //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
@@ -82,21 +80,21 @@ public class Bump {
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
 
 
-            JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
-            int success = 0;
-            try {
+           JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
+             int success = 0;
+             try {
                  success = json.getInt("success");
-            } catch (JSONException e) {
+                } catch (JSONException e) {
                 e.printStackTrace();
                 return "error";
-            }
-            if (success == 1) {
+                }
+            if (success == 1)
                 return "success";
-            }
             else
                 return "error";
-          }
-
+        }
     }
-
 }
+
+
+

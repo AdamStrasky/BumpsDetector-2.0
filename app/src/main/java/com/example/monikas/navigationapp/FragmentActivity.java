@@ -1,6 +1,5 @@
 package com.example.monikas.navigationapp;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -15,30 +14,21 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.PointF;
 import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewStub;
-import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -51,8 +41,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.MapFragment;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -79,8 +67,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static com.example.monikas.navigationapp.Bump.isBetween;
-import static com.example.monikas.navigationapp.MainActivity.downloadButton;
-import static com.example.monikas.navigationapp.MainActivity.listButton;
 import static com.example.monikas.navigationapp.MainActivity.mapConfirm;
 import static com.example.monikas.navigationapp.MainActivity.mapView;
 import static com.example.monikas.navigationapp.MainActivity.navig_on;
@@ -116,7 +102,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
     private int loaded_index;
-        public static   MapboxMap mapboxik;
+    public static   MapboxMap mapboxik;
 
     private boolean isEndNotified;
     private boolean flagA=false;
@@ -142,27 +128,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
 
-
-
-
-
-       mapView.onCreate(savedInstanceState);
-
-            mapView.getMapAsync(new OnMapReadyCallback() {
-
-                @Override
-                public void onMapReady(final MapboxMap mapboxMap) {
-                        mapboxik = mapboxMap;
-                  if (flagMap)
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(final MapboxMap mapboxMap) {
+                mapboxik = mapboxMap;
+                if (flagMap)
                     mapboxik.setMyLocationEnabled(true);
-
-
                 }
-
-
-
             });
-
 
         offlineManager = OfflineManager.getInstance(getActivity());
 
@@ -577,11 +551,16 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 Toast.makeText(getActivity(), "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
                  return;
             }else {
+
                 to_position = new LatLng(address.getLatitude(), address.getLongitude());
+
                 bounds = new LatLngBounds.Builder()
                         .include(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude + 0.2, to_position.longitude + 0.2)) // Northeast
                         .include(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude - 0.2, to_position.longitude - .2)) // Southwest
                         .build();
+
+
+
             }
 
         }
@@ -589,12 +568,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         Log.d("yfadsfa", "aaaaaaaaaaa");
             String styleURL = mapboxik.getStyleUrl();
-            double minZoom = mapboxik.getCameraPosition().zoom;
+        double minZoom = mapboxik.getCameraPosition().zoom;
             double maxZoom = mapboxik.getMaxZoom();
         Log.d("yfadsfa", "aaaaaaaaaaa");
             float pixelRatio = this.getResources().getDisplayMetrics().density;
             OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
                     styleURL, bounds, minZoom, maxZoom, pixelRatio);
+
+        Log.d("yfadsfa", definition.toString());
+        Log.d("yfadsfa", String.valueOf(pixelRatio));
         Log.d("yfadsfa", "aaaaaaaaaaa");
             // Build a JSONObject using the user-defined offline region title,
             // convert it into string, and use it to create a metadata variable.
@@ -803,7 +785,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
 
        // downloadButton.setEnabled(false);
-       // listButton.setEnabled(false);
+       // list_of_region.setEnabled(false);
         flagDownload=true;
         // Start and show the progress bar
         isEndNotified = false;
@@ -822,7 +804,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         // Enable buttons
        // downloadButton.setEnabled(true);
-      //  listButton.setEnabled(true);
+      //  list_of_region.setEnabled(true);
 
         // Stop and hide the progress bar
         isEndNotified = true;
@@ -879,8 +861,46 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     private class Regular_upgradeA extends TimerTask {
         @Override
         public void run() {
-            if (mapNotification && flagA==true)
-                murko();
+
+       /*     if (updatesLock) {
+                Log.d("TEaaaaaST"," nepresiel ");
+                return;
+            }
+          //  if (mapNotification && flagA==true)
+           //     murko();
+
+            if (!updatesLock) {
+                updatesLock=true;
+                sb.beginTransaction();
+                int i=0;
+                for (i = 0; i < 100; i++) {
+                    Location location = new Location("new");
+                    location.setLatitude(48.222 + i);
+                    location.setLongitude(48.222);
+                    location.setTime(new Date().getTime());
+                    Log.d("TEaaaaaST"," beyiiii");
+                    accelerometer.addPossibleBumps(location, 4.5f);
+                    accelerometer.addBumpsManual(1);
+                }
+                if (i ==98) {
+                    Log.d("TEaaaaaST"," vypol sa lock v regular A");
+                    updatesLock = false;
+                    sb.setTransactionSuccessful();
+                    sb.endTransaction();
+                }
+
+            }
+            Log.d("TEaaaaaST"," naplnene");
+*/
+
+       /* Location location;
+            Float data
+            HashMap<Location, Float> hashToArray = new HashMap();
+            hashToArray.put(location,data);
+
+            ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
+            ArrayList<Integer> bumpsManual*/
+
 
         }
     }
@@ -1518,10 +1538,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 nacitajDB();
 
                 //vytlky sa do dabatazy odosielaju kazdu minutu
-                  new Timer().schedule(new SendBumpsToDb(), 0, 180000);
+                new Timer().schedule(new SendBumpsToDb(), 0, 180000);
 
                 //mapa sa nastavuje kazde 2 minuty
-                 new Timer().schedule(new MapSetter(), 0, 180000);   //120000
+                new Timer().schedule(new MapSetter(), 0, 180000);   //120000
 
 
             }
@@ -1531,14 +1551,20 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 
     public void nacitajDB(){
-       /* sb.beginTransaction();
+    /*  if (updatesLock)
+          return;
+
+          updatesLock=true;
+
         String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
         HashMap<Location, Float> hashToArray = new HashMap();
-
+int i=0;
         if (cursor!= null && cursor.moveToFirst()) {
+            sb.beginTransaction();
             do {
+
                 Location location = new Location("new");
                 location.setLatitude(cursor.getDouble(0));
                 location.setLongitude(cursor.getDouble(1));
@@ -1552,13 +1578,25 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 accelerometer.addBumpsManual(cursor.getInt(3));
 
 
-                Log.d("TEST","latitude "+ cursor.getDouble(0));
-                Log.d("TEST","longitude "+ cursor.getDouble(1));
-                Log.d("TEST","intensity "+ cursor.getDouble(2));
+                Log.d("TESTa","latitude "+ cursor.getDouble(0));
+                Log.d("TESTa","longitude "+ cursor.getDouble(1));
+                Log.d("TESTa","intensity "+ cursor.getDouble(2));
+
+            if (i==50) {
+                Log.d("TESTa","pre4o sa vzpol ");
+                updatesLock = false;
+                sb.setTransactionSuccessful();
+                sb.endTransaction();
+                break;
+            }
             } while (cursor.moveToNext());
+            if (!cursor.moveToNext()) {
+
+            }
+
         }
-        sb.setTransactionSuccessful();
-        sb.endTransaction();*/
+*/
+
     }
 
     public void stop_servise(){
@@ -1649,8 +1687,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         int a =sequel;
                         lista.remove(a);
                         bumpsManuala.remove(a);
+sb.beginTransaction();
                         sb.execSQL("DELETE FROM new_bumps WHERE latitude="+loc.getLatitude() +" and  longitude="+loc.getLongitude()
                                 +" and intensity="+ data );
+sb.setTransactionSuccessful();
+                        sb.endTransaction();
                         saveBump(lista, bumpsManuala,sequel);
                     } else {
                         Log.d("asdfgsa","error");

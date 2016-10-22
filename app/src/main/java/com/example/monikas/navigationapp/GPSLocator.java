@@ -1,11 +1,9 @@
 package com.example.monikas.navigationapp;
 
-
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -25,25 +23,16 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.w3c.dom.Document;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagMap;
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
-
 import static com.example.monikas.navigationapp.FragmentActivity.mapboxik;
-import static com.example.monikas.navigationapp.MainActivity.mapView;
+
 
 /**
  * Created by monikas on 24. 3. 2015.
@@ -54,7 +43,6 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap map;
     private boolean navigation;
-    private JSONArray bumps;
     private PolylineOptions road;
     private float level;
     private LatLng latLng;
@@ -155,29 +143,25 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
             return;
         }
 
-
-          /////////////////////////////////////////////////////
         if (manual == 0 ) {
             BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.bump);
             map.addMarker(new MarkerOptions()
                     .alpha(0.8f)
                     .flat(false)
-                    .position(position)                                                                        // at the location you needed
+                    .position(position)
                     .title("Number of detections: " + count )
                     .icon(icon));
-      }
+        }
         else {
             BitmapDescriptor icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA);
             map.addMarker(new MarkerOptions()
                     .alpha(0.8f)
                     .flat(false)
-                    .position(position)                                                                        // at the location you needed
+                    .position(position)
                     .title("Manually added " +
                             "Number of detections:" + count )
                     .icon(icon));
-
-       }
-
+        }
     }
 
 
@@ -216,14 +200,13 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         if (location!=null && flagMap) {
             try {
                 mapboxik.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
-
-            } catch (NullPointerException e) {
+            } catch  (NullPointerException e) {
             }
         }
-
-
     }
+
     /*
+     Pridanie markeru, ešte to využijem
      for(int i=0; i < 10000; i++)
             mapboxik.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions()
                 .position(new com.mapbox.mapboxsdk.geometry.LatLng(49.2046277+i, 18.8356887))
