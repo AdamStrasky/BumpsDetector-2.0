@@ -1,6 +1,8 @@
 package com.example.monikas.navigationapp;
 
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.preference.PreferenceActivity;
 
 import android.os.Bundle;
@@ -11,6 +13,8 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.settings);
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+
 
     }
 

@@ -2,6 +2,7 @@ package com.example.monikas.navigationapp;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,6 +12,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -43,6 +47,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
+import static com.example.monikas.navigationapp.FragmentActivity.flagMap;
+import static com.example.monikas.navigationapp.FragmentActivity.mapboxik;
+import static com.example.monikas.navigationapp.FragmentActivity.pesek;
+
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
 
@@ -57,14 +66,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public static final String PREF_FILE_NAME = "Settings";
     private Float intensity = null;
     LinearLayout confirm;
-    Button add_button, save_button, delete_button;
+    public static LinearLayout       mapConfirm;
+
+    Button add_button, save_button, delete_button,downloand_button,back_button;
     public static MapView mapView = null;
 
 
     public static ProgressBar progressBar;
     public static Button downloadButton;
-    public static Button listButton;
-
+    public static Button listButton,navig_on;
 
 
     @Override
@@ -73,29 +83,40 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
 
 
+
+
+
         MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
 
          mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
-
-        listButton = (Button) findViewById(R.id.list_button);
-        downloadButton = (Button) findViewById(R.id.download_button);
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);
         delete_button = (Button) findViewById(R.id.delete_btn);
+        downloand_button = (Button) findViewById(R.id.saveMap_btn);
+        back_button = (Button) findViewById(R.id.backMap_btn);
+        navig_on = (Button) findViewById(R.id.navig_on);
+        mapConfirm = (LinearLayout) findViewById(R.id.mapConfirm);
         confirm = (LinearLayout) findViewById(R.id.confirm);
+
+        navig_on.setVisibility(View.INVISIBLE);
         confirm.setVisibility(View.INVISIBLE);
+        mapConfirm.setVisibility(View.INVISIBLE);
         confirm.setOnClickListener(this);
         save_button.setOnClickListener(this);
         delete_button.setOnClickListener(this);
         add_button.setOnClickListener(this);
+        downloand_button.setOnClickListener(this);
+        back_button.setOnClickListener(this);
+        navig_on.setOnClickListener(this);
 
 
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (v.getId() == searchBar.getId()) {
                     searchBar.setCursorVisible(true);
                     searchBar.setText("");
@@ -179,6 +200,20 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 confirm.setVisibility(View.INVISIBLE);
                 // disable listener na klik
                 fragmentActivity.gps.setUpMap(false);
+                break;
+            case R.id.backMap_btn:
+                fragmentActivity.alerttext(pesek,1);
+                mapConfirm.setVisibility(View.INVISIBLE);
+                flagMap=true;
+                break;
+            case R.id.saveMap_btn:
+                fragmentActivity.downloadRegion(pesek, 0);
+                mapConfirm.setVisibility(View.INVISIBLE);
+                flagMap=true;
+                break;
+            case R.id.navig_on:
+                navig_on.setVisibility(View.INVISIBLE);
+                flagMap=true;
                 break;
         }
     }
@@ -276,6 +311,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.all_bumps:
+
                 fragmentActivity.level = ALL_BUMPS;
                 LatLng convert_location =  fragmentActivity.gps.getCurrentLatLng();
                 fragmentActivity.getAllBumps(convert_location.latitude,convert_location.longitude);
@@ -296,6 +332,23 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
+            case R.id.download:
+                flagMap=true;
+
+                navig_on.setVisibility(View.INVISIBLE);
+               if ( flagDownload)
+                   Toast.makeText(this, "Momentálne sťahujete,nemožte 2 naraz", Toast.LENGTH_LONG).show();
+                else
+                fragmentActivity.downloadRegionDialog();
+                return true;
+            case R.id.list:
+                mapConfirm.setVisibility(View.INVISIBLE);
+                if ( flagDownload)
+                    Toast.makeText(this, "Momentálne sťahujete,nemožte pristupiť k stiahnutým mapám", Toast.LENGTH_LONG).show();
+                else
+                fragmentActivity.downloadedRegionList();
+                return true;
+
 
 
             case R.id.exit:

@@ -38,8 +38,10 @@ import org.w3c.dom.Document;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.monikas.navigationapp.FragmentActivity.flagMap;
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
+
 import static com.example.monikas.navigationapp.FragmentActivity.mapboxik;
 import static com.example.monikas.navigationapp.MainActivity.mapView;
 
@@ -211,9 +213,23 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         if (isNavigation() && MainActivity.isActivityVisible())
             goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
 
-        mapboxik.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(),getmCurrentLocation().getLongitude())));
+        if (location!=null && flagMap) {
+            try {
+                mapboxik.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
+
+            } catch (NullPointerException e) {
+            }
+        }
+
 
     }
+    /*
+     for(int i=0; i < 10000; i++)
+            mapboxik.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions()
+                .position(new com.mapbox.mapboxsdk.geometry.LatLng(49.2046277+i, 18.8356887))
+                .title("Hello World!")
+                .snippet("Welcome to my marker."));
+     */
 
 
     public void updateMap () {

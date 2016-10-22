@@ -34,7 +34,11 @@
         android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"/>
 
 
-
+    <Button
+        android:id="@+id/navig_on"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:text="Back on Position" />
 
     <LinearLayout
 

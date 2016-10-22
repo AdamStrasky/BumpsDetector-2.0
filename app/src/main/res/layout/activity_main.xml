@@ -63,6 +63,35 @@
     </LinearLayout>
 
 
+    <LinearLayout
+
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:id="@+id/mapConfirm"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="20dp">
+
+        <Button
+            android:id="@+id/saveMap_btn"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:text="Download" />
+
+        <Button
+            android:id="@+id/backMap_btn"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:text="Back" />
+    </LinearLayout>
+
+
+
+
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.MapFragment"
@@ -115,48 +144,13 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
 
-
-    <LinearLayout
-        android:id="@+id/bottom_navigation"
-        style="?android:attr/buttonBarStyle"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
+    <Button
+        android:id="@+id/navig_on"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:text="Back on Position"
         android:layout_alignParentBottom="true"
-
-        android:elevation="8dp"
-        android:orientation="horizontal"
-        android:paddingTop="8dp">
-
-        <Button
-            android:id="@+id/download_button"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:clickable="true"
-
-            android:text="Download"
-            android:textAllCaps="false"
-
-            android:textSize="12sp" />
-
-        <Button
-            android:id="@+id/list_button"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-
-            android:text="List"
-            android:textAllCaps="false"
-
-            android:textSize="12sp" />
-
-    </LinearLayout>
-
-
+        android:layout_centerHorizontal="true" />
 
 
 </RelativeLayout>
