@@ -37,8 +37,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
-import static com.example.monikas.navigationapp.FragmentActivity.flagMap;
-import static com.example.monikas.navigationapp.FragmentActivity.pesek;
+import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
+import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
@@ -181,18 +181,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 break;
             case R.id.backMap_btn:
                 // spusti sa alert dialog na opetovné hladanie mapy
-                fragmentActivity.alerttext(pesek,1);
+                fragmentActivity.alertSelectRegion(selectedName,1);
                 mapConfirm.setVisibility(View.INVISIBLE);
-                flagMap=true;
+                setOnPosition =true;
                 break;
             case R.id.saveMap_btn:
-                fragmentActivity.downloadRegion(pesek, 0);
+                fragmentActivity.downloadRegion(selectedName, 0);
                 mapConfirm.setVisibility(View.INVISIBLE);
-                flagMap=true;
+                setOnPosition =true;
                 break;
             case R.id.navig_on:
                 navig_on.setVisibility(View.INVISIBLE);
-                flagMap=true;
+                setOnPosition =true;
                 break;
         }
     }
@@ -312,7 +312,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             case R.id.download:
-                flagMap=true;
+                setOnPosition =true;
 
                 navig_on.setVisibility(View.INVISIBLE);
                if ( flagDownload)

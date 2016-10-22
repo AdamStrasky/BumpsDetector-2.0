@@ -52,14 +52,16 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Save" />
+            android:text="Save"
+            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/delete_btn"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Delete" />
+            android:text="Delete"
+            android:textAllCaps="false" />
     </LinearLayout>
 
 
@@ -79,14 +81,16 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Download" />
+            android:text="Download"
+            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/backMap_btn"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Back" />
+            android:text="Back"
+            android:textAllCaps="false" />
     </LinearLayout>
 
 
@@ -116,7 +120,7 @@
         android:layout_alignParentEnd="true"
         mapbox:style_url="mapbox://styles/mapbox/streets-v9"
         mapbox:zoom="11"/>
-       />
+    />
 
 
     <ProgressBar
@@ -142,15 +146,17 @@
         android:textSize="36sp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:textAllCaps="false" />
 
     <Button
         android:id="@+id/navig_on"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
-        android:text="Back on Position"
+        android:text="Back on my position"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:textAllCaps="false" />
 
 
 </RelativeLayout>

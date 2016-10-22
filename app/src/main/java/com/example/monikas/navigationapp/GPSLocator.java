@@ -28,7 +28,7 @@ import org.w3c.dom.Document;
 
 import java.util.ArrayList;
 
-import static com.example.monikas.navigationapp.FragmentActivity.flagMap;
+import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
 import static com.example.monikas.navigationapp.FragmentActivity.mapboxik;
@@ -197,7 +197,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         if (isNavigation() && MainActivity.isActivityVisible())
             goTo(new LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude()), MainActivity.ZOOM_LEVEL);
 
-        if (location!=null && flagMap) {
+        if (location!=null && setOnPosition) {
             try {
                 mapboxik.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
             } catch  (NullPointerException e) {

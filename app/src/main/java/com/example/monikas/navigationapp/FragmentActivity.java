@@ -106,7 +106,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     private boolean isEndNotified;
     private boolean flagA=false;
-    public static boolean flagMap=true;
+    public static boolean setOnPosition =true;
     public static boolean flagDownload=false;
     private boolean flagB=false;
     private int regionSelected;
@@ -114,7 +114,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     // Offline objects
     private OfflineManager offlineManager;
     private OfflineRegion offlineRegion;
-    public static String pesek= null;
+    public static String selectedName = null;
     private final static String TAG = "MainActivity";
 
     // JSON encoding/decoding
@@ -133,16 +133,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             @Override
             public void onMapReady(final MapboxMap mapboxMap) {
                 mapboxik = mapboxMap;
-                if (flagMap)
+
+                if (setOnPosition)
                     mapboxik.setMyLocationEnabled(true);
                 }
             });
 
         offlineManager = OfflineManager.getInstance(getActivity());
-
-
-
-
 
         initialization_database();
         get_loaded_index();
@@ -166,50 +163,41 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
         // pravidelný update ak nemám povolený internet
         new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
-        new Timer().schedule(new Regular_upgradeA(), 15000, 15000);// 3600000
+
+        //////////////////////////////odstranit, len na testovanie
+       // new Timer().schedule(new VkladanieDoDatabazy(), 15000, 15000);// 3600000
     }
 
-    public  void murko ( ){
-        Log.d("adssvfasdf", "vola sa to alebo nie ");
+    public  void offlineMapaNaMojejGPS ( ){
+        // asi odstranit
         gps=mLocnServGPS;
         if (gps!=null && gps.getCurrentLatLng()!=null) {
             offlineManager.listOfflineRegions(new OfflineManager.ListOfflineRegionsCallback() {
                     @Override
                      public void onList(final OfflineRegion[] offlineRegions) {
-                       if (offlineRegions == null || offlineRegions.length == 0) {
-                         return;
-                    }
-                    boolean isInMap= false;
-                    int aaa=0;
-                     for (OfflineRegion offlineRegion : offlineRegions) {
-                       Log.d("adssvfasdf", getRegionName(offlineRegion));
-                       LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[aaa].getDefinition()).getBounds();
-                         if (bounds.contains(new com.mapbox.mapboxsdk.geometry.LatLng(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude))) {
-                             isInMap=true;
-                              Log.d("adssvfasdf", "obsahuje");
-                         }
-                         else {
-                           Log.d("adssvfasdf", "neobsahuje ");
-                         }
-                         aaa++;
-                     }
-                     if(isInMap) {
-                         mapNotification=false;
-                      downloadRegionDialogA();
-                       }
+                        if (offlineRegions == null || offlineRegions.length == 0)
+                             return;
 
+                        boolean isInMap= false;
+                        int poradie=0;
+                        for (OfflineRegion offlineRegion : offlineRegions) {
+                            LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[poradie].getDefinition()).getBounds();
+                            if (bounds.contains(new com.mapbox.mapboxsdk.geometry.LatLng(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude)))
+                                isInMap=true;
+                            poradie++;
+                        }
+                        if(isInMap) {
+                            mapNotification=false;
+                        alertMissingMap();
+                        }
                     }
 
                     @Override
                      public void onError(String error) {
                      }
-            }
-
-            );
+            });
         }
     }
-
-
 
     public void get_loaded_index (){
         //  najvyššie uložený index po uspešnej transakcie collision
@@ -223,57 +211,35 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             editor.commit();
         }
     }
-
-
-    /////////////////////////////////////
-/////////////////////////////////
-    ///////////////////////////////
-    private void downloadRegionDialogA() {
-
-        // Set up download interaction. Display a dialog
-        // when the user clicks download button and require
-        // a user-provided region name
+    // asi zmazat, ak nebudem riesit net
+    private void alertMissingMap() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-
-
-
-        // Build the dialog box
         builder.setTitle("Internet connection")
                .setMessage("Your map is not available. Please connect to internet or download map of region if you want use a map")
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
                         dialog.cancel();
                     }
                 });
-
-
-        // Display the dialog
         builder.show();
     }
 
-
-
-
-
-
     public void downloadRegionDialog() {
-
         if (!isNetworkAvailable()) {
-            Toast.makeText(getActivity(), "You must to be connected to internet if zou want download map", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "You must to be connected to internet if you want download map", Toast.LENGTH_SHORT).show();
               return;
         }
-        pesek=null;
+        selectedName = null;
         AlertDialog.Builder builderSingle = new AlertDialog.Builder( getActivity());
         builderSingle.setIcon(R.drawable.ic_launcher);
-        builderSingle.setTitle("Select One Name:-");
+        builderSingle.setTitle("Select map for download");
 
         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                 getActivity(),
                 android.R.layout.select_dialog_singlechoice);
-        arrayAdapter.add("Downloads current map");
-        arrayAdapter.add("Select region to download ");
+        arrayAdapter.add("Download current map     ");
+        arrayAdapter.add("Select region to download");
 
         builderSingle.setNegativeButton(
                 "cancel",
@@ -289,64 +255,49 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                         alerttext(null,which);
-                      
+                        // zvolená možnosť vyberu mapy
+                      alertSelectRegion(null,which);
                     }
                 });
         builderSingle.show();
-
-
-
-        // Set up download interaction. Display a dialog
-        // when the user clicks download button and require
-        // a user-provided region name
-
     }
 
-    public void alerttext(String meno ,int which) {
-        String strName = "test na doplnenie";
-        final int   click=which;
+    public void alertSelectRegion(String region , int which) {
+        String strName = "Map for download";
+        // ktorá možnosť bola zvolená - currnet/ select
+        final int  click=which;
         final EditText regionNameEdit = new EditText(getActivity());
         if (which==0 )
-            regionNameEdit.setHint("zadaj meno mapy");
+            regionNameEdit.setHint("Write name of region");
         else
-            regionNameEdit.setHint("zadaj region na stiahnutie");
-        if (meno!=null)
-            regionNameEdit.setText(meno);
+            regionNameEdit.setHint("Write name of region for download");
+        // ak bolo znovuotvorene, nech zostane uložený nazov regionu
+        if (region!=null)
+            regionNameEdit.setText(region);
 
-        AlertDialog.Builder sayWindows = new AlertDialog.Builder(
-                getActivity());
-
-        sayWindows.setPositiveButton("Download", null);
-
-        sayWindows.setNegativeButton("Cancel", null);
+        AlertDialog.Builder windowAlert = new AlertDialog.Builder(getActivity());
+        windowAlert.setPositiveButton("Download", null);
+        windowAlert.setNegativeButton("Cancel", null);
+        // ak volím select, dať možnosť aj zobraziť mapu
         if (which !=0)
-            sayWindows.setNeutralButton("Navige to", null);
-
-
-        sayWindows.setView(regionNameEdit);
-        sayWindows.setTitle(strName);
-
-        final AlertDialog mAlertDialog = sayWindows.create();
+            windowAlert.setNeutralButton("Navige to", null);
+        windowAlert.setView(regionNameEdit);
+        windowAlert.setTitle(strName);
+        final AlertDialog mAlertDialog = windowAlert.create();
         mAlertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-
             @Override
             public void onShow(DialogInterface dialog) {
-
-                Button b = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                b.setOnClickListener(new View.OnClickListener() {
+                Button positive_btn = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                positive_btn.setOnClickListener(new View.OnClickListener() {
 
                     @Override
                     public void onClick(View view) {
                         String regionName = regionNameEdit.getText().toString();
-                        // Require a region name to begin the download.
-                        // If the user-provided string is empty, display
-                        // a toast message and do not begin download.
                         if (regionName.length() == 0) {
                             Toast.makeText(getActivity(), "Region name cannot be empty.", Toast.LENGTH_SHORT).show();
                         } else {
+                            // zvolené zadanie regionu
                             if (click == 1) {
-
                                 Address address=null;
                                 try {
                                     address = Route.findLocality(regionName, getActivity());
@@ -366,54 +317,42 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 mAlertDialog.cancel();
                                 downloadRegion(regionName, click);
                             }
-
-
                         }
                     }
                 });
-
-                Button c = mAlertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
-                c.setOnClickListener(new View.OnClickListener() {
+                // kliknutie na navigovanie na zadani region
+                Button neutral_btn = mAlertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+                neutral_btn.setOnClickListener(new View.OnClickListener() {
 
                     @Override
                     public void onClick(View view) {
                         Address address=null;
-                        LatLng to_position = null;
                         String regionName = regionNameEdit.getText().toString();
-                        Log.d("asdwasd", String.valueOf(regionName));
                         try {
                             address = Route.findLocality(regionName, getActivity());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
 
-
                         if (address == null) {
-                            Log.d("yfadsfa", "ddddddddddddddddd");
-                            Log.d("yfadsfa", "preco nebolo null");
-                            endProgress("Unable to find location, wrong name!");
-                            Toast.makeText(getActivity(), "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity(), "Region not exist", Toast.LENGTH_LONG).show();
 
                         }else {
-                            flagMap=false;
+                           setOnPosition =false;
                             mapboxik.setMyLocationEnabled(false);
                             mAlertDialog.cancel();
 
-                            pesek=regionName;
-                            to_position = new LatLng(address.getLatitude(), address.getLongitude());
-
-
+                            selectedName =regionName;
+                            LatLng position = new LatLng(address.getLatitude(), address.getLongitude());
                             CameraPosition cameraPosition = new CameraPosition.Builder()
-                                    .target(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude, to_position.longitude))
+                                    .target(new com.mapbox.mapboxsdk.geometry.LatLng(position.latitude, position.longitude))
                                     .zoom(15)
                                     .build();
 
-                            // Move camera to new position
+                            //  posun kamery na novu poziciu
                             mapboxik.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
+                            // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
                             mapConfirm.setVisibility(View.VISIBLE);
-
-
                         }
                     }
                 });
@@ -421,123 +360,19 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
         });
         mAlertDialog.show();
-
-                 /*   String strName = arrayAdapter.getItem(which);
-                    final int   click=which;
-
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-
-
-
-                        // Build the dialog box
-
-                        builder.setTitle(strName)
-                                .setView(regionNameEdit)
-                               .setPositiveButton("Download", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        String regionName = regionNameEdit.getText().toString();
-                                        // Require a region name to begin the download.
-                                        // If the user-provided string is empty, display
-                                        // a toast message and do not begin download.
-                                        if (regionName.length() == 0) {
-                                            Toast.makeText(getActivity(), "Region name cannot be empty.", Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            dialog.cancel();
-
-                                            Log.d("yfadsfa","das" + String.valueOf(click));
-                                            // Begin download process
-                                            downloadRegion(regionName,click);
-                                        }
-                                    }
-                                });
-
-                             builder.setTitle(strName)
-                                .setView(regionNameEdit).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.cancel();
-                                    }
-                                });
-                        if (which !=0)
-                         builder.setTitle(strName)
-                                .setView(regionNameEdit)
-                                .setNeutralButton("Navige to", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                    Address address=null;
-                                        LatLng to_position = null;
-                                        String regionName = regionNameEdit.getText().toString();
-                                    Log.d("asdwasd", String.valueOf(regionName));
-                                        try {
-                                            address = Route.findLocality(regionName, getActivity());
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
-
-
-                                        if (address == null) {
-                                            Log.d("yfadsfa", "ddddddddddddddddd");
-                                            Log.d("yfadsfa", "preco nebolo null");
-                                            endProgress("Unable to find location, wrong name!");
-                                            Toast.makeText(getActivity(), "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
-
-                                        }else {
-                                            mapboxik.setMyLocationEnabled(false);
-                                            flagMap=false;
-                                            to_position = new LatLng(address.getLatitude(), address.getLongitude());
-
-
-                                            CameraPosition cameraPosition = new CameraPosition.Builder()
-                                                    .target(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude, to_position.longitude))
-                                                    .zoom(15)
-                                                    .build();
-
-                                            // Move camera to new position
-                                            mapboxik.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                                        }
-
-                                    }
-                                });
-
-
-
-                        // Display the dialog
-                        builder.show();*/
     }
 
-    public void downloadRegion(final String regionName,  int a) {
-
-
+    public void downloadRegion(final String regionName,  int select) {
         LatLngBounds bounds =null;
-        if (a == 0) {
-            Log.d("yfadsfa", "bbbbbbbbb");
+        // ak bola zvolená sučasna obrazovka, vezme mapu zobrazenu na displeji
+        if (select == 0) {
             bounds = mapboxik.getProjection().getVisibleRegion().latLngBounds;
         }
-        else
-            Log.d("yfadsfa", "xxxxxxxxxxxxx");
 
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-        // Define offline region parameters, including bounds,
-        // min/max zoom, and metadata
-
-        // Start the progressBar
         startProgress();
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-        Address address = null;
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-        LatLng to_position = null;
-        Log.d("yfadsfa", "aaaaaaaaaaa");
+        if (select ==1) {
+            Address address = null;
 
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-       // bounds = mapboxik.getProjection().getVisibleRegion().latLngBounds;
-
-
-
-
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-       if (a ==1) {
-           Log.d("yfadsfa", "ccccccccccccccccc");
             try {
                 address = Route.findLocality(regionName, getActivity());
             } catch (IOException e) {
@@ -545,69 +380,52 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
 
             if (address == null) {
-                Log.d("yfadsfa", "ddddddddddddddddd");
-                Log.d("yfadsfa", "preco nebolo null");
                 endProgress("Unable to find location, wrong name!");
                 Toast.makeText(getActivity(), "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
                  return;
             }else {
-
-                to_position = new LatLng(address.getLatitude(), address.getLongitude());
-
                 bounds = new LatLngBounds.Builder()
-                        .include(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude + 0.2, to_position.longitude + 0.2)) // Northeast
-                        .include(new com.mapbox.mapboxsdk.geometry.LatLng(to_position.latitude - 0.2, to_position.longitude - .2)) // Southwest
+                        .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() + 0.2, address.getLongitude() + 0.2)) // Northeast
+                        .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() - 0.2, address.getLongitude() - .2)) // Southwest
                         .build();
-
-
-
             }
-
         }
 
-
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-            String styleURL = mapboxik.getStyleUrl();
+        String styleURL = mapboxik.getStyleUrl();
         double minZoom = mapboxik.getCameraPosition().zoom;
-            double maxZoom = mapboxik.getMaxZoom();
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-            float pixelRatio = this.getResources().getDisplayMetrics().density;
+        double maxZoom = mapboxik.getMaxZoom();
+        float pixelRatio = this.getResources().getDisplayMetrics().density;
             OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
                     styleURL, bounds, minZoom, maxZoom, pixelRatio);
 
-        Log.d("yfadsfa", definition.toString());
-        Log.d("yfadsfa", String.valueOf(pixelRatio));
-        Log.d("yfadsfa", "aaaaaaaaaaa");
-            // Build a JSONObject using the user-defined offline region title,
-            // convert it into string, and use it to create a metadata variable.
-            // The metadata varaible will later be passed to createOfflineRegion()
-            byte[] metadata;
-            try {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put(JSON_FIELD_REGION_NAME, regionName);
-                String json = jsonObject.toString();
-                metadata = json.getBytes(JSON_CHARSET);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to encode metadata: " + e.getMessage());
-                metadata = null;
+       // Build a JSONObject using the user-defined offline region title,
+        // convert it into string, and use it to create a metadata variable.
+        // The metadata varaible will later be passed to createOfflineRegion()
+        byte[] metadata;
+        try {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put(JSON_FIELD_REGION_NAME, regionName);
+            String json = jsonObject.toString();
+            metadata = json.getBytes(JSON_CHARSET);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to encode metadata: " + e.getMessage());
+            metadata = null;
+        }
+
+        // Create the offline region and launch the download
+        offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
+            @Override
+            public void onCreate(OfflineRegion offlineRegion) {
+                Log.d(TAG, "Offline region created: " + regionName);
+                FragmentActivity.this.offlineRegion = offlineRegion;/////////////////////////////
+                launchDownload();
             }
 
-
-            // Create the offline region and launch the download
-            offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
-                @Override
-                public void onCreate(OfflineRegion offlineRegion) {
-                    Log.d(TAG, "Offline region created: " + regionName);
-                    FragmentActivity.this.offlineRegion = offlineRegion;/////////////////////////////
-                    launchDownload();
-                }
-
-                @Override
-                public void onError(String error) {
-                    Log.e(TAG, "Error: " + error);
-                }
-            });
-
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Error: " + error);
+            }
+        });
     }
 
     private void launchDownload() {
@@ -625,13 +443,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     // Download complete
 
                     endProgress("Region downloaded successfully.");
-                  //
                     return;
                 } else if (status.isRequiredResourceCountPrecise()) {
                     // Switch to determinate state
                     setPercentage((int) Math.round(percentage));
                 }
-           //     flagDownload=false;
                 // Log what is being currently downloaded
                 Log.d(TAG, String.format("%s/%s resources; %s bytes downloaded.",
                         String.valueOf(status.getCompletedResourceCount()),
@@ -653,11 +469,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
         });
 
-
-
         // Change the region state
         offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE);
-        Log.d("adasfgdasdyagea", "zapol sa offliene region ");
     }
 
     public void downloadedRegionList() {
@@ -697,7 +510,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         .setPositiveButton("Navigate to", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
-                                flagMap= false;
+                                setOnPosition = false;
                                 Toast.makeText(getActivity(), items[regionSelected], Toast.LENGTH_LONG).show();
 
                                 // Get the region bounds and zoom
@@ -781,11 +594,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     // Progress bar methods
     private void startProgress() {
-        // Disable buttons
 
-
-       // downloadButton.setEnabled(false);
-       // list_of_region.setEnabled(false);
         flagDownload=true;
         // Start and show the progress bar
         isEndNotified = false;
@@ -802,10 +611,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         // Don't notify more than once
         if (isEndNotified) return;
 
-        // Enable buttons
-       // downloadButton.setEnabled(true);
-      //  list_of_region.setEnabled(true);
-
         // Stop and hide the progress bar
         isEndNotified = true;
         flagDownload=false;
@@ -817,48 +622,20 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
     }
 
-
-
-
-
-
-
-    /////////////////////////////////////
-
-
-
-
-
-
-
     public void initialization_database(){
         // inicializacia databazy
         databaseHelper = new DatabaseOpenHelper(getActivity());
         sb = databaseHelper.getWritableDatabase();
     }
 
-
-
-
-     /*   public void onMyLocationChange() {
-
-                if (gps != null && gps.getCurrentLatLng()!= null) {
-                 map.easeCamera(CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude)));
-                }
-
-        }*/
-
-
-
     private class Regular_upgrade extends TimerTask {
         @Override
         public void run() {
             regular_update = true;
-
         }
     }
-
-    private class Regular_upgradeA extends TimerTask {
+ // pravdepodobne vymazať
+    private class VkladanieDoDatabazy extends TimerTask {
         @Override
         public void run() {
 
@@ -900,8 +677,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
             ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
             ArrayList<Integer> bumpsManual*/
-
-
         }
     }
 
@@ -1549,7 +1324,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
 
     }
-
+// treba opraviť
     public void nacitajDB(){
     /*  if (updatesLock)
           return;
@@ -1624,7 +1399,8 @@ int i=0;
                 }});
         }
     }
- public  boolean updatesLock = false;
+
+    public  boolean updatesLock = false;
     private boolean regularUpdatesLock = false;
     private class SendBumpsToDb extends TimerTask {
 
@@ -1687,14 +1463,14 @@ int i=0;
                         int a =sequel;
                         lista.remove(a);
                         bumpsManuala.remove(a);
-sb.beginTransaction();
+                        sb.beginTransaction();
                         sb.execSQL("DELETE FROM new_bumps WHERE latitude="+loc.getLatitude() +" and  longitude="+loc.getLongitude()
                                 +" and intensity="+ data );
-sb.setTransactionSuccessful();
+                        sb.setTransactionSuccessful();
                         sb.endTransaction();
                         saveBump(lista, bumpsManuala,sequel);
                     } else {
-                        Log.d("asdfgsa","error");
+                        Log.d("TEST","error");
                         saveBump(list, bumpsManual,sequel+1);
                     }
 
@@ -1725,17 +1501,13 @@ sb.setTransactionSuccessful();
                      Toast.makeText(getActivity(), "Setting map", Toast.LENGTH_SHORT).show();
                      regular_update =false;
                      mLocnServGPS.setLevel(level);
-                Log.d("asdfgsa","pred null");
-                  gps = mLocnServGPS;
-                  if (gps!=null ) {
-                      Log.d("asdfgsa","po null  null");
-                      LatLng convert_location = gps.getCurrentLatLng();
-
-                      if (convert_location != null) {
-                          Log.d("asdfgsa","convert_location  null");
+                     gps = mLocnServGPS;
+                     if (gps!=null ) {
+                        LatLng convert_location = gps.getCurrentLatLng();
+                        if (convert_location != null) {
                           get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
-                      }
-                  }
+                        }
+                     }
             }
             /// ak je to prve spustenie alebo pravidelný update
             else if (regular_update) {
