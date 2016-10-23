@@ -103,13 +103,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
     private int loaded_index;
-    public static   MapboxMap mapboxik;
+    public static   MapboxMap mapbox;
 
     private boolean isEndNotified;
-    private boolean flagA=false;
     public static boolean setOnPosition =true;
     public static boolean flagDownload=false;
-    private boolean flagB=false;
+
     private int regionSelected;
     private boolean mapNotification=true;
     // Offline objects
@@ -122,11 +121,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public final static String JSON_CHARSET = "UTF-8";
     public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
 
-
-    private static int flagd =0;
-
-
-    Button  save_button, back_button;
     private  boolean regular_update = false;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -137,10 +131,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(final MapboxMap mapboxMap) {
-                mapboxik = mapboxMap;
-
+                mapbox = mapboxMap;
                 if (setOnPosition)
-                    mapboxik.setMyLocationEnabled(true);
+                    mapbox.setMyLocationEnabled(true);
                 }
             });
 
@@ -344,7 +337,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
                         }else {
                            setOnPosition =false;
-                            mapboxik.setMyLocationEnabled(false);
+                            mapbox.setMyLocationEnabled(false);
                             mAlertDialog.cancel();
 
                             selectedName =regionName;
@@ -355,7 +348,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                     .build();
 
                             //  posun kamery na novu poziciu
-                            mapboxik.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                            mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                             // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
                             mapConfirm.setVisibility(View.VISIBLE);
                         }
@@ -371,7 +364,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         LatLngBounds bounds =null;
         // ak bola zvolená sučasna obrazovka, vezme mapu zobrazenu na displeji
         if (select == 0) {
-            bounds = mapboxik.getProjection().getVisibleRegion().latLngBounds;
+            bounds = mapbox.getProjection().getVisibleRegion().latLngBounds;
         }
 
         startProgress();
@@ -396,9 +389,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
         }
 
-        String styleURL = mapboxik.getStyleUrl();
-        double minZoom = mapboxik.getCameraPosition().zoom;
-        double maxZoom = mapboxik.getMaxZoom();
+        String styleURL = mapbox.getStyleUrl();
+        double minZoom = mapbox.getCameraPosition().zoom;
+        double maxZoom = mapbox.getMaxZoom();
         float pixelRatio = this.getResources().getDisplayMetrics().density;
             OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
                     styleURL, bounds, minZoom, maxZoom, pixelRatio);
@@ -530,7 +523,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
                                 // Move camera to new position
                                 navig_on.setVisibility(View.VISIBLE);
-                                mapboxik.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
                             }
                         })
@@ -648,8 +641,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 Log.d("TEaaaaaST"," nepresiel ");
                 return;
             }
-            if (flagd==1 )
-                return;
+
           //  if (mapNotification && flagA==true)
            //     murko();
 
@@ -670,7 +662,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         updatesLock = false;
                         sb.setTransactionSuccessful();
                         sb.endTransaction();
-                        flagd=1;
+
                         break;
                     }
 
@@ -679,14 +671,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             }
             Log.d("TEaaaaaST"," naplnene");
 
-
-       /* Location location;
-            Float data
-            HashMap<Location, Float> hashToArray = new HashMap();
-            hashToArray.put(location,data);
-
-            ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
-            ArrayList<Integer> bumpsManual*/
         }
     }
 
@@ -1321,7 +1305,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 if(activity != null && mLocnServGPS.getCurrentLatLng()!=null ) {
                      mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
                 }
-                nacitajDB();
+               // loadSaveDB();
 
                 //vytlky sa do dabatazy odosielaju kazdu minutu
                 new Timer().schedule(new SendBumpsToDb(), 0, 30000);
@@ -1336,7 +1320,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     }
 // treba opraviť
-    public void nacitajDB(){
+    public void loadSaveDB(){
   if (updatesLock)
           return;
 
@@ -1394,7 +1378,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     }
 
-
     private class MapSetter extends TimerTask {
          @Override
         public void run() {
@@ -1418,8 +1401,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 @Override
                 public void run() {
                     //ak je pripojenie na internet
-                    //if (isNetworkAvailable()) {
-                      //   if (!(isEneableDownload() && !isConnectedWIFI())) {
+                    if (isNetworkAvailable()) {
+                        if (!(isEneableDownload() && !isConnectedWIFI())) {
 
                              if (accelerometer != null) {
                                  ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
@@ -1444,40 +1427,29 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                      else
                                         Log.d("adasd","nedostal sa lebo bol lock ");
                                  }
-                           //  }
-                       //  }
+                            }
+                        }
                     }
-                  /*  else {
-                          if (isEneableShowText())
-                            Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();
-                      }*/
+
                 }}
             );
         }
     }
+    private boolean  lock =true;
+    private ArrayList<HashMap<Location, Float>> listHelp;
+    private ArrayList<Integer> bumpsManualHelp;
+    private Integer  poradie;
     Handler threadHandler = null;
-    private void CreateThread() {
-        Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
-        // We create a new thread
+    public void saveBump( ArrayList<HashMap<Location, Float>> list,  ArrayList<Integer> bumpsManual,  Integer sequel) {
+        listHelp=list;
+        bumpsManualHelp= bumpsManual;
+        poradie=sequel;
         Thread t = new Thread() {
             public void run() {
-                Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
                 Looper.prepare();
-                Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
-                Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
-                Log.d("adasd", "siye "+String.valueOf(listHelp.size()));
-                sb.beginTransaction();
-                while (flah) {
-
-
+                while (true) {
                     if (lock) {
-                        Log.d("adasd","spustil sa while");
-
-                        Log.d("adasd", String.valueOf(poradie));
-                        if (!listHelp.isEmpty() && listHelp.size() > poradie) {
-
-
-                            Log.d("adasd","1");
+                      if (!listHelp.isEmpty() && listHelp.size() > poradie) {
                             Iterator it = listHelp.get(poradie).entrySet().iterator();
                             HashMap.Entry pair = (HashMap.Entry) it.next();    //next
                             final Location loc = (Location) pair.getKey();
@@ -1485,165 +1457,54 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                             Handler = new Bump(loc, data, bumpsManualHelp.get(poradie));
                             Handler.getResponse(new CallBackReturn() {
                                 public void callback(String results) {
-                                    Log.d("adasd","2");
                                     if (results.equals("success")) {
-                                        Log.d("adasd","3");
-                                        int a =poradie;
-                                        listHelp.remove(a);
-                                        Log.d("adasd",String.valueOf(listHelp.size()));
-                                        bumpsManualHelp.remove(a);
-                                        lock = true;
+                                        int num =poradie;
+                                        listHelp.remove(num);
+                                         bumpsManualHelp.remove(num);
+                                         Log.d("XXX", String.valueOf(loc.getLatitude()));
+                                         Log.d("XXX", String.valueOf(loc.getLongitude()));
+                                         Log.d("XXX", String.valueOf(data));
 
-                                        sb.execSQL("DELETE FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                        double adsa = loc.getLatitude();
+                                        sb.beginTransaction();
+                                        String selectQuery = "Select * FROM new_bumps WHERE latitude=" + adsa;
+
+                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                        Cursor cursor = database.rawQuery(selectQuery, null);
+                                        Log.d("UUUUU",String.valueOf(cursor.getCount()));
+                                        sb.execSQL("Select * FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
                                                 + " and intensity=" + data);
-
-                                        //end(a);
-                                    } else {
-                                        Log.d("adasd","4");
-                                        Log.d("TEST", "error");
-                                        int a =poradie;
-                                        a++;
-                                        poradie=a;
+                                        sb.setTransactionSuccessful();
+                                        sb.endTransaction();
                                         lock = true;
-
-                                        //  saveBump(list, bumpsManual,sequel+1);
+                                    } else {
+                                        Log.d("TEST", "error");
+                                        int num =poradie;
+                                        num++;
+                                        poradie=num;
+                                        lock = true;
                                     }
-
                                 }
-
                             });
-                            Log.d("adasd","5");
-                        }
 
-                        else {
-
-                            updatesLock=false;
-                            Log.d("aad","koniec <<< ");
-                            if (listHelp.size() > 0) {
-                                mLocnServAcc.getPossibleBumps().addAll(listHelp);
-                                mLocnServAcc.getBumpsManual().addAll(bumpsManualHelp);
-                                listHelp=null;
-                                bumpsManualHelp=null;
-                                sb.setTransactionSuccessful();
-                                sb.endTransaction();
-                            }
-                            break;
+                      }
+                    else {
+                        updatesLock=false;
+                        if (listHelp.size() > 0) {
+                            mLocnServAcc.getPossibleBumps().addAll(listHelp);
+                            mLocnServAcc.getBumpsManual().addAll(bumpsManualHelp);
+                            listHelp=null;
+                            bumpsManualHelp=null;
                         }
-                        Log.d("adasd","6");
+                        break;
                     }
-                    Log.d("adasd","7");
                 }
-                Log.d("adasd","8");
-
-
-                Looper.loop();
-
             }
-        };
+            Looper.loop();
+        } };
         t.start();
+
     }
-
-
-   private final boolean flah = true;
-
-
-
-
-
-
-
-
-
-
-  public void saveBump(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual, final Integer sequel) {
-        listHelp=list;
-        bumpsManualHelp= bumpsManual;
-        poradie=sequel;
-      Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
-        CreateThread();
-     ///   new Save().execute();
-  }
- /*   private static  boolean  lock =true;
-    private static  ArrayList<HashMap<Location, Float>> listHelp;
-    private  static ArrayList<Integer> bumpsManualHelp;
-    private  static  Integer  poradie;*/
-
-
-
-
-
-    /*public void saveBump(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual, final Integer sequel) {
-        listHelp=list;
-        bumpsManualHelp= bumpsManual;
-        poradie=sequel;
-        while (true) {
-
-
-            if (lock) {
-                Log.d("adasd","spustil sa while");
-                Log.d("adasd", String.valueOf(poradie));
-                if (!listHelp.isEmpty() && listHelp.size() > poradie) {
-                    Log.d("adasd","1");
-                    Iterator it = listHelp.get(poradie).entrySet().iterator();
-                    HashMap.Entry pair = (HashMap.Entry) it.next();    //next
-                    final Location loc = (Location) pair.getKey();
-                    final float data = (float) pair.getValue();
-                    Handler = new Bump(loc, data, bumpsManualHelp.get(poradie));
-                    Handler.getResponse(new CallBackReturn() {
-                        public void callback(String results) {
-                            Log.d("adasd","2");
-                            if (results.equals("success")) {
-                                Log.d("adasd","3");
-                                int a =poradie;
-                                listHelp.remove(a);
-                                Log.d("adasd",String.valueOf(listHelp.size()));
-                                bumpsManualHelp.remove(a);
-                                lock = true;
-                                sb.beginTransaction();
-                                sb.execSQL("DELETE FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
-                                        + " and intensity=" + data);
-                                sb.setTransactionSuccessful();
-                                sb.endTransaction();
-                                //end(a);
-                            } else {
-                                Log.d("adasd","4");
-                                Log.d("TEST", "error");
-                                int a =poradie;
-                                a++;
-                                poradie=a;
-                                lock = true;
-
-                                //  saveBump(list, bumpsManual,sequel+1);
-                            }
-
-                        }
-
-                    });
-                    Log.d("adasd","5");
-                }
-
-                else {
-                    updatesLock=false;
-                    Log.d("aad","koniec <<< ");
-                    if (listHelp.size() > 0) {
-                        mLocnServAcc.getPossibleBumps().addAll(listHelp);
-                        mLocnServAcc.getBumpsManual().addAll(bumpsManualHelp);
-                        listHelp=null;
-                        bumpsManualHelp=null;
-                    }
-                    break;
-                }
-                Log.d("adasd","6");
-            }
-            Log.d("adasd","7");
-        }
-    }
-    */
-    private static  boolean  lock =true;
-    private static  ArrayList<HashMap<Location, Float>> listHelp;
-    private  static ArrayList<Integer> bumpsManualHelp;
-    private  static  Integer  poradie;
-
 
     public void getBumpsWithLevel() {
         //ak je pripojenie na internet
