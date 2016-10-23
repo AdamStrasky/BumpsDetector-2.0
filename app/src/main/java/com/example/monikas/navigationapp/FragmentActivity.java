@@ -23,6 +23,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -121,6 +122,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public final static String JSON_CHARSET = "UTF-8";
     public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
 
+
+    private static int flagd =0;
+
+
     Button  save_button, back_button;
     private  boolean regular_update = false;
     @Override
@@ -165,7 +170,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
 
         //////////////////////////////odstranit, len na testovanie
-       // new Timer().schedule(new VkladanieDoDatabazy(), 15000, 15000);// 3600000
+  // new Timer().schedule(new VkladanieDoDatabazy(), 15000, 15000);// 3600000
     }
 
     public  void offlineMapaNaMojejGPS ( ){
@@ -639,10 +644,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         @Override
         public void run() {
 
-       /*     if (updatesLock) {
+          if (updatesLock) {
                 Log.d("TEaaaaaST"," nepresiel ");
                 return;
             }
+            if (flagd==1 )
+                return;
           //  if (mapNotification && flagA==true)
            //     murko();
 
@@ -650,25 +657,28 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 updatesLock=true;
                 sb.beginTransaction();
                 int i=0;
-                for (i = 0; i < 100; i++) {
+                for (i = 0; i < 100000; i++) {
                     Location location = new Location("new");
                     location.setLatitude(48.222 + i);
                     location.setLongitude(48.222);
                     location.setTime(new Date().getTime());
                     Log.d("TEaaaaaST"," beyiiii");
-                    accelerometer.addPossibleBumps(location, 4.5f);
+                    accelerometer.addPossibleBumps(location, 5.5f);
                     accelerometer.addBumpsManual(1);
-                }
-                if (i ==98) {
-                    Log.d("TEaaaaaST"," vypol sa lock v regular A");
-                    updatesLock = false;
-                    sb.setTransactionSuccessful();
-                    sb.endTransaction();
+                    if (i ==99999) {
+                        Log.d("TEaaaaaST"," vypol sa lock v regular A");
+                        updatesLock = false;
+                        sb.setTransactionSuccessful();
+                        sb.endTransaction();
+                        flagd=1;
+                        break;
+                    }
+
                 }
 
             }
             Log.d("TEaaaaaST"," naplnene");
-*/
+
 
        /* Location location;
             Float data
@@ -997,41 +1007,41 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
      class Max_Bump_Number extends AsyncTask<String, Void, JSONArray> {
 
-        protected JSONArray doInBackground(String... args) {
+             protected JSONArray doInBackground(String... args) {
 
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
-            params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
-            params.add(new BasicNameValuePair("b_id", String.valueOf(b_id_database)));
-            params.add(new BasicNameValuePair("net", String.valueOf(net)));
+                 List<NameValuePair> params = new ArrayList<NameValuePair>();
+                 params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
+                 params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
+                 params.add(new BasicNameValuePair("b_id", String.valueOf(b_id_database)));
+                 params.add(new BasicNameValuePair("net", String.valueOf(net)));
 
-            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_bumps.php", "POST", params);
+                 JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_bumps.php", "POST", params);
 
-            try {
-                 int success = json.getInt("success");
-                JSONArray response = new JSONArray();
-                if (success == 0) {
-                    // mam nove data na stiahnutie
-                    bumps = json.getJSONArray("bumps");
-                    return bumps;
-                } else if (success == 1) {
-                    // potrebujem potvrdit nove data na stiahnutie
-                    response.put(0, "update");
-                    return response;
-                } else {
-                   return null;
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                JSONArray response = new JSONArray();
-                try {
-                    response.put(0, "error");
-                } catch (JSONException e1) {
-                    e1.printStackTrace();
-                }
-                return response;
-            }
-        }
+                 try {
+                     int success = json.getInt("success");
+                     JSONArray response = new JSONArray();
+                     if (success == 0) {
+                         // mam nove data na stiahnutie
+                         bumps = json.getJSONArray("bumps");
+                         return bumps;
+                     } else if (success == 1) {
+                         // potrebujem potvrdit nove data na stiahnutie
+                         response.put(0, "update");
+                         return response;
+                     } else {
+                         return null;
+                     }
+                 } catch (JSONException e) {
+                     e.printStackTrace();
+                     JSONArray response = new JSONArray();
+                     try {
+                         response.put(0, "error");
+                     } catch (JSONException e1) {
+                         e1.printStackTrace();
+                     }
+                     return response;
+                 }
+             }
 
         protected void onPostExecute(JSONArray array) {
 
@@ -1131,6 +1141,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         bumpsManual.addAll(  accelerometer.getBumpsManual());
                         accelerometer.getPossibleBumps().clear();
                         accelerometer.getBumpsManual().clear();
+                        Log.d("aadsda","spustam savebump");
                         saveBump(bumpList, bumpsManual,0);
                     }
                     if (updates==1) {
@@ -1313,7 +1324,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 nacitajDB();
 
                 //vytlky sa do dabatazy odosielaju kazdu minutu
-                new Timer().schedule(new SendBumpsToDb(), 0, 180000);
+                new Timer().schedule(new SendBumpsToDb(), 0, 30000);
 
                 //mapa sa nastavuje kazde 2 minuty
                 new Timer().schedule(new MapSetter(), 0, 180000);   //120000
@@ -1326,7 +1337,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
 // treba opraviť
     public void nacitajDB(){
-    /*  if (updatesLock)
+  if (updatesLock)
           return;
 
           updatesLock=true;
@@ -1334,45 +1345,41 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
-        HashMap<Location, Float> hashToArray = new HashMap();
-int i=0;
+        ArrayList<HashMap<Location, Float>> hashToArray = new  ArrayList <HashMap<Location, Float>>();
+        ArrayList <Integer> listA = new ArrayList <Integer>();
+
+        long date = new Date().getTime();
+        int i=0;
         if (cursor!= null && cursor.moveToFirst()) {
             sb.beginTransaction();
             do {
+                if(!cursor.isNull(0) && !cursor.isNull(1) & !cursor.isNull(2) && !cursor.isNull(3)){
+                    Location location = new Location("new");
+                    location.setLatitude(cursor.getDouble(0));
+                    location.setLongitude(cursor.getDouble(1));
+                    location.setTime(date);
+                    HashMap<Location, Float> hashToArraya = new HashMap();
+                    hashToArraya.put(location, (float) cursor.getDouble(2));
+                    hashToArray.add(hashToArraya);
+                    listA.add(cursor.getInt(3));
+                    Log.d("TESTa", "latitude " + cursor.getDouble(0));
+                    Log.d("TESTa", "longitude " + cursor.getDouble(1));
+                    Log.d("TESTa", "intensity " + cursor.getDouble(2));
+                }
 
-                Location location = new Location("new");
-                location.setLatitude(cursor.getDouble(0));
-                location.setLongitude(cursor.getDouble(1));
-                location.setTime(new Date().getTime());
-
-                hashToArray.put(location, (float) cursor.getDouble(2));
-                Log.d("dasdas", String.valueOf(location));
-                Log.d("dasdas", String.valueOf(cursor.getDouble(2)));
-                accelerometer.addPossibleBumps(location, (float) cursor.getDouble(2));
-                //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
-                accelerometer.addBumpsManual(cursor.getInt(3));
-
-
-                Log.d("TESTa","latitude "+ cursor.getDouble(0));
-                Log.d("TESTa","longitude "+ cursor.getDouble(1));
-                Log.d("TESTa","intensity "+ cursor.getDouble(2));
-
-            if (i==50) {
-                Log.d("TESTa","pre4o sa vzpol ");
-                updatesLock = false;
-                sb.setTransactionSuccessful();
-                sb.endTransaction();
-                break;
-            }
-            } while (cursor.moveToNext());
+           } while (cursor.moveToNext());
             if (!cursor.moveToNext()) {
-
+                 accelerometer.getPossibleBumps().addAll(hashToArray);
+                 accelerometer.getBumpsManual().addAll(listA);
+                 updatesLock = false;
+                 sb.setTransactionSuccessful();
+                 sb.endTransaction();
             }
 
-        }
-*/
 
-    }
+        }else
+            updatesLock = false;
+      }
 
     public void stop_servise(){
          getActivity().stopService(new Intent(getActivity().getApplicationContext(), Accelerometer.class));
@@ -1411,8 +1418,8 @@ int i=0;
                 @Override
                 public void run() {
                     //ak je pripojenie na internet
-                    if (isNetworkAvailable()) {
-                         if (!(isEneableDownload() && !isConnectedWIFI())) {
+                    //if (isNetworkAvailable()) {
+                      //   if (!(isEneableDownload() && !isConnectedWIFI())) {
 
                              if (accelerometer != null) {
                                  ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
@@ -1422,6 +1429,7 @@ int i=0;
 
                                  if (!list.isEmpty()) {
                                      if (!updatesLock) {
+                                         Log.d("adasd","presiel a nastavil lock ");
 
                                          updatesLock = true;
                                          regularUpdatesLock = false;
@@ -1433,62 +1441,209 @@ int i=0;
                                          accelerometer.getBumpsManual().clear();
                                          saveBump(lista, bumpsManual, 0);
                                      }
+                                     else
+                                        Log.d("adasd","nedostal sa lebo bol lock ");
                                  }
-                             }
-                         }
+                           //  }
+                       //  }
                     }
-                    else {
+                  /*  else {
                           if (isEneableShowText())
                             Toast.makeText(getActivity(), "Please, connect to network.", Toast.LENGTH_SHORT).show();
-                      }
+                      }*/
                 }}
             );
         }
     }
-    public void saveBump(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual, final Integer sequel) {
+    Handler threadHandler = null;
+    private void CreateThread() {
+        Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
+        // We create a new thread
+        Thread t = new Thread() {
+            public void run() {
+                Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
+                Looper.prepare();
+                Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
+                Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
+                Log.d("adasd", "siye "+String.valueOf(listHelp.size()));
+                sb.beginTransaction();
+                while (flah) {
 
-        if (list.size() >  sequel) {
-            Iterator it = list.get(sequel).entrySet().iterator();
-            HashMap.Entry pair = (HashMap.Entry) it.next();    //next
-            final Location loc = (Location) pair.getKey();
-            final float data = (float) pair.getValue();
-            Handler = new Bump(loc, data,bumpsManual.get(sequel));
-            Handler.getResponse(new CallBackReturn() {
-                public void callback(String results) {
-                    if ( results.equals("success")) {
-                        ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
-                        lista.addAll(list);
-                        ArrayList<Integer> bumpsManuala = new ArrayList<Integer> ();
-                        bumpsManuala.addAll(bumpsManual);
-                        int a =sequel;
-                        lista.remove(a);
-                        bumpsManuala.remove(a);
-                        sb.beginTransaction();
-                        sb.execSQL("DELETE FROM new_bumps WHERE latitude="+loc.getLatitude() +" and  longitude="+loc.getLongitude()
-                                +" and intensity="+ data );
-                        sb.setTransactionSuccessful();
-                        sb.endTransaction();
-                        saveBump(lista, bumpsManuala,sequel);
-                    } else {
-                        Log.d("TEST","error");
-                        saveBump(list, bumpsManual,sequel+1);
+
+                    if (lock) {
+                        Log.d("adasd","spustil sa while");
+
+                        Log.d("adasd", String.valueOf(poradie));
+                        if (!listHelp.isEmpty() && listHelp.size() > poradie) {
+
+
+                            Log.d("adasd","1");
+                            Iterator it = listHelp.get(poradie).entrySet().iterator();
+                            HashMap.Entry pair = (HashMap.Entry) it.next();    //next
+                            final Location loc = (Location) pair.getKey();
+                            final float data = (float) pair.getValue();
+                            Handler = new Bump(loc, data, bumpsManualHelp.get(poradie));
+                            Handler.getResponse(new CallBackReturn() {
+                                public void callback(String results) {
+                                    Log.d("adasd","2");
+                                    if (results.equals("success")) {
+                                        Log.d("adasd","3");
+                                        int a =poradie;
+                                        listHelp.remove(a);
+                                        Log.d("adasd",String.valueOf(listHelp.size()));
+                                        bumpsManualHelp.remove(a);
+                                        lock = true;
+
+                                        sb.execSQL("DELETE FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                                + " and intensity=" + data);
+
+                                        //end(a);
+                                    } else {
+                                        Log.d("adasd","4");
+                                        Log.d("TEST", "error");
+                                        int a =poradie;
+                                        a++;
+                                        poradie=a;
+                                        lock = true;
+
+                                        //  saveBump(list, bumpsManual,sequel+1);
+                                    }
+
+                                }
+
+                            });
+                            Log.d("adasd","5");
+                        }
+
+                        else {
+
+                            updatesLock=false;
+                            Log.d("aad","koniec <<< ");
+                            if (listHelp.size() > 0) {
+                                mLocnServAcc.getPossibleBumps().addAll(listHelp);
+                                mLocnServAcc.getBumpsManual().addAll(bumpsManualHelp);
+                                listHelp=null;
+                                bumpsManualHelp=null;
+                                sb.setTransactionSuccessful();
+                                sb.endTransaction();
+                            }
+                            break;
+                        }
+                        Log.d("adasd","6");
                     }
-
+                    Log.d("adasd","7");
                 }
-            });
+                Log.d("adasd","8");
 
-        }
-        else {
-            updatesLock=false;
-           if (list.size() > 0) {
-                mLocnServAcc.getPossibleBumps().addAll(list);
-                mLocnServAcc.getBumpsManual().addAll(bumpsManual);
-            } else {
+
+                Looper.loop();
 
             }
-        }
-
+        };
+        t.start();
     }
+
+
+   private final boolean flah = true;
+
+
+
+
+
+
+
+
+
+
+  public void saveBump(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual, final Integer sequel) {
+        listHelp=list;
+        bumpsManualHelp= bumpsManual;
+        poradie=sequel;
+      Log.d("asd","wwwwwwwwwwwwwwwwwwwwwwwww");
+        CreateThread();
+     ///   new Save().execute();
+  }
+ /*   private static  boolean  lock =true;
+    private static  ArrayList<HashMap<Location, Float>> listHelp;
+    private  static ArrayList<Integer> bumpsManualHelp;
+    private  static  Integer  poradie;*/
+
+
+
+
+
+    /*public void saveBump(final ArrayList<HashMap<Location, Float>> list, final ArrayList<Integer> bumpsManual, final Integer sequel) {
+        listHelp=list;
+        bumpsManualHelp= bumpsManual;
+        poradie=sequel;
+        while (true) {
+
+
+            if (lock) {
+                Log.d("adasd","spustil sa while");
+                Log.d("adasd", String.valueOf(poradie));
+                if (!listHelp.isEmpty() && listHelp.size() > poradie) {
+                    Log.d("adasd","1");
+                    Iterator it = listHelp.get(poradie).entrySet().iterator();
+                    HashMap.Entry pair = (HashMap.Entry) it.next();    //next
+                    final Location loc = (Location) pair.getKey();
+                    final float data = (float) pair.getValue();
+                    Handler = new Bump(loc, data, bumpsManualHelp.get(poradie));
+                    Handler.getResponse(new CallBackReturn() {
+                        public void callback(String results) {
+                            Log.d("adasd","2");
+                            if (results.equals("success")) {
+                                Log.d("adasd","3");
+                                int a =poradie;
+                                listHelp.remove(a);
+                                Log.d("adasd",String.valueOf(listHelp.size()));
+                                bumpsManualHelp.remove(a);
+                                lock = true;
+                                sb.beginTransaction();
+                                sb.execSQL("DELETE FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                        + " and intensity=" + data);
+                                sb.setTransactionSuccessful();
+                                sb.endTransaction();
+                                //end(a);
+                            } else {
+                                Log.d("adasd","4");
+                                Log.d("TEST", "error");
+                                int a =poradie;
+                                a++;
+                                poradie=a;
+                                lock = true;
+
+                                //  saveBump(list, bumpsManual,sequel+1);
+                            }
+
+                        }
+
+                    });
+                    Log.d("adasd","5");
+                }
+
+                else {
+                    updatesLock=false;
+                    Log.d("aad","koniec <<< ");
+                    if (listHelp.size() > 0) {
+                        mLocnServAcc.getPossibleBumps().addAll(listHelp);
+                        mLocnServAcc.getBumpsManual().addAll(bumpsManualHelp);
+                        listHelp=null;
+                        bumpsManualHelp=null;
+                    }
+                    break;
+                }
+                Log.d("adasd","6");
+            }
+            Log.d("adasd","7");
+        }
+    }
+    */
+    private static  boolean  lock =true;
+    private static  ArrayList<HashMap<Location, Float>> listHelp;
+    private  static ArrayList<Integer> bumpsManualHelp;
+    private  static  Integer  poradie;
+
 
     public void getBumpsWithLevel() {
         //ak je pripojenie na internet
