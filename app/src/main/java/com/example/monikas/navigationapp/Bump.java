@@ -66,12 +66,6 @@ public class Bump {
             String longitude = String.valueOf(location.getLongitude());
             List<NameValuePair> params = new ArrayList<NameValuePair>();
 
-
-             Log.d("BUMP", "latitude " + latitude);
-             Log.d("BUMP", "longitude "+longitude );
-             Log.d("BUMP", "intensity "+intensity );
-             Log.d("BUMP", "rating "+rating );
-             Log.d("BUMP", "rating "+rating );
             //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
@@ -79,7 +73,7 @@ public class Bump {
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
 
-            JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
+         /*   JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
              int success = 0;
              try {
                  success = json.getInt("success");
@@ -87,10 +81,10 @@ public class Bump {
                 e.printStackTrace();
                 return "error";
                 }
-            if (success == 1)
-                return "success";
-              else
+            if (success == 1)*/
                 return "error";
+           /*   else
+                return "error";*/
         }
     }
 }

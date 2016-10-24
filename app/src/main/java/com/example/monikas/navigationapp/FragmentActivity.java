@@ -108,6 +108,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     private boolean isEndNotified;
     public static boolean setOnPosition =true;
     public static boolean flagDownload=false;
+    public static boolean lockAdd=false;
 
     private int regionSelected;
     private boolean mapNotification=true;
@@ -909,7 +910,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                        // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
                                          sql=   "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1 WHERE b_id_bumps=" + b_id ;
                                     }
-                                    cursor= sb.rawQuery(sql,null);
+                                    sb.execSQL(sql);
                                 }
 
                                 // insert novych udajov
@@ -1119,12 +1120,14 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         dialog.cancel();
                     if (!updatesLock && regularUpdatesLock){
                         updatesLock=true;
+
                         ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
                         bumpList.addAll(accelerometer.getPossibleBumps());
                         ArrayList<Integer> bumpsManual = new ArrayList<Integer> ();
                         bumpsManual.addAll(  accelerometer.getBumpsManual());
                         accelerometer.getPossibleBumps().clear();
                         accelerometer.getBumpsManual().clear();
+
                         Log.d("aadsda","spustam savebump");
                         saveBump(bumpList, bumpsManual,0);
                     }
@@ -1269,7 +1272,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 global_gps =mLocnServGPS;
                 mServiceConnectedAcc =   getActivity().bindService(new Intent(getActivity().getApplicationContext(), Accelerometer.class), mServconnAcc, Context.BIND_AUTO_CREATE);
             }
-        }, 400);
+        }, 1000);
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -1278,7 +1281,28 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 gps = mLocnServGPS;
                 showCalibrationAlert();
             }
-        }, 600);
+        }, 2000);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Activity activity = getActivity();
+                if(activity != null && mLocnServGPS.getCurrentLatLng()!=null ) {
+                    mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
+                }
+                loadSaveDB();
+
+                //vytlky sa do dabatazy odosielaju kazdu minutu
+                new Timer().schedule(new SendBumpsToDb(), 0, 30000);
+
+                //mapa sa nastavuje kazde 2 minuty
+                new Timer().schedule(new MapSetter(), 0, 180000);   //120000
+
+
+            }
+        },5000);
+
+
     }
 
     @Override
@@ -1294,32 +1318,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     }
     private Bump  Handler;
      private void initialization() {
-
         buildGoogleApiClient();
-
-        //po 10 sekundach sa spustia metody vykonavajuce sa pravidelne
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Activity activity = getActivity();
-                if(activity != null && mLocnServGPS.getCurrentLatLng()!=null ) {
-                     mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
-                }
-               // loadSaveDB();
-
-                //vytlky sa do dabatazy odosielaju kazdu minutu
-                new Timer().schedule(new SendBumpsToDb(), 0, 30000);
-
-                //mapa sa nastavuje kazde 2 minuty
-                new Timer().schedule(new MapSetter(), 0, 180000);   //120000
-
-
-            }
-        },10000);
-
-
     }
-// treba opraviť
+
     public void loadSaveDB(){
   if (updatesLock)
           return;
@@ -1334,6 +1335,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
         long date = new Date().getTime();
         int i=0;
+
         if (cursor!= null && cursor.moveToFirst()) {
             sb.beginTransaction();
             do {
@@ -1352,9 +1354,13 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 }
 
            } while (cursor.moveToNext());
-            if (!cursor.moveToNext()) {
-                 accelerometer.getPossibleBumps().addAll(hashToArray);
-                 accelerometer.getBumpsManual().addAll(listA);
+            if (cursor!= null) {
+                accelerometer = mLocnServAcc;
+                if (mLocnServAcc!= null) {
+                    mLocnServAcc.getPossibleBumps().addAll(hashToArray);
+                    mLocnServAcc.getBumpsManual().addAll(listA);
+                }else
+                Log.d("aaa","nulllllll");
                  updatesLock = false;
                  sb.setTransactionSuccessful();
                  sb.endTransaction();
@@ -1390,7 +1396,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
     }
 
-    public  boolean updatesLock = false;
+    public static boolean updatesLock = false;
     private boolean regularUpdatesLock = false;
     private class SendBumpsToDb extends TimerTask {
 
@@ -1401,10 +1407,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 @Override
                 public void run() {
                     //ak je pripojenie na internet
-                    if (isNetworkAvailable()) {
-                        if (!(isEneableDownload() && !isConnectedWIFI())) {
-
+                  //  if (isNetworkAvailable()) {
+                    //    if (!(isEneableDownload() && !isConnectedWIFI())) {
+                    Log.d("adasd","accelerometernu nulll ");
                              if (accelerometer != null) {
+                                 Log.d("adasd","accelerometer nu nulll ");
                                  ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
                                  //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
                                  if (isEneableShowText())
@@ -1428,9 +1435,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                         Log.d("adasd","nedostal sa lebo bol lock ");
                                  }
                             }
-                        }
-                    }
-
+                       // }
+                  //  }
                 }}
             );
         }
@@ -1439,7 +1445,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     private ArrayList<HashMap<Location, Float>> listHelp;
     private ArrayList<Integer> bumpsManualHelp;
     private Integer  poradie;
-    Handler threadHandler = null;
     public void saveBump( ArrayList<HashMap<Location, Float>> list,  ArrayList<Integer> bumpsManual,  Integer sequel) {
         listHelp=list;
         bumpsManualHelp= bumpsManual;
@@ -1459,21 +1464,32 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 public void callback(String results) {
                                     if (results.equals("success")) {
                                         int num =poradie;
-                                        listHelp.remove(num);
-                                         bumpsManualHelp.remove(num);
-                                         Log.d("XXX", String.valueOf(loc.getLatitude()));
-                                         Log.d("XXX", String.valueOf(loc.getLongitude()));
-                                         Log.d("XXX", String.valueOf(data));
-
-                                        double adsa = loc.getLatitude();
                                         sb.beginTransaction();
-                                        String selectQuery = "Select * FROM new_bumps WHERE latitude=" + adsa;
+                                        sb.execSQL("DELETE FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                               + " and  ROUND(intensity,6)==ROUND("+data+",6) and manual="+bumpsManualHelp.get(num)+"");
 
-                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                        Cursor cursor = database.rawQuery(selectQuery, null);
-                                        Log.d("UUUUU",String.valueOf(cursor.getCount()));
-                                        sb.execSQL("Select * FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
-                                                + " and intensity=" + data);
+                                    //    String sql = "SELECT * FROM new_bumps WHERE * latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude();
+                                             //   + " and  ROUND(intensity,5)=="+data;
+                                        Log.d("asda","data  "+data);
+                                        String sql = "SELECT * FROM new_bumps WHERE  ROUND(intensity,6)==ROUND("+data+",6)";
+
+
+                                        Cursor cursor = null;
+                                        cursor = sb.rawQuery(sql, null);
+                                        Log.d("asda","velksot "+cursor.getCount());
+
+                                         sql = "SELECT * FROM new_bumps ";
+
+
+                                         cursor = null;
+                                        cursor = sb.rawQuery(sql, null);
+                                        Log.d("asda","velksot cela"+cursor.getCount());
+                                        Log.d("asda","velksot pola"+listHelp.size());
+
+
+
+                                        listHelp.remove(num);
+                                        bumpsManualHelp.remove(num);
                                         sb.setTransactionSuccessful();
                                         sb.endTransaction();
                                         lock = true;
@@ -1489,17 +1505,66 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
                       }
                     else {
-                        updatesLock=false;
-                        if (listHelp.size() > 0) {
-                            mLocnServAcc.getPossibleBumps().addAll(listHelp);
-                            mLocnServAcc.getBumpsManual().addAll(bumpsManualHelp);
-                            listHelp=null;
-                            bumpsManualHelp=null;
-                        }
-                        break;
+                         break;
+
+
                     }
                 }
             }
+                lockAdd=true;
+                if (listHelp.size()>0 && accelerometer.getPossibleBumps().size()>0) {
+                    Log.d("TEST", "som tu");
+
+                    int i=0;
+                    for (HashMap<Location, Float> bump : listHelp) {
+
+                        Iterator it = bump.entrySet().iterator();
+                        while (it.hasNext()) {
+                            HashMap.Entry pair = (HashMap.Entry) it.next();
+                            Location hashLocation = (Location) pair.getKey();
+                           i=0;
+                            for (HashMap<Location, Float> bumps : accelerometer.getPossibleBumps()) {
+
+                                Iterator its = bumps.entrySet().iterator();
+                                while (its.hasNext()) {
+                                    HashMap.Entry pairs = (HashMap.Entry) its.next();
+                                    Location hashLocations = (Location) pairs.getKey();
+                                    if ((hashLocation.getLatitude() == hashLocations.getLatitude()) &&
+                                            (hashLocation.getLongitude() == hashLocations.getLongitude()) ) {
+
+                                           if ( (Float) pair.getValue() >(Float) pairs.getValue()  )
+                                               accelerometer.getPossibleBumps().get(0).put(hashLocations,(Float) pair.getValue());
+
+
+                                        if ( (Float) pair.getValue() <(Float) pairs.getValue())
+                                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) pairs.getValue()+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude()
+                                                + " and  ROUND(intensity,6)==ROUND("+(Float) pair.getValue()+",6)");
+
+                                        listHelp.remove(i);
+                                        bumpsManualHelp.remove(i);
+                                    }
+                                }
+                                i++;
+                            }
+                        }
+                    }
+                    accelerometer.getPossibleBumps().addAll(listHelp);
+                    accelerometer.getBumpsManual().addAll(bumpsManualHelp);
+
+                    Log.d("TEST", "koniec for");
+                }
+                else if (listHelp.size()>0) {
+                    accelerometer.getPossibleBumps().addAll(listHelp);
+                    accelerometer.getBumpsManual().addAll(bumpsManualHelp);
+                }
+                lockAdd=false;
+                Log.d("TEST", "koniec celho");
+                listHelp=null;
+                bumpsManualHelp=null;
+
+                updatesLock=false;
+
+
             Looper.loop();
         } };
         t.start();

@@ -5,9 +5,12 @@ package com.example.monikas.navigationapp;
  */
 
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -24,12 +27,16 @@ import android.util.FloatMath;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.fragment_context;
 import static com.example.monikas.navigationapp.FragmentActivity.global_gps;
+import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
+import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
 
 
 public class Accelerometer extends Service implements SensorEventListener, LocationListener {
@@ -49,11 +56,14 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private int LIFOsize = 60;
     private float delta;
     private boolean unlock = true;
+    SQLiteDatabase sb;
+    DatabaseOpenHelper databaseHelper;
 
     public Accelerometer(){
         this.context = fragment_context;
         LIFO = new ArrayList<>();
         flag = false;
+        initialization_database();
         mSensorManager = (SensorManager) context.getSystemService(context.SENSOR_SERVICE);
         mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -159,6 +169,12 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
         }
     }
 
+    public void initialization_database(){
+        // inicializacia databazy
+        databaseHelper = new DatabaseOpenHelper(context);
+        sb = databaseHelper.getWritableDatabase();
+    }
+
     public void calibrate () {
 
         //values[0], values[1], values[2] = data z akcelerometra pre osi X,Y,Z
@@ -177,9 +193,12 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     }
 
 
+
     public synchronized String detect (Location location, Float data) {
         String result = null;
         boolean isToClose = false;
+        if (lockAdd)
+            return "lock";
         //possibleBumps je zoznam vytlkov, ktore sa poslu do databazy
         for (HashMap<Location, Float> bump : possibleBumps) {
 
@@ -191,7 +210,10 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                 if ((location.getLatitude() == hashLocation.getLatitude()) && (location.getLongitude() == hashLocation.getLongitude())) {
                     if (data > (Float) pair.getValue()) {
                         pair.setValue(data);
+                        Log.d("asdasda", String.valueOf(data));
                         Log.d("DETECT", "same location");
+                        if (!updatesLock)
+                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+data+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
                         result = "same bump";
                     }
                     isToClose = true;
@@ -204,8 +226,12 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
                         if (data > (Float) pair.getValue()) {
                             Log.d("DETECT", "under 2 meters ");
-                            result = "under bump";
+                            Log.d("asdasda", String.valueOf(data));
                             pair.setValue(data);
+
+                            if (!updatesLock)
+                                sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+data+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
+                                result = "under bump";
                         }
                         isToClose = true;
                     }
@@ -217,12 +243,24 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
 
             Log.d("DETECT", "new dump");
             result = "new bump";
+            Log.d("asdasda", String.valueOf(data));
             System.out.println("lat: "+ location.getLatitude() + ",lng: "+ location.getLongitude() + ",data: " + data);
             HashMap<Location, Float> hashToArray = new HashMap();
             hashToArray.put(location,data);
             //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
             possibleBumps.add(hashToArray);
             BumpsManual.add(0);
+            if (!updatesLock) {
+                BigDecimal bd = new BigDecimal(Float.toString(data));
+                bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                hashToArray.put(location,data);
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                contentValues.put(Provider.new_bumps.MANUAL, 0);
+                contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+            }
         }
         return result;
     }

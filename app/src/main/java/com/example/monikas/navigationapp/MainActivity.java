@@ -31,6 +31,7 @@ import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import java.util.Iterator;
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
+import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
@@ -170,6 +172,19 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     location.setTime(new Date().getTime());
                     fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
                     fragmentActivity.accelerometer.addBumpsManual(1);
+                    if (!updatesLock) {
+                        BigDecimal bd = new BigDecimal(Float.toString(intensity));
+                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                        fragmentActivity.sb.beginTransaction();
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                        contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                        contentValues.put(Provider.new_bumps.MANUAL, 1);
+                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                        fragmentActivity.sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                        fragmentActivity.sb.setTransactionSuccessful();
+                        fragmentActivity.sb.endTransaction();
+                    }
                     Toast.makeText(this, "New bump added" , Toast.LENGTH_LONG).show();
                 }
                 break;
@@ -366,19 +381,22 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                 HashMap.Entry pair = (HashMap.Entry) it.next();
                                 Location loc = (Location) pair.getKey();
                                 float data = (float) pair.getValue();
-                                String sql = "SELECT * FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
-                                        + " and intensity=" + data+ " and manual="+bumpsManual.get(i);
+                               String sql = "SELECT intensity FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                        + " and  ROUND(intensity,6)==ROUND("+data+",6)  and manual="+bumpsManual.get(i);
 
+                                BigDecimal bd = new BigDecimal(Float.toString(data));
+                                bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
                                 Cursor cursor = null;
                                 cursor = sb.rawQuery(sql, null);
 
                                 if (cursor.getCount() == 0) {
+                                    Log.d("asdasda", String.valueOf(data));
                                     Log.d("asdasda", "vkladam ");
                                     ContentValues contentValues = new ContentValues();
                                     contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
                                     contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
                                     contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
-                                    contentValues.put(Provider.new_bumps.INTENSITY, data);
+                                    contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
                                     sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
 
                                 }
