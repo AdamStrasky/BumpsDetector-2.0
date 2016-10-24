@@ -164,7 +164,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
 
         //////////////////////////////odstranit, len na testovanie
-  // new Timer().schedule(new VkladanieDoDatabazy(), 15000, 15000);// 3600000
+       // new Timer().schedule(new VkladanieDoDatabazy(), 15000, 15000);// 3600000
     }
 
     public  void offlineMapaNaMojejGPS ( ){
@@ -642,9 +642,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 Log.d("TEaaaaaST"," nepresiel ");
                 return;
             }
-
-          //  if (mapNotification && flagA==true)
-           //     murko();
 
             if (!updatesLock) {
                 updatesLock=true;
@@ -1406,21 +1403,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             getActivity().runOnUiThread(new Runnable(){
                 @Override
                 public void run() {
-                    //ak je pripojenie na internet
-                  //  if (isNetworkAvailable()) {
-                    //    if (!(isEneableDownload() && !isConnectedWIFI())) {
-                    Log.d("adasd","accelerometernu nulll ");
-                             if (accelerometer != null) {
-                                 Log.d("adasd","accelerometer nu nulll ");
-                                 ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
+                  //  ak je pripojenie na internet
+                    if (isNetworkAvailable()) {
+                         if (!(isEneableDownload() && !isConnectedWIFI())) {
+                            if (accelerometer != null) {
+                                ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
                                  //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
                                  if (isEneableShowText())
                                      Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
 
                                  if (!list.isEmpty()) {
                                      if (!updatesLock) {
-                                         Log.d("adasd","presiel a nastavil lock ");
-
                                          updatesLock = true;
                                          regularUpdatesLock = false;
                                          ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
@@ -1431,12 +1424,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                          accelerometer.getBumpsManual().clear();
                                          saveBump(lista, bumpsManual, 0);
                                      }
-                                     else
-                                        Log.d("adasd","nedostal sa lebo bol lock ");
                                  }
                             }
-                       // }
-                  //  }
+                        }
+                    }
                 }}
             );
         }
@@ -1464,29 +1455,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 public void callback(String results) {
                                     if (results.equals("success")) {
                                         int num =poradie;
+
+                                        // ak mi prišlo potvrdenie o odoslaní, mažem z db
                                         sb.beginTransaction();
                                         sb.execSQL("DELETE FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
                                                + " and  ROUND(intensity,6)==ROUND("+data+",6) and manual="+bumpsManualHelp.get(num)+"");
-
-                                    //    String sql = "SELECT * FROM new_bumps WHERE * latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude();
-                                             //   + " and  ROUND(intensity,5)=="+data;
-                                        Log.d("asda","data  "+data);
-                                        String sql = "SELECT * FROM new_bumps WHERE  ROUND(intensity,6)==ROUND("+data+",6)";
-
-
-                                        Cursor cursor = null;
-                                        cursor = sb.rawQuery(sql, null);
-                                        Log.d("asda","velksot "+cursor.getCount());
-
-                                         sql = "SELECT * FROM new_bumps ";
-
-
-                                         cursor = null;
-                                        cursor = sb.rawQuery(sql, null);
-                                        Log.d("asda","velksot cela"+cursor.getCount());
-                                        Log.d("asda","velksot pola"+listHelp.size());
-
-
 
                                         listHelp.remove(num);
                                         bumpsManualHelp.remove(num);
@@ -1494,6 +1467,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                         sb.endTransaction();
                                         lock = true;
                                     } else {
+                                        // nastala chyba, nemažem
                                         Log.d("TEST", "error");
                                         int num =poradie;
                                         num++;
@@ -1503,43 +1477,38 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 }
                             });
 
-                      }
-                    else {
+                      } else {
                          break;
-
-
+                      }
                     }
                 }
-            }
                 lockAdd=true;
+                // ak nastala chyba, aktualizujem s udajmi s novými udajmi čo som dostal počas behu saveBUmp
                 if (listHelp.size()>0 && accelerometer.getPossibleBumps().size()>0) {
-                    Log.d("TEST", "som tu");
-
                     int i=0;
-                    for (HashMap<Location, Float> bump : listHelp) {
-
-                        Iterator it = bump.entrySet().iterator();
-                        while (it.hasNext()) {
-                            HashMap.Entry pair = (HashMap.Entry) it.next();
-                            Location hashLocation = (Location) pair.getKey();
+                    for (HashMap<Location, Float> oldList : listHelp) {
+                        Iterator oldListIteam = oldList.entrySet().iterator();
+                        while (oldListIteam.hasNext()) {
+                            HashMap.Entry oldData = (HashMap.Entry) oldListIteam.next();
+                            Location oldLocation = (Location) oldData.getKey();
                            i=0;
-                            for (HashMap<Location, Float> bumps : accelerometer.getPossibleBumps()) {
+                            for (HashMap<Location, Float> newList : accelerometer.getPossibleBumps()) {
 
-                                Iterator its = bumps.entrySet().iterator();
-                                while (its.hasNext()) {
-                                    HashMap.Entry pairs = (HashMap.Entry) its.next();
-                                    Location hashLocations = (Location) pairs.getKey();
-                                    if ((hashLocation.getLatitude() == hashLocations.getLatitude()) &&
-                                            (hashLocation.getLongitude() == hashLocations.getLongitude()) ) {
-
-                                           if ( (Float) pair.getValue() >(Float) pairs.getValue()  )
-                                               accelerometer.getPossibleBumps().get(0).put(hashLocations,(Float) pair.getValue());
-
-
-                                        if ( (Float) pair.getValue() <(Float) pairs.getValue())
-                                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) pairs.getValue()+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude()
-                                                + " and  ROUND(intensity,6)==ROUND("+(Float) pair.getValue()+",6)");
-
+                                Iterator newListIteam = newList.entrySet().iterator();
+                                while (newListIteam.hasNext()) {
+                                    HashMap.Entry newData = (HashMap.Entry) newListIteam.next();
+                                    Location newLocation = (Location) newData.getKey();
+                                    // ak sa zhoduju location, tak updatujem hodnoty
+                                    if ((oldLocation.getLatitude() == newLocation.getLatitude()) &&
+                                            (oldLocation.getLongitude() == newLocation.getLongitude()) ) {
+                                        // staršia hodnota je väčšia, tak prepíšem na väčšiu hodnotu
+                                         if ( (Float) oldData.getValue() >(Float) newData.getValue()  )
+                                               accelerometer.getPossibleBumps().get(0).put(newLocation,(Float) oldData.getValue());
+                                        // ak je stará hodnota menšia, updatujem databazu kde je uložená menšia
+                                        if ( (Float) oldData.getValue() <(Float) newData.getValue())
+                                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) newData.getValue()+",6) WHERE latitude=" + oldLocation.getLatitude() + " and  longitude=" + oldLocation.getLongitude()
+                                                + " and  ROUND(intensity,6)==ROUND("+(Float) oldData.getValue()+",6)");
+                                        // mažem s pomocného zoznamu updatnuté hodnoty
                                         listHelp.remove(i);
                                         bumpsManualHelp.remove(i);
                                     }
@@ -1548,24 +1517,21 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                             }
                         }
                     }
+                    // doplnim do zoznamu povodné, ktoré sa nezmenili
                     accelerometer.getPossibleBumps().addAll(listHelp);
                     accelerometer.getBumpsManual().addAll(bumpsManualHelp);
-
-                    Log.d("TEST", "koniec for");
                 }
                 else if (listHelp.size()>0) {
+                    // nepribudli nové hodnoty, tak tam vrátim pôvodné
                     accelerometer.getPossibleBumps().addAll(listHelp);
                     accelerometer.getBumpsManual().addAll(bumpsManualHelp);
                 }
+                // vypínam locky, nulujem pomocné polia
                 lockAdd=false;
-                Log.d("TEST", "koniec celho");
                 listHelp=null;
                 bumpsManualHelp=null;
-
                 updatesLock=false;
-
-
-            Looper.loop();
+                Looper.loop();
         } };
         t.start();
 

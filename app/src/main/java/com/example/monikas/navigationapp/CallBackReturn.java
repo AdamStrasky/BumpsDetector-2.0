@@ -1,7 +1,5 @@
 package com.example.monikas.navigationapp;
 
-import java.util.HashMap;
-
 /**
  * Created by Adam on 18.10.2016.
  */

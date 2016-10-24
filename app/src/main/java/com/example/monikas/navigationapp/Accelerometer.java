@@ -9,7 +9,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -23,13 +22,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 
 import android.preference.PreferenceManager;
-import android.util.FloatMath;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -75,7 +72,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
      public ArrayList<HashMap<Location, Float>> getPossibleBumps() {
          return possibleBumps;
     }
-
 
     public void addPossibleBumps(Location location, Float data) {
         HashMap<Location, Float> hashToArray = new HashMap();
@@ -192,8 +188,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
 
     }
 
-
-
     public synchronized String detect (Location location, Float data) {
         String result = null;
         boolean isToClose = false;
@@ -210,7 +204,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                 if ((location.getLatitude() == hashLocation.getLatitude()) && (location.getLongitude() == hashLocation.getLongitude())) {
                     if (data > (Float) pair.getValue()) {
                         pair.setValue(data);
-                        Log.d("asdasda", String.valueOf(data));
                         Log.d("DETECT", "same location");
                         if (!updatesLock)
                             sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+data+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
@@ -226,7 +219,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
                         if (data > (Float) pair.getValue()) {
                             Log.d("DETECT", "under 2 meters ");
-                            Log.d("asdasda", String.valueOf(data));
                             pair.setValue(data);
 
                             if (!updatesLock)
@@ -243,7 +235,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
 
             Log.d("DETECT", "new dump");
             result = "new bump";
-            Log.d("asdasda", String.valueOf(data));
             System.out.println("lat: "+ location.getLatitude() + ",lng: "+ location.getLongitude() + ",data: " + data);
             HashMap<Location, Float> hashToArray = new HashMap();
             hashToArray.put(location,data);
