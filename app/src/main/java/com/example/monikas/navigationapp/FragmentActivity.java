@@ -39,14 +39,11 @@ import org.json.JSONObject;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.MapFragment;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.offline.OfflineManager;
 import com.mapbox.mapboxsdk.offline.OfflineRegion;
 import com.mapbox.mapboxsdk.offline.OfflineRegionError;
@@ -75,7 +72,7 @@ import static com.example.monikas.navigationapp.MainActivity.navig_on;
 import static com.example.monikas.navigationapp.MainActivity.progressBar;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
-public class FragmentActivity extends Fragment  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
     private GoogleApiClient mGoogleApiClient;
     public GPSLocator gps = null;
@@ -83,7 +80,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public static Activity fragment_context;
     public static GPSLocator global_gps;
     public static GoogleApiClient global_mGoogleApiClient;
-    public static MapFragment global_MapFragment;
     //konstanty pre level (podiel rating/count pre vytlk v databaze)
     private final float ALL_BUMPS = 1.0f;
     private final float MEDIUM_BUMPS = 1.5f;
@@ -104,13 +100,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
     private int loaded_index;
-
-
     private boolean isEndNotified;
     public static boolean setOnPosition =true;
     public static boolean flagDownload=false;
     public static boolean lockAdd=false;
-
     private int regionSelected;
     private boolean mapNotification=true;
     // Offline objects
@@ -118,23 +111,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     private OfflineRegion offlineRegion;
     public static String selectedName = null;
     private final static String TAG = "MainActivity";
-
     // JSON encoding/decoding
     public final static String JSON_CHARSET = "UTF-8";
     public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
-
     private  boolean regular_update = false;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-
-
-
-
-
         offlineManager = OfflineManager.getInstance(getActivity());
-
         initialization_database();
         get_loaded_index();
         // ak sa pripojím na internet požiam o update
@@ -157,11 +142,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }
         // pravidelný update ak nemám povolený internet
         new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
-
         //////////////////////////////odstranit, len na testovanie
        // new Timer().schedule(new VkladanieDoDatabazy(), 15000, 15000);// 3600000
     }
 
+   // pravdepodobne vymať
+/*****************************************************************************************************/
     public  void offlineMapaNaMojejGPS ( ){
         // asi odstranit
         gps=mLocnServGPS;
@@ -192,24 +178,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             });
         }
     }
-
-    public void get_loaded_index (){
-        //  najvyššie uložený index po uspešnej transakcie collision
-        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-        if (sharedPref.contains("save"))
-            loaded_index = sharedPref.getInt("save", 0);
-        else {
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putInt("save", 0);
-            loaded_index = 0;
-            editor.commit();
-        }
-    }
     // asi zmazat, ak nebudem riesit net
     private void alertMissingMap() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Internet connection")
-               .setMessage("Your map is not available. Please connect to internet or download map of region if you want use a map")
+                .setMessage("Your map is not available. Please connect to internet or download map of region if you want use a map")
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -219,6 +192,67 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         builder.show();
     }
 
+    // pravdepodobne vymazať
+    private class VkladanieDoDatabazy extends TimerTask {
+        @Override
+        public void run() {
+
+            if (updatesLock) {
+                Log.d("TEaaaaaST"," nepresiel ");
+                return;
+            }
+
+            if (!updatesLock) {
+                updatesLock=true;
+                sb.beginTransaction();
+                int i=0;
+                for (i = 0; i < 100000; i++) {
+                    Location location = new Location("new");
+                    location.setLatitude(48.222 + i);
+                    location.setLongitude(48.222);
+                    location.setTime(new Date().getTime());
+                    Log.d("TEaaaaaST"," beyiiii");
+                    accelerometer.addPossibleBumps(location, 5.5f);
+                    accelerometer.addBumpsManual(1);
+                    if (i ==99999) {
+                        Log.d("TEaaaaaST"," vypol sa lock v regular A");
+                        updatesLock = false;
+                        sb.setTransactionSuccessful();
+                        sb.endTransaction();
+
+                        break;
+                    }
+
+                }
+
+            }
+            Log.d("TEaaaaaST"," naplnene");
+
+        }
+    }
+
+    ///////// pomocna funkcia, možem zmazať
+    public void getAllBumpsALL() {
+        sb.beginTransaction();
+        String selectQuery = "SELECT b_id_bumps,rating,count FROM my_bumps ";
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+        Cursor cursor = database.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Log.d("TEST","id "+ cursor.getInt(0));
+                Log.d("TEST","rating "+ cursor.getInt(1));
+                Log.d("TEST","count "+ cursor.getInt(2));
+            } while (cursor.moveToNext());
+        }
+        sb.setTransactionSuccessful();
+        sb.endTransaction();
+    }
+
+    /*****************************************************************************************************/
+
+  // presunúť do inej triedy
+  /*******************************************************************************************************/
     public void downloadRegionDialog() {
         if (!isNetworkAvailable()) {
             Toast.makeText(getActivity(), "You must to be connected to internet if you want download map", Toast.LENGTH_SHORT).show();
@@ -411,7 +445,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             @Override
             public void onCreate(OfflineRegion offlineRegion) {
                 Log.d(TAG, "Offline region created: " + regionName);
-                FragmentActivity.this.offlineRegion = offlineRegion;/////////////////////////////
+                FragmentActivity.this.offlineRegion = offlineRegion;
                 launchDownload();
             }
 
@@ -615,6 +649,20 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         if (message!=null)
         Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
     }
+    /*******************************************************************************************************/
+
+    public void get_loaded_index (){
+        //  najvyššie uložený index po uspešnej transakcie collision
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        if (sharedPref.contains("save"))
+            loaded_index = sharedPref.getInt("save", 0);
+        else {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putInt("save", 0);
+            loaded_index = 0;
+            editor.commit();
+        }
+    }
 
     public void initialization_database(){
         // inicializacia databazy
@@ -628,48 +676,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             regular_update = true;
         }
     }
- // pravdepodobne vymazať
-    private class VkladanieDoDatabazy extends TimerTask {
-        @Override
-        public void run() {
-
-          if (updatesLock) {
-                Log.d("TEaaaaaST"," nepresiel ");
-                return;
-            }
-
-            if (!updatesLock) {
-                updatesLock=true;
-                sb.beginTransaction();
-                int i=0;
-                for (i = 0; i < 100000; i++) {
-                    Location location = new Location("new");
-                    location.setLatitude(48.222 + i);
-                    location.setLongitude(48.222);
-                    location.setTime(new Date().getTime());
-                    Log.d("TEaaaaaST"," beyiiii");
-                    accelerometer.addPossibleBumps(location, 5.5f);
-                    accelerometer.addBumpsManual(1);
-                    if (i ==99999) {
-                        Log.d("TEaaaaaST"," vypol sa lock v regular A");
-                        updatesLock = false;
-                        sb.setTransactionSuccessful();
-                        sb.endTransaction();
-
-                        break;
-                    }
-
-                }
-
-            }
-            Log.d("TEaaaaaST"," naplnene");
-
-        }
-    }
 
     public void getAllBumps(Double latitude, Double longitude) {
-        // vyčistenie mapy a uprava cesty
-        gps.updateMap();
+       // vyčistenie mapy a uprava cesty
+        mapbox.clear();
+
         SimpleDateFormat now,ago;
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
@@ -727,24 +738,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 }
             }
         }
-    }
-
-    ///////// pomocna funkcia, možem zmazať
-    public void getAllBumpsALL() {
-        sb.beginTransaction();
-        String selectQuery = "SELECT b_id_bumps,rating,count FROM my_bumps ";
-        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-        Cursor cursor = database.rawQuery(selectQuery, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-               Log.d("TEST","id "+ cursor.getInt(0));
-               Log.d("TEST","rating "+ cursor.getInt(1));
-               Log.d("TEST","count "+ cursor.getInt(2));
-            } while (cursor.moveToNext());
-        }
-        sb.setTransactionSuccessful();
-        sb.endTransaction();
     }
 
     private double lang_database,longt_database;
@@ -1021,8 +1014,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
              }
 
         protected void onPostExecute(JSONArray array) {
-
-
             if (array == null) {
               // žiadne nové data v bumps, zisti collisons
                 get_max_collision(lang_database, longt_database,0);
@@ -1086,7 +1077,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     } else {
                         // nastala chyba, načitaj uložene vytlky
                         sb.endTransaction();
-                        getAllBumpsALL();
+                        LatLng convert_location =  gps.getCurrentLatLng();
+                        getAllBumps(convert_location.latitude,convert_location.longitude);
                         return;
                     }
                 }
@@ -1114,8 +1106,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                         bumpsManual.addAll(  accelerometer.getBumpsManual());
                         accelerometer.getPossibleBumps().clear();
                         accelerometer.getBumpsManual().clear();
-
-                        Log.d("aadsda","spustam savebump");
                         saveBump(bumpList, bumpsManual,0);
                     }
                     if (updates==1) {
@@ -1219,13 +1209,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         alert.show();
     }
 
-    public boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
                 .addConnectionCallbacks(this)
@@ -1245,11 +1228,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         }, 500);
     }
 
-
     public void init_servise() {
 
         global_mGoogleApiClient= mGoogleApiClient;
-        global_MapFragment =  ((MapFragment) getFragmentManager().findFragmentById(R.id.map));
         mServiceConnectedGPS =   getActivity().bindService(new Intent(getActivity().getApplicationContext(), GPSLocator.class), mServconnGPS, Context.BIND_AUTO_CREATE);
 
          new Handler().postDelayed(new Runnable() {
@@ -1273,23 +1254,15 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Activity activity = getActivity();
-                if(activity != null && mLocnServGPS.getCurrentLatLng()!=null ) {
-                    mLocnServGPS.goTo(mLocnServGPS.getCurrentLatLng(),ZOOM_LEVEL);
-                }
                 loadSaveDB();
-
                 //vytlky sa do dabatazy odosielaju kazdu minutu
-                new Timer().schedule(new SendBumpsToDb(), 0, 30000);
-
+                new Timer().schedule(new SendBumpsToDb(), 0, 120000);
                 //mapa sa nastavuje kazde 2 minuty
-                new Timer().schedule(new MapSetter(), 0, 30000);   //120000
+                new Timer().schedule(new MapSetter(), 0, 120000);   //120000
 
 
             }
         },5000);
-
-
     }
 
     @Override
@@ -1301,19 +1274,17 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     public void onConnectionFailed(ConnectionResult connectionResult) {
         if (isEneableShowText())
             Toast.makeText(getActivity(), "GoogliApiClient connection failed", Toast.LENGTH_LONG).show();
-
     }
-    private Bump  Handler;
+
      private void initialization() {
         buildGoogleApiClient();
     }
 
     public void loadSaveDB(){
-  if (updatesLock)
+        if (updatesLock)
           return;
 
-          updatesLock=true;
-
+        updatesLock=true;
         String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
@@ -1335,9 +1306,9 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     hashToArraya.put(location, (float) cursor.getDouble(2));
                     hashToArray.add(hashToArraya);
                     listA.add(cursor.getInt(3));
-                    Log.d("TESTa", "latitude " + cursor.getDouble(0));
-                    Log.d("TESTa", "longitude " + cursor.getDouble(1));
-                    Log.d("TESTa", "intensity " + cursor.getDouble(2));
+                    Log.d("loadSaveDB", "latitude " + cursor.getDouble(0));
+                    Log.d("loadSaveDB", "longitude "+ cursor.getDouble(1));
+                    Log.d("loadSaveDB", "intensity "+ cursor.getDouble(2));
                 }
 
            } while (cursor.moveToNext());
@@ -1347,7 +1318,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     mLocnServAcc.getPossibleBumps().addAll(hashToArray);
                     mLocnServAcc.getBumpsManual().addAll(listA);
                 }else
-                Log.d("aaa","nulllllll");
+                    Log.d("loadSaveDB","NULL ACCELEROMETER");
                  updatesLock = false;
                  sb.setTransactionSuccessful();
                  sb.endTransaction();
@@ -1368,23 +1339,11 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         if (  mServiceConnectedGPS) {
            getActivity().unbindService(mServconnGPS);
         }
-
-    }
-
-    private class MapSetter extends TimerTask {
-         @Override
-        public void run() {
-            getActivity().runOnUiThread(new Runnable(){
-
-                @Override
-                public void run() {
-                    getBumpsWithLevel();
-                }});
-        }
     }
 
     public static boolean updatesLock = false;
     private boolean regularUpdatesLock = false;
+
     private class SendBumpsToDb extends TimerTask {
 
         @Override
@@ -1422,6 +1381,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             );
         }
     }
+    private Bump  Handler;
     private boolean  lock =true;
     private ArrayList<HashMap<Location, Float>> listHelp;
     private ArrayList<Integer> bumpsManualHelp;
@@ -1527,6 +1487,18 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
     }
 
+    private class MapSetter extends TimerTask {
+        @Override
+        public void run() {
+            getActivity().runOnUiThread(new Runnable(){
+
+                @Override
+                public void run() {
+                    getBumpsWithLevel();
+                }});
+        }
+    }
+
     public void getBumpsWithLevel() {
         //ak je pripojenie na internet
         if (isNetworkAvailable()) {
@@ -1610,5 +1582,12 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 return false;
         }
         return false;
+    }
+
+    public boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

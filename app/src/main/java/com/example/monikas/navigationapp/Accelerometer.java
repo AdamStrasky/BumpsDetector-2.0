@@ -35,7 +35,6 @@ import static com.example.monikas.navigationapp.FragmentActivity.global_gps;
 import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
 
-
 public class Accelerometer extends Service implements SensorEventListener, LocationListener {
 
     private boolean flag = false;
@@ -152,10 +151,8 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                     LIFO.add(currentData);
                 }
             }
-
             return result;
         }
-
 
         protected void onPostExecute(String result) {
             if (result != null) {
@@ -220,7 +217,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         if (data > (Float) pair.getValue()) {
                             Log.d("DETECT", "under 2 meters ");
                             pair.setValue(data);
-
                             if (!updatesLock)
                                 sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+data+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
                                 result = "under bump";
@@ -232,7 +228,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
 
         }
         if (!isToClose) {
-
             Log.d("DETECT", "new dump");
             result = "new bump";
             System.out.println("lat: "+ location.getLatitude() + ",lng: "+ location.getLongitude() + ",data: " + data);

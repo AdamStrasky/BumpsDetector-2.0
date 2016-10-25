@@ -25,7 +25,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -40,7 +39,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
-
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
@@ -63,7 +61,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public static LinearLayout mapConfirm;
     public static ProgressBar progressBar;
     public static Button navig_on;
-    public static   MapboxMap mapbox;
+    public static MapboxMap mapbox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +69,17 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
-
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(final MapboxMap mapboxMap) {
+                mapbox = mapboxMap;
+                if (setOnPosition)
+                    mapbox.setMyLocationEnabled(true);
+
+            }
+        });
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
@@ -94,30 +101,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         downloand_button.setOnClickListener(this);
         back_button.setOnClickListener(this);
         navig_on.setOnClickListener(this);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(final MapboxMap mapboxMap) {
-                mapbox = mapboxMap;
-                if (setOnPosition)
-                    mapbox.setMyLocationEnabled(true);
-
-            }
-
-
-        });
-
-
-
-
-
-
-
 
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 if (v.getId() == searchBar.getId()) {
                     searchBar.setCursorVisible(true);
                     searchBar.setText("");
@@ -135,10 +122,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
-
-
-
-
     }
 
     public void onClick(View v) {
@@ -249,20 +232,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         activityVisible = false;
     }
 
-
-
-
     public void onClick_Search(View v) throws IOException {
-
         Address address = null;
         EditText text = (EditText) findViewById(R.id.location);
         Toast.makeText(this, "Finding location...", Toast.LENGTH_LONG).show();
-
-
         text.setCursorVisible(false);
         hideKeyboard(v);
         String location = text.getText().toString();
-
         if (fragmentActivity.isNetworkAvailable()) {
             try {
                 address = Route.findLocality(location, this);
@@ -273,10 +249,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 else {
                     LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
                     LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
-                    fragmentActivity.gps.goTo(myPosition, ZOOM_LEVEL);
                     fragmentActivity.gps.showDirection(myPosition, to_position);
-                    fragmentActivity.gps.setNavigation(true);
-                }
+                 }
             }
             catch (Exception e) {
                 if (isEneableShowText())
@@ -290,7 +264,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     public void hideKeyboard(View v) {
-
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
@@ -309,13 +282,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.normal:
-               // fragmentActivity.gps.getMap().setMapType(GoogleMap.MAP_TYPE_NORMAL);
                 mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
-               // mapbox://styles/mapbox/light-v9
                 return true;
 
             case R.id.clear_map:
-                fragmentActivity. gps.setRoad(null);
                 mapbox.clear();
                 return true;
 
@@ -326,116 +296,85 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.navigation:
-                fragmentActivity.gps.setNavigation(false);
                 EditText text = (EditText) findViewById(R.id.location);
                 text.setText("Navigate to...");
                 return true;
 
             case R.id.all_bumps:
-
                 fragmentActivity.level = ALL_BUMPS;
-                LatLng convert_location =  fragmentActivity.gps.getCurrentLatLng();
-                fragmentActivity.getAllBumps(convert_location.latitude,convert_location.longitude);
+                LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
+                fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
                 return true;
 
             case R.id.medium_bumps:
                 fragmentActivity.level = MEDIUM_BUMPS;
-                LatLng convert_location1 =  fragmentActivity.gps.getCurrentLatLng();
-                fragmentActivity.getAllBumps(convert_location1.latitude,convert_location1.longitude);
+                LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
+                fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
                 return true;
 
             case R.id.large_bumps:
                 fragmentActivity.level = LARGE_BUMPS;
-                LatLng convert_location2 =  fragmentActivity.gps.getCurrentLatLng();
-                fragmentActivity.getAllBumps(convert_location2.latitude,convert_location2.longitude);
+                LatLng largeBumps =  fragmentActivity.gps.getCurrentLatLng();
+                fragmentActivity.getAllBumps(largeBumps.latitude,largeBumps.longitude);
                 return true;
 
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
+
             case R.id.download:
                 setOnPosition =true;
-
                 navig_on.setVisibility(View.INVISIBLE);
-               if ( flagDownload)
+                if ( flagDownload)
                    Toast.makeText(this, "Momentálne sťahujete,nemožte 2 naraz", Toast.LENGTH_LONG).show();
                 else
-                fragmentActivity.downloadRegionDialog();
+                    fragmentActivity.downloadRegionDialog();
                 return true;
+
             case R.id.list:
                 mapConfirm.setVisibility(View.INVISIBLE);
-                if ( flagDownload)
+                if (flagDownload)
                     Toast.makeText(this, "Momentálne sťahujete,nemožte pristupiť k stiahnutým mapám", Toast.LENGTH_LONG).show();
                 else
-                fragmentActivity.downloadedRegionList();
+                    fragmentActivity.downloadedRegionList();
                 return true;
 
-
-
             case R.id.exit:
+                ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
+                ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
+                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                SQLiteDatabase  sb = databaseHelper.getWritableDatabase();
+                sb.beginTransaction();
+                int i=0;
+                    for (HashMap<Location, Float> bump : list) {
+                        Iterator it = bump.entrySet().iterator();
+                        while (it.hasNext()) {
+                            HashMap.Entry pair = (HashMap.Entry) it.next();
+                            Location loc = (Location) pair.getKey();
+                            float data = (float) pair.getValue();
+                            String sql = "SELECT intensity FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                    + " and  ROUND(intensity,6)==ROUND("+data+",6)  and manual="+bumpsManual.get(i);
 
-                // uloženie vytlkov do databazy na vypnutie appky
-               /* boolean off=false;
-                if (fragmentActivity.isNetworkAvailable()) {
-                    if (!(fragmentActivity.isEneableDownload() && !fragmentActivity.isConnectedWIFI())) {
-                        if (!fragmentActivity.accelerometer.getPossibleBumps().isEmpty()) {
-                            if (!fragmentActivity.updatesLock) {
-                                off = true;
-                                fragmentActivity.updatesLock = true;
-                                ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
-                                lista.addAll(fragmentActivity.accelerometer.getPossibleBumps());
-                                ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
-                                bumpsManual.addAll(fragmentActivity.accelerometer.getBumpsManual());
-                                fragmentActivity.accelerometer.getPossibleBumps().clear();
-                                fragmentActivity.accelerometer.getBumpsManual().clear();
-                                Log.d("asdasda", "adasfgrgfadf ");
-                                fragmentActivity.saveBump(lista, bumpsManual, 0);
-                            }
-                        }
-                    }
-                }
-
-                if (off) {*/
-                     ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
-                     ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
-                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                     SQLiteDatabase  sb = databaseHelper.getWritableDatabase();
-                     sb.beginTransaction();
-                     int i=0;
-                        for (HashMap<Location, Float> bump : list) {
-                            Iterator it = bump.entrySet().iterator();
-                            while (it.hasNext()) {
-                                HashMap.Entry pair = (HashMap.Entry) it.next();
-                                Location loc = (Location) pair.getKey();
-                                float data = (float) pair.getValue();
-                               String sql = "SELECT intensity FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
-                                        + " and  ROUND(intensity,6)==ROUND("+data+",6)  and manual="+bumpsManual.get(i);
-
-                                BigDecimal bd = new BigDecimal(Float.toString(data));
-                                bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                                Cursor cursor = null;
-                                cursor = sb.rawQuery(sql, null);
-
+                            BigDecimal bd = new BigDecimal(Float.toString(data));
+                            bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                            Cursor cursor = sb.rawQuery(sql, null);
                                 if (cursor.getCount() == 0) {
-                                    Log.d("asdasda", String.valueOf(data));
-                                    Log.d("asdasda", "vkladam ");
+                                    Log.d("MainActivity", "vkladam ");
                                     ContentValues contentValues = new ContentValues();
                                     contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
                                     contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
                                     contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
                                     contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
                                     sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-
                                 }
                             }
                             i++;
-                        }
+                    }
                     sb.setTransactionSuccessful();
                     sb.endTransaction();
-               // }
-                fragmentActivity.stop_servise();
-                onDestroy();
-                return true;
+                    fragmentActivity.stop_servise();
+                    onDestroy();
+                    return true;
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -453,7 +392,12 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         super.onResume();
         if (fragmentActivity.gps !=null && fragmentActivity.gps.getmCurrentLocation()!= null) {
             LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
-            fragmentActivity.gps.goTo(myPosition, ZOOM_LEVEL);
+            if (myPosition!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
+                try {
+                    mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(myPosition.latitude, myPosition.longitude)));
+                } catch  (NullPointerException e) {
+                }
+            }
         }
         MainActivity.activityResumed();
     }
@@ -465,14 +409,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     public boolean isEneableShowText() {
-
         SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
         Boolean alarm = preferences.getBoolean("alarm", Boolean.parseBoolean(null));
         if ((alarm) || (!alarm && MainActivity.isActivityVisible())) {
            return true;
         }
         else
-            return false;
+           return false;
     }
 
 }

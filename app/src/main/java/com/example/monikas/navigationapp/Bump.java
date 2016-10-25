@@ -34,13 +34,11 @@ public class Bump {
         if (isBetween(intensity, 6, 10)) rating = 2;
         if (isBetween(intensity, 10, 10000)) rating = 3;
         this.manual = manual;
-
     }
 
     public static boolean isBetween(float x, float from, float to) {
         return from <= x && x <= to;
     }
-
 
     public void getResponse(final CallBackReturn returnMethod) {
         CreateNewBump obj = new CreateNewBump();
@@ -63,8 +61,7 @@ public class Bump {
             String latitude = String.valueOf(location.getLatitude());
             String longitude = String.valueOf(location.getLongitude());
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            Log.d("xcxvddd","odosielal som"+ String.valueOf(manual));
-            //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
+           //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
             params.add(new BasicNameValuePair("intensity", Float.toString(intensity)));
@@ -76,8 +73,8 @@ public class Bump {
              try {
                  success = json.getInt("success");
                 } catch (JSONException e) {
-                e.printStackTrace();
-                return "error";
+                    e.printStackTrace();
+                    return "error";
                 }
             if (success == 1)
                 return "success";

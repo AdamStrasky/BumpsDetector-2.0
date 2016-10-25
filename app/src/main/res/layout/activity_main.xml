@@ -34,92 +34,20 @@
         android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"/>
 
 
-
-
-    <LinearLayout
-
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:orientation="horizontal"
-        android:id="@+id/confirm"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="20dp">
-
-        <Button
-            android:id="@+id/save_btn"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:text="Save"
-            android:textAllCaps="false" />
-
-        <Button
-            android:id="@+id/delete_btn"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:text="Delete"
-            android:textAllCaps="false" />
-    </LinearLayout>
-
-
-    <LinearLayout
-
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:orientation="horizontal"
-        android:id="@+id/mapConfirm"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="20dp">
-
-        <Button
-            android:id="@+id/saveMap_btn"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:text="Download"
-            android:textAllCaps="false" />
-
-        <Button
-            android:id="@+id/backMap_btn"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:text="Back"
-            android:textAllCaps="false" />
-    </LinearLayout>
-
-
-
-
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.MapFragment"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_above="@+id/confirm"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true">
-    </fragment>
-
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapboxMarkerMapView"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:layout_above="@+id/map"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/location"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         mapbox:style_url="mapbox://styles/mapbox/streets-v9"
-        mapbox:zoom="11"/>
+        mapbox:zoom="11"
+        android:layout_alignParentBottom="true">
+
+    </com.mapbox.mapboxsdk.maps.MapView>
     />
 
 
@@ -135,6 +63,14 @@
         android:visibility="gone" />
 
 
+    <Button
+        android:id="@+id/navig_on"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:text="Back on my position"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:textAllCaps="false" />
 
     <Button
         android:id="@+id/add_button"
@@ -144,19 +80,66 @@
         android:text="+"
         android:textColor="#fff"
         android:textSize="36sp"
-        android:layout_alignParentBottom="true"
+        android:textAllCaps="false"
+        android:layout_alignBottom="@+id/confirm"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:textAllCaps="false" />
+        android:layout_marginRight="12dp"
+        android:layout_marginEnd="12dp" />
 
-    <Button
-        android:id="@+id/navig_on"
-        android:layout_width="wrap_content"
+    <LinearLayout
+
+        android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:text="Back on my position"
+        android:orientation="horizontal"
+        android:id="@+id/confirm"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:textAllCaps="false" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <Button
+            android:id="@+id/save_btn"
+            android:layout_width="193dp"
+            android:layout_height="fill_parent"
+            android:text="Save"
+            android:textAllCaps="false" />
+
+        <LinearLayout
+
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:id="@+id/mapConfirm"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginBottom="20dp"
+            android:layout_weight="1">
+
+            <Button
+                android:id="@+id/saveMap_btn"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:text="Download"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/backMap_btn"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:text="Back"
+                android:textAllCaps="false" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/delete_btn"
+            android:layout_width="181dp"
+            android:layout_height="fill_parent"
+            android:text="Delete"
+            android:textAllCaps="false" />
+    </LinearLayout>
 
 
 </RelativeLayout>

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+
 import java.util.List;
 
 import org.apache.http.HttpEntity;
@@ -39,8 +40,6 @@ public class JSONParser {
                 HttpResponse httpResponse = httpClient.execute(httpPost);
                 HttpEntity httpEntity = httpResponse.getEntity();
                 is = httpEntity.getContent();
-
-
             }
             if (method == "GET") {
                 DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -48,7 +47,6 @@ public class JSONParser {
                 HttpResponse response = httpClient.execute(request);
                 HttpEntity httpEntity = response.getEntity();
                 is = httpEntity.getContent();
-
             }
 
         } catch (UnsupportedEncodingException e) {
@@ -63,8 +61,6 @@ public class JSONParser {
 
         } catch (IOException e) {
             e.printStackTrace();
-
-
         }
 
         try {
@@ -77,20 +73,16 @@ public class JSONParser {
             is.close();
             json = sb.toString();
         } catch (Exception e) {
-
             Log.e("Buffer Error", "Error converting result " + e.toString());
             return  null;
-
         }
 
         // parse the string to a JSON object
         try {
             jObj = new JSONObject(json);
         } catch (JSONException e) {
-
             Log.e("JSON Parser", "Error parsing data " + e.toString());
             return  null;
-
         }
         return jObj;
     }
