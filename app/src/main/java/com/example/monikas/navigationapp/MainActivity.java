@@ -29,6 +29,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -38,7 +40,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
-import static com.example.monikas.navigationapp.FragmentActivity.mapbox;
+
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
@@ -57,11 +59,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private Float intensity = null;
     LinearLayout confirm;
     Button add_button, save_button, delete_button,downloand_button,back_button;
+    public  MapView mapView = null;
     public static LinearLayout mapConfirm;
-    public static MapView mapView = null;
     public static ProgressBar progressBar;
     public static Button navig_on;
-
+    public static   MapboxMap mapbox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +94,24 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         downloand_button.setOnClickListener(this);
         back_button.setOnClickListener(this);
         navig_on.setOnClickListener(this);
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(final MapboxMap mapboxMap) {
+                mapbox = mapboxMap;
+                if (setOnPosition)
+                    mapbox.setMyLocationEnabled(true);
+
+            }
+
+
+        });
+
+
+
+
+
+
 
 
         searchBar.setOnClickListener(new View.OnClickListener() {
@@ -115,6 +135,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
+
+
+
+
     }
 
     public void onClick(View v) {

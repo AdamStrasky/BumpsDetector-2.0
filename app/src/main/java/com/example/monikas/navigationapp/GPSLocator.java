@@ -40,7 +40,9 @@ import java.util.ArrayList;
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
-import static com.example.monikas.navigationapp.FragmentActivity.mapbox;
+
+import static com.example.monikas.navigationapp.MainActivity.mapbox;
+
 import android.animation.TypeEvaluator;
 
 
@@ -199,10 +201,17 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         Document doc = md.getDocument(from, to);
         ArrayList<LatLng> directionPoint = md.getDirection(doc);
         road = new PolylineOptions().width(27).color(Color.MAGENTA);
-
+        com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
         for(int i = 0 ; i < directionPoint.size() ; i++) {
             road.add(directionPoint.get(i));
+            points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
+                    directionPoint.get(i).latitude,
+                    directionPoint.get(i).longitude);
         }
+        mapbox.addPolyline(new com.mapbox.mapboxsdk.annotations.PolylineOptions()
+                .add(points)
+                .color(Color.parseColor("#009688"))
+                .width(5));
         updateMap();
 
     }

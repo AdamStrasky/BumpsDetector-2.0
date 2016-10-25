@@ -69,7 +69,8 @@ import java.util.TimerTask;
 
 import static com.example.monikas.navigationapp.Bump.isBetween;
 import static com.example.monikas.navigationapp.MainActivity.mapConfirm;
-import static com.example.monikas.navigationapp.MainActivity.mapView;
+
+import static com.example.monikas.navigationapp.MainActivity.mapbox;
 import static com.example.monikas.navigationapp.MainActivity.navig_on;
 import static com.example.monikas.navigationapp.MainActivity.progressBar;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
@@ -103,7 +104,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
     private int loaded_index;
-    public static   MapboxMap mapbox;
+
 
     private boolean isEndNotified;
     public static boolean setOnPosition =true;
@@ -130,18 +131,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
 
 
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(final MapboxMap mapboxMap) {
-                mapbox = mapboxMap;
-                if (setOnPosition)
-                    mapbox.setMyLocationEnabled(true);
 
-                }
-
-
-            });
 
         offlineManager = OfflineManager.getInstance(getActivity());
 
