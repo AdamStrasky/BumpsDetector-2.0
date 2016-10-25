@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
+import static com.example.monikas.navigationapp.FragmentActivity.mapbox;
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
@@ -162,13 +163,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
                 // vrati polohu  kde som stlačil na mape
-                LatLng convert_location =  fragmentActivity.gps.setUpMap(false);
+                com.mapbox.mapboxsdk.geometry.LatLng convert_location =  fragmentActivity.gps.setUpMap(false);
                 //vytvorenie markera
                 fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
                     Location location = new Location("new");
-                    location.setLatitude(convert_location.latitude);
-                    location.setLongitude(convert_location.longitude);
+                    location.setLatitude(convert_location.getLatitude());
+                    location.setLongitude(convert_location.getLongitude());
                     location.setTime(new Date().getTime());
                     fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
                     fragmentActivity.accelerometer.addBumpsManual(1);
@@ -280,16 +281,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         switch (item.getItemId()) {
 
             case R.id.satellite:
-                fragmentActivity.gps.getMap().setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                 return true;
 
             case R.id.normal:
-                fragmentActivity.gps.getMap().setMapType(GoogleMap.MAP_TYPE_NORMAL);
+               // fragmentActivity.gps.getMap().setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
+               // mapbox://styles/mapbox/light-v9
                 return true;
 
             case R.id.clear_map:
                 fragmentActivity. gps.setRoad(null);
-                fragmentActivity.gps.getMap().clear();
+                mapbox.clear();
                 return true;
 
             case R.id.calibrate:

@@ -1,12 +1,21 @@
 package com.example.monikas.navigationapp;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
+
+
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
+
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -17,12 +26,12 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+
 import com.google.android.gms.maps.model.PolylineOptions;
+
+import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import org.w3c.dom.Document;
 
@@ -32,6 +41,7 @@ import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.global_MapFragment;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
 import static com.example.monikas.navigationapp.FragmentActivity.mapbox;
+import android.animation.TypeEvaluator;
 
 
 /**
@@ -45,8 +55,8 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     private boolean navigation;
     private PolylineOptions road;
     private float level;
-    private LatLng latLng;
-    private Marker marker;
+    private com.mapbox.mapboxsdk.geometry.LatLng latLng;
+    private com.mapbox.mapboxsdk.annotations.Marker marker;
 
     public GPSLocator () {
 
@@ -62,18 +72,57 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         }
     }
 
-    public LatLng setUpMap(boolean value) {
+    public com.mapbox.mapboxsdk.geometry.LatLng setUpMap(boolean value) {
 
         if (!value) {
-             map.setOnMapClickListener(null);
+            //////////
+            mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
+                }
+                });
+
              if (marker != null) {
-                marker.remove();
+                 marker.remove();
+                // mapbox.removeMarker();
              }
          return  latLng;
         }
         else {
             latLng = null;
-            map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+             marker=null;
+            mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
+                    latLng = point;
+
+                    if (marker != null) {   // odstranenie predchadzajuceho markera
+                       // marker.remove();
+                        ValueAnimator markerAnimator = ObjectAnimator.ofObject(marker, "position",
+                                new LatLngEvaluator(), marker.getPosition(), point);
+                        markerAnimator.setDuration(2000);
+                        markerAnimator.start();
+
+                    } else {
+                        IconFactory iconFactory = IconFactory.getInstance(GPSLocator.this);
+                        Drawable iconDrawable = ContextCompat.getDrawable(GPSLocator.this, R.drawable.green_icon);
+                        com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
+                        marker = mapbox.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions().title("Selected point")
+                                .position(point)
+                                .icon(icons));
+                    }
+                }
+
+
+            });
+
+            return null;
+
+
+
+
+
+          /*  map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
                 @Override
                 public void onMapClick(LatLng point) {
@@ -85,14 +134,35 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
                     }
 
                      // vytvorenie markera
-                     marker = map.addMarker(new MarkerOptions().position(point).title("Selected point")
+                     marker = map.addMarker(new com.google.android.gms.maps.model.MarkerOptions().position(point).title("Selected point")
                          .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+
+                   IconFactory iconFactory = IconFactory.getInstance(GPSLocator.this);
+                    Drawable iconDrawable = ContextCompat.getDrawable(GPSLocator.this, R.drawable.red_icon);
+                    com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
+                    mapbox.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions().title("Selected point")
+                            .icon(icons));
 
                 }
             });
-            return null;
+            return null;*/
         }
      }
+
+    private static class LatLngEvaluator implements TypeEvaluator<com.mapbox.mapboxsdk.geometry.LatLng> {
+        // Method is used to interpolate the marker animation.
+
+        private com.mapbox.mapboxsdk.geometry.LatLng  aa = new com.mapbox.mapboxsdk.geometry.LatLng();
+
+        @Override
+        public com.mapbox.mapboxsdk.geometry.LatLng evaluate(float fraction, com.mapbox.mapboxsdk.geometry.LatLng startValue, com.mapbox.mapboxsdk.geometry.LatLng endValue) {
+            aa.setLatitude(startValue.getLatitude()
+                    + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
+            aa.setLongitude(startValue.getLongitude()
+                    + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
+            return aa;
+        }
+    }
 
 
     public void setRoad(PolylineOptions road) {
@@ -138,29 +208,28 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
 
     //icon dowloaded from http://www.flaticon.com/free-icon/map-pin_34493
-    public void addBumpToMap (LatLng position, int count, int manual ) {
+    public void addBumpToMap (com.mapbox.mapboxsdk.geometry.LatLng  position, int count, int manual ) {
         if (position == null) {
             return;
         }
-
+        IconFactory iconFactory = IconFactory.getInstance(GPSLocator.this);
         if (manual == 0 ) {
-            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.bump);
-            map.addMarker(new MarkerOptions()
-                    .alpha(0.8f)
-                    .flat(false)
-                    .position(position)
+
+            Drawable iconDrawable = ContextCompat.getDrawable(GPSLocator.this, R.drawable.red_icon);
+            com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
+            mapbox.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions()
+                    .position(new com.mapbox.mapboxsdk.geometry.LatLng(position.getLatitude(), position.getLongitude()))
                     .title("Number of detections: " + count )
-                    .icon(icon));
+                    .icon(icons));
         }
         else {
-            BitmapDescriptor icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA);
-            map.addMarker(new MarkerOptions()
-                    .alpha(0.8f)
-                    .flat(false)
-                    .position(position)
+            Drawable iconDrawable = ContextCompat.getDrawable(GPSLocator.this, R.drawable.green_icon);
+            com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
+            mapbox.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions()
+                    .position(new com.mapbox.mapboxsdk.geometry.LatLng(position.getLatitude(), position.getLongitude()))
                     .title("Manually added " +
                             "Number of detections:" + count )
-                    .icon(icon));
+                    .icon(icons));
         }
     }
 

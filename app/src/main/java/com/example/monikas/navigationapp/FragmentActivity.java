@@ -128,6 +128,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
 
+
+
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
@@ -135,7 +137,10 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 mapbox = mapboxMap;
                 if (setOnPosition)
                     mapbox.setMyLocationEnabled(true);
+
                 }
+
+
             });
 
         offlineManager = OfflineManager.getInstance(getActivity());
@@ -687,7 +692,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         // ziskam sučasnu poziciu
         LatLng convert_location =  gps.getCurrentLatLng();
 
-        sb.beginTransaction();
+      //  sb.beginTransaction();
         // seleknutie vytlk z oblasti a starych 280 dni
         String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
               " ( last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
@@ -698,7 +703,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
         if (cursor.moveToFirst()) {
             do {
                 // pridavanie do mapy
-                gps.addBumpToMap(new LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
+                gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
             } while (cursor.moveToNext());
         }
        if( !updatesLock)
@@ -707,8 +712,8 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
             notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
         }else
             updatesLock=false;
-         sb.setTransactionSuccessful();
-         sb.endTransaction();
+        // sb.setTransactionSuccessful();
+        // sb.endTransaction();
     }
 
     public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
@@ -727,7 +732,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                     if (isBetween(data, 6, 10)) rating = 2;
                     if (isBetween(data, 10, 10000)) rating = 3;
                     if (rating == level)
-                        gps.addBumpToMap(new LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
+                        gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
                     i++;
                 }
             }
