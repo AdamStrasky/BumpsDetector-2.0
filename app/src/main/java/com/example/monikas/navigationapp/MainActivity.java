@@ -49,7 +49,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private final float ALL_BUMPS = 1.0f;
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
-    public static int ZOOM_LEVEL = 18;
+    public static int ZOOM_LEVEL = 16;
     private  FragmentActivity fragmentActivity;
     public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
     private static boolean activityVisible=true;

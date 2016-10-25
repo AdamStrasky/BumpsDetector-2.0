@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
 
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 
 import org.w3c.dom.Document;
@@ -30,6 +31,7 @@ import android.animation.TypeEvaluator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
+import static com.example.monikas.navigationapp.MainActivity.ZOOM_LEVEL;
 import static com.example.monikas.navigationapp.MainActivity.mapbox;
 
 
@@ -184,6 +186,17 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
             } catch  (NullPointerException e) {
             }
         }
+        if (ZoomInit)
+            SetZoom();
+    }
+    private boolean ZoomInit = true;
+    public void SetZoom() {
+        ZoomInit = false;
+        com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
+        mapbox.setCameraPosition(new CameraPosition.Builder()
+                .target(yourLatLng )
+                .zoom(ZOOM_LEVEL)
+                .build());
     }
 
     public IBinder onBind(Intent intent) {

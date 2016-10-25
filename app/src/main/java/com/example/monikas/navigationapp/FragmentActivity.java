@@ -86,7 +86,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private final float LARGE_BUMPS = 2.5f;
     //level defaultne nastaveny pre zobrazovanie vsetkych vytlkov
     public float level = ALL_BUMPS;
-    public static int ZOOM_LEVEL = 18;
     JSONParser jsonParser = new JSONParser();
     boolean mServiceConnectedAcc = false;
     boolean mBoundAcc = false;
@@ -650,7 +649,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
     }
     /*******************************************************************************************************/
-
     public void get_loaded_index (){
         //  najvyššie uložený index po uspešnej transakcie collision
         SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);

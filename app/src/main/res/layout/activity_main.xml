@@ -135,7 +135,7 @@
 
         <Button
             android:id="@+id/delete_btn"
-            android:layout_width="181dp"
+            android:layout_width="169dp"
             android:layout_height="fill_parent"
             android:text="Delete"
             android:textAllCaps="false" />
