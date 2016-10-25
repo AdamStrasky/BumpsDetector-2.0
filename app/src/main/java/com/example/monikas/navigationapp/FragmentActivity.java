@@ -1055,8 +1055,6 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
 
                         if (c != null) {
                             try {
-
-                                Log.d("asdasd", String.valueOf(c.getDouble("latitude")));
                                 latitude = c.getDouble("latitude");
                                 longitude = c.getDouble("longitude");
                                 count = c.getInt("count");
@@ -1064,10 +1062,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                                 max_number = b_id;
                                 rating = c.getInt("rating");
                                 last_modified = c.getString("last_modified");
-                                if (c.isNull("manual")) {
-                                    manual = 0;
-                                } else
-                                    manual = c.getInt("manual");
+                                manual = c.getInt("manual");
                                 ContentValues contentValues = new ContentValues();
                                 contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
                                 contentValues.put(Provider.bumps_detect.COUNT, count);
@@ -1288,7 +1283,7 @@ public class FragmentActivity extends Fragment  implements GoogleApiClient.Conne
                 new Timer().schedule(new SendBumpsToDb(), 0, 30000);
 
                 //mapa sa nastavuje kazde 2 minuty
-                new Timer().schedule(new MapSetter(), 0, 180000);   //120000
+                new Timer().schedule(new MapSetter(), 0, 30000);   //120000
 
 
             }

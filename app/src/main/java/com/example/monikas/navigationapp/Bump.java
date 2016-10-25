@@ -63,7 +63,7 @@ public class Bump {
             String latitude = String.valueOf(location.getLatitude());
             String longitude = String.valueOf(location.getLongitude());
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-
+            Log.d("xcxvddd","odosielal som"+ String.valueOf(manual));
             //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
