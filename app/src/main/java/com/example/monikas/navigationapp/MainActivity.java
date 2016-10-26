@@ -333,6 +333,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.download:
+                fragmentActivity.gps.setUpMap(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
@@ -344,6 +345,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.list:
+                fragmentActivity.gps.setUpMap(false);
                 add_button.setVisibility(View.VISIBLE);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
