@@ -56,11 +56,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public static final String PREF_FILE_NAME = "Settings";
     private Float intensity = null;
     LinearLayout confirm;
-    Button add_button, save_button, delete_button,downloand_button,back_button;
+    Button  save_button, delete_button,downloand_button,back_button;
     public  MapView mapView = null;
     public static LinearLayout mapConfirm;
     public static ProgressBar progressBar;
-    public static Button navig_on;
+    public static Button navig_on,add_button;
     public static MapboxMap mapbox;
 
     @Override
@@ -80,6 +80,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
             }
         });
+
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
@@ -123,6 +124,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .commit();
         }
     }
+
+
 
     public void onClick(View v) {
         switch (v.getId()) {
@@ -203,20 +206,26 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 fragmentActivity.gps.setUpMap(false);
                 break;
             case R.id.backMap_btn:
+                SetUpCamera();
                 // spusti sa alert dialog na opetovné hladanie mapy
                 fragmentActivity.alertSelectRegion(selectedName,1);
                 mapConfirm.setVisibility(View.INVISIBLE);
+                add_button.setVisibility(View.VISIBLE);
                 setOnPosition =true;
                 break;
             case R.id.saveMap_btn:
                 fragmentActivity.downloadRegion(selectedName, 0);
                 mapConfirm.setVisibility(View.INVISIBLE);
+                add_button.setVisibility(View.VISIBLE);
                 setOnPosition =true;
                 break;
             case R.id.navig_on:
+                SetUpCamera();
+                add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 setOnPosition =true;
                 break;
+          //  case R.id.back_button
         }
     }
 
@@ -324,6 +333,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
             case R.id.download:
                 setOnPosition =true;
+                confirm.setVisibility(View.INVISIBLE);
+                add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 if ( flagDownload)
                    Toast.makeText(this, "Momentálne sťahujete,nemožte 2 naraz", Toast.LENGTH_LONG).show();
@@ -332,7 +343,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.list:
+                add_button.setVisibility(View.VISIBLE);
                 mapConfirm.setVisibility(View.INVISIBLE);
+                confirm.setVisibility(View.INVISIBLE);
+                navig_on.setVisibility(View.INVISIBLE);
                 if (flagDownload)
                     Toast.makeText(this, "Momentálne sťahujete,nemožte pristupiť k stiahnutým mapám", Toast.LENGTH_LONG).show();
                 else
@@ -388,8 +402,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 
-    protected void onResume() {
-        super.onResume();
+    public void SetUpCamera(){
         if (fragmentActivity.gps !=null && fragmentActivity.gps.getmCurrentLocation()!= null) {
             LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
             if (myPosition!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
@@ -399,6 +412,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 }
             }
         }
+    }
+
+    protected void onResume() {
+        super.onResume();
+        SetUpCamera();
         MainActivity.activityResumed();
     }
 

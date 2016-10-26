@@ -65,12 +65,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static com.example.monikas.navigationapp.Bump.isBetween;
+import static com.example.monikas.navigationapp.MainActivity.add_button;
 import static com.example.monikas.navigationapp.MainActivity.mapConfirm;
 
 import static com.example.monikas.navigationapp.MainActivity.mapbox;
 import static com.example.monikas.navigationapp.MainActivity.navig_on;
 import static com.example.monikas.navigationapp.MainActivity.progressBar;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
+
 
 public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
@@ -380,6 +382,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                             // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
                             mapConfirm.setVisibility(View.VISIBLE);
+                            add_button.setVisibility(View.INVISIBLE);
                         }
                     }
                 });
@@ -551,6 +554,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         .build();
 
                                 // Move camera to new position
+                                add_button.setVisibility(View.INVISIBLE);
                                 navig_on.setVisibility(View.VISIBLE);
                                 mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
@@ -677,7 +681,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     public void getAllBumps(Double latitude, Double longitude) {
        // vyčistenie mapy a uprava cesty
-        mapbox.clear();
+
+        mapbox.removeAnnotations();
+
 
         SimpleDateFormat now,ago;
         Calendar cal = Calendar.getInstance();
@@ -1538,7 +1544,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         else {
             if (gps!=null && gps.getCurrentLatLng()!=null ) {
                 LatLng convert_location = gps.getCurrentLatLng();
-                if (convert_location != null)
+                if (convert_location != null )
                     getAllBumps(convert_location.latitude, convert_location.longitude);
             }
         }

@@ -40,7 +40,7 @@ import static com.example.monikas.navigationapp.MainActivity.mapbox;
  */
 public class GPSLocator extends Service implements LocationListener,  MapboxMap.OnMyLocationChangeListener{
 
-    private Location mCurrentLocation;
+    private Location mCurrentLocation=null;
     private GoogleApiClient mGoogleApiClient;
     private float level;
     private com.mapbox.mapboxsdk.geometry.LatLng latLng;
@@ -155,6 +155,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
 
     public Location getmCurrentLocation() {
+
         return mCurrentLocation;
     }
 
@@ -179,15 +180,20 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
     public void onLocationChanged(Location location) {
         Log.d("GPS", " change GPS position");
-        mCurrentLocation = location;
+        if (location!=null && location.hasAccuracy())
+            mCurrentLocation = location;
+        else
+            mCurrentLocation=null;
+
         if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
             try {
                 mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
             } catch  (NullPointerException e) {
             }
+            if (ZoomInit)
+               SetZoom();
         }
-        if (ZoomInit)
-            SetZoom();
+
     }
     private boolean ZoomInit = true;
     public void SetZoom() {
