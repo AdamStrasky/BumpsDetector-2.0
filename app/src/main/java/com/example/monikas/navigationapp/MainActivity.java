@@ -59,7 +59,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     Button  save_button, delete_button,downloand_button,back_button;
     public  MapView mapView = null;
     public static LinearLayout mapConfirm;
-    public static ProgressBar progressBar;
     public static Button navig_on,add_button;
     public static MapboxMap mapbox;
 
@@ -81,7 +80,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             }
         });
 
-        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);
@@ -123,6 +121,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
+
     }
 
 
@@ -206,24 +205,26 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 fragmentActivity.gps.setUpMap(false);
                 break;
             case R.id.backMap_btn:
+                setOnPosition =true;
                 SetUpCamera();
                 // spusti sa alert dialog na opetovné hladanie mapy
                 fragmentActivity.alertSelectRegion(selectedName,1);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
-                setOnPosition =true;
+
                 break;
             case R.id.saveMap_btn:
                 fragmentActivity.downloadRegion(selectedName, 0);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
                 setOnPosition =true;
+                SetUpCamera();
                 break;
             case R.id.navig_on:
+                setOnPosition =true;
                 SetUpCamera();
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
-                setOnPosition =true;
                 break;
           //  case R.id.back_button
         }

@@ -3,6 +3,7 @@ package com.example.monikas.navigationapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -39,7 +40,6 @@ import org.json.JSONObject;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
-
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -70,9 +70,8 @@ import static com.example.monikas.navigationapp.MainActivity.mapConfirm;
 
 import static com.example.monikas.navigationapp.MainActivity.mapbox;
 import static com.example.monikas.navigationapp.MainActivity.navig_on;
-import static com.example.monikas.navigationapp.MainActivity.progressBar;
 import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
-
+import android.support.v4.app.NotificationCompat.Builder;
 
 public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
@@ -118,7 +117,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private  boolean regular_update = false;
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         offlineManager = OfflineManager.getInstance(getActivity());
         initialization_database();
@@ -141,6 +140,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             GPS_FLAG = false;
             initialization();
         }
+
         // pravidelný update ak nemám povolený internet
         new Timer().schedule(new Regular_upgrade(), 60000, 60000);// 3600000
         //////////////////////////////odstranit, len na testovanie
@@ -465,18 +465,17 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             @Override
             public void onStatusChanged(OfflineRegionStatus status) {
                 // Compute a percentage
-                double percentage = status.getRequiredResourceCount() >= 0 ?
+                 double percentage = status.getRequiredResourceCount() >= 0 ?
                         (100.0 * status.getCompletedResourceCount() / status.getRequiredResourceCount()) :
                         0.0;
 
+                mBuilder.setProgress(100, (int) Math.round(percentage), false);
+                mNotifyManager.notify(0, mBuilder.build());
+
                 if (status.isComplete()) {
                     // Download complete
-
                     endProgress("Region downloaded successfully.");
                     return;
-                } else if (status.isRequiredResourceCountPrecise()) {
-                    // Switch to determinate state
-                    setPercentage((int) Math.round(percentage));
                 }
                 // Log what is being currently downloaded
                 Log.d(TAG, String.format("%s/%s resources; %s bytes downloaded.",
@@ -566,8 +565,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 // Make progressBar indeterminate and
                                 // set it to visible to signal that
                                 // the deletion process has begun
-                                progressBar.setIndeterminate(true);
-                                progressBar.setVisibility(View.VISIBLE);
+
 
                                 // Begin the deletion process
                                 offlineRegions[regionSelected].delete(new OfflineRegion.OfflineRegionDeleteCallback() {
@@ -575,15 +573,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     public void onDelete() {
                                         // Once the region is deleted, remove the
                                         // progressBar and display a toast
-                                        progressBar.setVisibility(View.INVISIBLE);
-                                        progressBar.setIndeterminate(false);
+
                                         Toast.makeText(getActivity(), "Region deleted", Toast.LENGTH_LONG).show();
                                     }
 
                                     @Override
                                     public void onError(String error) {
-                                        progressBar.setVisibility(View.INVISIBLE);
-                                        progressBar.setIndeterminate(false);
+
                                         Log.e(TAG, "Error: " + error);
                                     }
                                 });
@@ -625,32 +621,37 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     // Progress bar methods
     private void startProgress() {
-
+        Toast.makeText(getActivity(), "Download start", Toast.LENGTH_LONG).show();
+        downloadNotification();
         flagDownload=true;
-        // Start and show the progress bar
         isEndNotified = false;
-        progressBar.setIndeterminate(true);
-        progressBar.setVisibility(View.VISIBLE);
-    }
-
-    private void setPercentage(final int percentage) {
-        progressBar.setIndeterminate(false);
-        progressBar.setProgress(percentage);
     }
 
     private void endProgress(final String message) {
         // Don't notify more than once
         if (isEndNotified) return;
+        mBuilder.setContentText("Download complete")
+                // Removes the progress bar
+                .setProgress(0,0,false);
+        mNotifyManager.notify(0, mBuilder.build());
 
         // Stop and hide the progress bar
         isEndNotified = true;
         flagDownload=false;
-        progressBar.setIndeterminate(false);
-        progressBar.setVisibility(View.GONE);
 
-        // Show a toast
         if (message!=null)
         Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
+    }
+
+    private NotificationManager mNotifyManager;
+    private Builder mBuilder;
+
+    public void downloadNotification() {
+        mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
+        mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
+        mBuilder.setContentTitle("Map download")
+                .setContentText("Download in progress")
+                .setSmallIcon(R.drawable.bump_white);
     }
     /*******************************************************************************************************/
     public void get_loaded_index (){

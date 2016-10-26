@@ -23,34 +23,6 @@
         android:textColor="#ffffff"
         android:background="#282626"/>
 
-    <ImageView
-        android:id="@+id/search_img"
-        android:onClick="onClick_Search"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_alignTop="@+id/location"
-        android:layout_alignBottom="@+id/location"
-        android:layout_alignRight="@+id/location"
-        android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"/><![CDATA[
-
-
-    />
-
-
-    ]]>
-
-    <ProgressBar
-        android:id="@+id/progress_bar"
-
-        android:layout_width="match_parent"
-        android:layout_height="25dp"
-        android:layout_centerHorizontal="true"
-        android:layout_centerInParent="true"
-        android:paddingLeft="25dp"
-        android:paddingRight="25dp"
-        android:visibility="gone" />
-
-
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapboxMarkerMapView"
         android:layout_width="200dp"
@@ -74,11 +46,11 @@
         android:id="@+id/mapConfirm"
         android:layout_weight="1"
         android:layout_alignTop="@+id/navig_on"
-        android:layout_toRightOf="@+id/progress_bar"
-        android:layout_toEndOf="@+id/progress_bar"
         android:keepScreenOn="false"
         android:visibility="invisible"
-        android:transitionGroup="false">
+        android:transitionGroup="false"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
         <Button
             android:id="@+id/saveMap_btn"
@@ -106,9 +78,9 @@
         android:id="@+id/confirm"
         android:layout_weight="1"
         android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@+id/progress_bar"
-        android:layout_toEndOf="@+id/progress_bar"
-        android:layout_alignTop="@+id/navig_on">
+        android:layout_alignTop="@+id/navig_on"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
         <Button
             android:id="@+id/save_btn"
@@ -151,6 +123,4 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:textAllCaps="false" />
-
-
 </RelativeLayout>
