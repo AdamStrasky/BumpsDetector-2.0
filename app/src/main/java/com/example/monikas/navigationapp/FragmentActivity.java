@@ -683,7 +683,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public void getAllBumps(final Double latitude, final Double longitude) {
        // vyčistenie mapy a uprava cesty
 
-        mapbox.removeAnnotations();
+        mapbox.deselectMarkers();
 
         Thread t = new Thread() {
             public void run() {
