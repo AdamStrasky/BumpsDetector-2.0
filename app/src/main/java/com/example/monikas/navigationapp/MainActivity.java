@@ -402,6 +402,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     protected void onDestroy() {
         super.onDestroy();
         finish();
+        mapView.onDestroy();
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 
@@ -417,16 +418,24 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
     }
 
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
     protected void onResume() {
         super.onResume();
         SetUpCamera();
         MainActivity.activityResumed();
+        mapView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         MainActivity.activityPaused();
+        mapView.onPause();
     }
 
     public boolean isEneableShowText() {

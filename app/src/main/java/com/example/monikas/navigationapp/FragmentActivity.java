@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -41,6 +42,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -680,11 +682,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
-    public void getAllBumps(Double latitude, Double longitude) {
+
+   private  ArrayList <Location> qwert = new  ArrayList<Location> ();
+    public void getAllBumps(final Double latitude, final Double longitude) {
        // vyčistenie mapy a uprava cesty
 
         mapbox.removeAnnotations();
 
+        Thread t = new Thread() {
+            public void run() {
 
         SimpleDateFormat now,ago;
         Calendar cal = Calendar.getInstance();
@@ -698,18 +704,28 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         // ziskam sučasnu poziciu
         LatLng convert_location =  gps.getCurrentLatLng();
 
-      //  sb.beginTransaction();
+        long date = new Date().getTime();
+
+
+
+        sb.beginTransaction();
         // seleknutie vytlk z oblasti a starych 280 dni
         String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
               " ( last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
-                + " (ROUND(latitude,0)==ROUND("+latitude+",0) and ROUND(longitude,0)==ROUND("+longitude+",0)) ";
+                + " (ROUND(latitude,2)==ROUND("+latitude+",2) and ROUND(longitude,2)==ROUND("+longitude+",2)) ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
-        Cursor cursor = database.rawQuery(selectQuery, null);
+                Cursor cursor = database.rawQuery(selectQuery, null);
 
         if (cursor.moveToFirst()) {
             do {
+
+                Location location = new Location("new");
+                location.setLatitude(cursor.getDouble(0));
+                location.setLongitude(cursor.getDouble(1));
+                location.setTime(date);
+                qwert.add(location);
                 // pridavanie do mapy
-                gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
+             //  gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
             } while (cursor.moveToNext());
         }
        if( !updatesLock)
@@ -718,9 +734,62 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
         }else
             updatesLock=false;
-        // sb.setTransactionSuccessful();
-        // sb.endTransaction();
+         sb.setTransactionSuccessful();
+         sb.endTransaction();
+
+
+                Looper.prepare();
+
+                Looper.loop();
+            } };
+        t.start();
+
+        DrawMarkersTask drawMarkersTask = new DrawMarkersTask();
+        drawMarkersTask.execute();
+
     }
+
+    public class DrawMarkersTask extends AsyncTask<Void, MarkerOptions, Void> {
+        protected void onPreExecute() {
+            // this method executes in UI thread
+            mapbox.clear(); // you can clear map here for example
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            // this method executes in separate background thread
+            // you CANT modify UI here
+            Log.d("MarkerOptions","dostalo sa tu ");
+            Log.d("MarkerOptions", String.valueOf(qwert.size()));
+            for (int i = 0; i < qwert.size(); i++) {
+                Log.d("MarkerOptions","cyklus ");
+                // prepare your marker here
+                MarkerOptions markerOptions = new MarkerOptions().position(
+                        new com.mapbox.mapboxsdk.geometry.LatLng((qwert.get(i).getLatitude()),(qwert.get(i).getLongitude()
+                        )));
+
+                publishProgress(markerOptions); // pass it for the main UI thread for displaying
+                try {
+                    Thread.sleep(50); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                } catch (InterruptedException e) {
+                    // NOP (no operation)
+                }
+            }
+            return null;
+        }
+
+        protected void onProgressUpdate(MarkerOptions... markerOptions) {
+            // this executes in main ui thread so you can add prepared marker to your map
+            mapbox.addMarker(markerOptions[0]);
+        }
+
+        protected void onPostExecute(Void result) {
+            // this also executes in main ui thread
+        }
+    }
+
+
+
 
     public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
         updatesLock=false;
@@ -1263,7 +1332,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 //vytlky sa do dabatazy odosielaju kazdu minutu
                 new Timer().schedule(new SendBumpsToDb(), 0, 120000);
                 //mapa sa nastavuje kazde 2 minuty
-                new Timer().schedule(new MapSetter(), 0, 120000);   //120000
+                new Timer().schedule(new MapSetter(), 0, 30000);   //120000
 
 
             }
@@ -1595,4 +1664,54 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
+
+    /******************************************************************************************/
+   /* Handler threadHandler = null;
+
+    // This handler is created on the UI thread en thus associated with that thread
+    //	this means that any code executed by this handler is executed on the UI thread
+    Handler uiHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+          //  textView.setText(textView.getText()+"Did you succeed?");
+        }
+    };
+
+    private void CreateThread() {
+
+        // We create a new thread
+        Thread t = new Thread() {
+            public void run() {
+
+                Looper.prepare();
+
+                // In this thread we create a handler which is associated with this thread
+                //	thus, everything executed by this handler is executed on this seperate thread
+                //	and as a result, we are not blocking the UI thread
+                threadHandler = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        for(int i = 0; i < 100; i++)
+                        {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception e) {
+                                Log.v("Error: ", e.toString());
+                            }
+                        }
+                        uiHandler.sendMessage(uiHandler.obtainMessage());
+                    }
+                };
+
+                Looper.loop();
+
+            }
+        };
+        t.start();
+    }*/
+
+
+
+
+    /*******************************************************************************************/
 }
