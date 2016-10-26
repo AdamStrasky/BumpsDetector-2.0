@@ -115,6 +115,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public final static String JSON_CHARSET = "UTF-8";
     public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
     private  boolean regular_update = false;
+    private  boolean clear =true ;
     @Override
     public void onCreate(Bundle savedInstanceState) {
          super.onCreate(savedInstanceState);
@@ -458,6 +459,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         });
     }
 
+    public boolean isClear() {
+
+        return clear;
+    }
+
+    public void setClear(boolean clear) {
+        this.clear = clear;
+    }
+
     private void launchDownload() {
         // Set up an observer to handle download progress and
         // notify the user when the region is finished downloading
@@ -682,8 +692,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     public void getAllBumps(final Double latitude, final Double longitude) {
        // vyčistenie mapy a uprava cesty
+        if (isClear())
+            mapbox.deselectMarkers();
 
-        mapbox.deselectMarkers();
 
         Thread t = new Thread() {
             public void run() {

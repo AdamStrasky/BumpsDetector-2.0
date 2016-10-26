@@ -161,6 +161,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                 // spustenie listenera na mapu
                                 fragmentActivity.gps.setUpMap(true);
                                 confirm.setVisibility(View.VISIBLE);
+                                fragmentActivity.setClear(false);
                                 add_button.setVisibility(View.INVISIBLE);
 
                             }
@@ -171,6 +172,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.save_btn:
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
+                fragmentActivity.setClear(true);
                 // vrati polohu  kde som stlačil na mape
                 com.mapbox.mapboxsdk.geometry.LatLng convert_location =  fragmentActivity.gps.setUpMap(false);
                 //vytvorenie markera
@@ -201,8 +203,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.delete_btn:
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
+                fragmentActivity.setClear(true);
                 // disable listener na klik
-                fragmentActivity.gps.setUpMap(false);
+                fragmentActivity.gps.setUpMap(true);
                 break;
             case R.id.backMap_btn:
                 setOnPosition =true;
@@ -296,6 +299,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.clear_map:
+                if(confirm.isShown()){
+                    Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
+            }
                 mapbox.clear();
                 return true;
 
@@ -336,6 +342,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 fragmentActivity.gps.setUpMap(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
+                fragmentActivity.setClear(true);
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 if ( flagDownload)
@@ -349,6 +356,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
+                fragmentActivity.setClear(true);
                 navig_on.setVisibility(View.INVISIBLE);
                 if (flagDownload)
                     Toast.makeText(this, "Momentálne sťahujete,nemožte pristupiť k stiahnutým mapám", Toast.LENGTH_LONG).show();
@@ -397,6 +405,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return super.onOptionsItemSelected(item);
         }
     }
+
 
     @Override
     protected void onDestroy() {
