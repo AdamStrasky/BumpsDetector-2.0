@@ -301,7 +301,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.clear_map:
                 if(confirm.isShown()){
                     Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
-            }
+                }else
                 mapbox.clear();
                 return true;
 
