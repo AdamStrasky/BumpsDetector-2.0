@@ -1352,6 +1352,47 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             }
         }, 2000);
 
+
+
+
+
+        Thread t = new Thread() {
+            public void run() {
+                Log.d("TTRREEE","spustil sa   sa Thread");
+
+
+                Looper.prepare();
+
+                while(true )  {
+                    gps = mLocnServGPS;
+                    if (gps != null) {
+                        LatLng convert_location = gps.getCurrentLatLng();
+                        if (convert_location != null) {
+                            Log.d("TTRREEE","break sa Thread");
+                            break;
+
+                        }
+                    }
+                    else
+                        Toast.makeText(getActivity(), "Finding your location....", Toast.LENGTH_LONG).show();
+
+                  //  Log.d("TTRREEE","bezi  sa Thread");
+                }
+                startGPS();
+                Looper.loop();
+                Log.d("TTRREEE","konci  sa   sa Thread");
+
+            }
+        };
+        t.start();
+
+
+
+    }
+
+
+    public void startGPS() {
+        Log.d("TTRREEE","bezi  sa startGPS");
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -1384,7 +1425,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public void loadSaveDB(){
         if (updatesLock)
           return;
-
+Log.d("TTRREEE","pustilo sa loadSaveDB");
         Thread t = new Thread() {
             public void run() {
 
@@ -1625,9 +1666,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                      regular_update =false;
                      mLocnServGPS.setLevel(level);
                      gps = mLocnServGPS;
+                Log.d("TTRREEE","gps pred null");
                      if (gps!=null ) {
+                         Log.d("TTRREEE","gps po  null");
                         LatLng convert_location = gps.getCurrentLatLng();
                         if (convert_location != null) {
+                            Log.d("TTRREEE","mam GPS");
                           get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
                         }
                      }
