@@ -203,9 +203,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.delete_btn:
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.setClear(true);
+
                 // disable listener na klik
-                fragmentActivity.gps.setUpMap(true);
+                fragmentActivity.gps.setUpMap(false);
+                fragmentActivity.setClear(true);
                 break;
             case R.id.backMap_btn:
                 setOnPosition =true;

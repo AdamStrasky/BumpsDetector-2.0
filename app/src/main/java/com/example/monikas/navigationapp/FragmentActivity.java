@@ -732,7 +732,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     } catch (InterruptedException e) {
                         // NOP (no operation)
                     }
-               if (i== 1000)
+               if (i== 500)
                     break;
             }
             while (cursor.moveToNext());
