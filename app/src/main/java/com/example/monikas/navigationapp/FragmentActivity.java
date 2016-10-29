@@ -697,14 +697,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     public void getAllBumps(final Double latitude, final Double longitude) {
        // vyčistenie mapy a uprava cesty
-       if (isClear())
-            mapbox.deselectMarkers();
+
         if  (updatesLock) {
            return;
         }
         updatesLock = true;
+        if (isClear())
+            mapbox.deselectMarkers();
 
-        Thread t = new Thread() {
+         Thread t = new Thread() {
             public void run() {
 
                 Looper.prepare();

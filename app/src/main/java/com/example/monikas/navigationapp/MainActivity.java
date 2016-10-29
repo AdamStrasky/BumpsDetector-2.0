@@ -353,21 +353,79 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.all_bumps:
-                fragmentActivity.level = ALL_BUMPS;
-                LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
-                fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
-                return true;
+
+                new Thread() {
+                    public void run() {
+                        Looper.prepare();
+
+                        while (true) {
+                            if  (!updatesLock) {
+                                updatesLock = true;
+                                fragmentActivity.level = ALL_BUMPS;
+                                LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
+                                updatesLock = false;
+                                fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
+                                break;
+                            }
+                            try {
+                                Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                            } catch (InterruptedException e) {
+                                // NOP (no operation)
+                            }
+                        }
+                        Looper.loop();
+                    }
+                }.start();
+                 return true;
 
             case R.id.medium_bumps:
-                fragmentActivity.level = MEDIUM_BUMPS;
-                LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
-                fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
+                new Thread() {
+                    public void run() {
+                        Looper.prepare();
+
+                        while (true) {
+                            if  (!updatesLock) {
+                                updatesLock = true;
+                                fragmentActivity.level = MEDIUM_BUMPS;
+                                LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
+                                updatesLock = false;
+                                fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
+                                break;
+                            }
+                            try {
+                                Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                            } catch (InterruptedException e) {
+                                // NOP (no operation)
+                            }
+                        }
+                        Looper.loop();
+                    }
+                }.start();
                 return true;
 
             case R.id.large_bumps:
-                fragmentActivity.level = LARGE_BUMPS;
-                LatLng largeBumps =  fragmentActivity.gps.getCurrentLatLng();
-                fragmentActivity.getAllBumps(largeBumps.latitude,largeBumps.longitude);
+                new Thread() {
+                    public void run() {
+                        Looper.prepare();
+
+                        while (true) {
+                            if  (!updatesLock) {
+                                updatesLock = true;
+                                fragmentActivity.level = LARGE_BUMPS;
+                                LatLng largeBumps =  fragmentActivity.gps.getCurrentLatLng();
+                                updatesLock = false;
+                                fragmentActivity.getAllBumps(largeBumps.latitude,largeBumps.longitude);
+                                break;
+                            }
+                            try {
+                                Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                            } catch (InterruptedException e) {
+                                // NOP (no operation)
+                            }
+                        }
+                        Looper.loop();
+                    }
+                }.start();
                 return true;
 
             case R.id.action_settings:
