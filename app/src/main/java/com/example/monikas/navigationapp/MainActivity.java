@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -39,6 +40,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
+import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
+import static com.example.monikas.navigationapp.FragmentActivity.lockZoznam;
+import static com.example.monikas.navigationapp.FragmentActivity.lockZoznamDB;
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
@@ -154,7 +158,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                 // vybrana intenzita noveho vytlku
                                 if (select== 0)
                                     intensity =10.f;
-                                else if (select== 0)
+                                else if (select== 1)
                                     intensity =6.f;
                                 else
                                     intensity =0.f;
@@ -178,10 +182,57 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 //vytvorenie markera
                 fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
-                    Location location = new Location("new");
+
+                  //  !!!!!!! final
+                    final double ll = intensity;
+                    final Location location = new Location("new");
                     location.setLatitude(convert_location.getLatitude());
                     location.setLongitude(convert_location.getLongitude());
                     location.setTime(new Date().getTime());
+
+                     new Thread() {
+                        public void run() {
+                            Looper.prepare();
+                            while(true){
+                                if (!lockAdd && !lockZoznam &&!threadLock) {
+                                    threadLock=true;
+                                    fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
+                                    fragmentActivity.accelerometer.addBumpsManual(1);
+                                    if (!lockZoznamDB && !updatesLock) {
+                                        BigDecimal bd = new BigDecimal(Float.toString(intensity));
+                                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                        fragmentActivity.sb.beginTransaction();
+                                        ContentValues contentValues = new ContentValues();
+                                        contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                        contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                        contentValues.put(Provider.new_bumps.MANUAL, 1);
+                                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                        fragmentActivity.sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                        fragmentActivity.sb.setTransactionSuccessful();
+                                        fragmentActivity.sb.endTransaction();
+                                    }
+                                    threadLock=false;
+                                    Log.d("TREEEE","casovy lock koniec");
+                                    break;
+
+                                }
+                                Log.d("TREEEE","casovy lock");
+                                Log.d("TREEEE", String.valueOf(location.getLatitude()));
+                                Log.d("TREEEE", String.valueOf(location.getLongitude()));
+                                Log.d("TREEEE", String.valueOf(ll));
+                                try {
+                                    Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                                } catch (InterruptedException e) {
+                                    // NOP (no operation)
+                                }
+                            }
+
+                            Looper.loop();
+                      }
+                    }.start();
+
+
+
                     fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
                     fragmentActivity.accelerometer.addBumpsManual(1);
                     if (!updatesLock) {
@@ -233,6 +284,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
           //  case R.id.back_button
         }
     }
+
+    private boolean threadLock= false;
 
     public static boolean isActivityVisible() {
         return activityVisible;

@@ -33,6 +33,8 @@ import java.util.Iterator;
 import static com.example.monikas.navigationapp.FragmentActivity.fragment_context;
 import static com.example.monikas.navigationapp.FragmentActivity.global_gps;
 import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
+import static com.example.monikas.navigationapp.FragmentActivity.lockZoznam;
+import static com.example.monikas.navigationapp.FragmentActivity.lockZoznamDB;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
 
 public class Accelerometer extends Service implements SensorEventListener, LocationListener {
@@ -191,6 +193,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
         if (lockAdd)
             return "lock";
         //possibleBumps je zoznam vytlkov, ktore sa poslu do databazy
+        lockZoznam = true;
         for (HashMap<Location, Float> bump : possibleBumps) {
 
             Iterator it = bump.entrySet().iterator();
@@ -202,8 +205,11 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                     if (data > (Float) pair.getValue()) {
                         pair.setValue(data);
                         Log.d("DETECT", "same location");
-                        if (!updatesLock)
-                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+data+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
+                        if (!updatesLock) {
+                            lockZoznamDB=true;
+                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
+                            lockZoznamDB=false;
+                        }
                         result = "same bump";
                     }
                     isToClose = true;
@@ -217,9 +223,12 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         if (data > (Float) pair.getValue()) {
                             Log.d("DETECT", "under 2 meters ");
                             pair.setValue(data);
-                            if (!updatesLock)
-                                sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+data+",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
-                                result = "under bump";
+                            if (!updatesLock) {
+                                lockZoznamDB=true;
+                                sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
+                                lockZoznamDB=false;
+                            }
+                            result = "under bump";
                         }
                         isToClose = true;
                     }
@@ -227,6 +236,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
             }
 
         }
+        lockZoznam = false;
         if (!isToClose) {
             Log.d("DETECT", "new dump");
             result = "new bump";
@@ -234,9 +244,13 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
             HashMap<Location, Float> hashToArray = new HashMap();
             hashToArray.put(location,data);
             //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
+            lockZoznam = true;
+
             possibleBumps.add(hashToArray);
             BumpsManual.add(0);
+            lockZoznam = false;
             if (!updatesLock) {
+                lockZoznamDB=true;
                 BigDecimal bd = new BigDecimal(Float.toString(data));
                 bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
                 hashToArray.put(location,data);
@@ -246,6 +260,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                 contentValues.put(Provider.new_bumps.MANUAL, 0);
                 contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
                 sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                lockZoznamDB=false;
             }
         }
         return result;

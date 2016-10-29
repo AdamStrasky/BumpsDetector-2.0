@@ -116,6 +116,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
     private  boolean regular_update = false;
     private  boolean clear =true ;
+
+
+    public static boolean lockZoznam = false;
+    public static boolean lockZoznamDB = false;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
          super.onCreate(savedInstanceState);
@@ -694,7 +699,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
        // vyčistenie mapy a uprava cesty
         if (isClear())
             mapbox.deselectMarkers();
-
+        if  (updatesLock) {
+           return;
+        }
+        updatesLock = true;
 
         Thread t = new Thread() {
             public void run() {
@@ -743,12 +751,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         cursor.close();
                 }
 
-                if( !updatesLock)
-                    updatesLock=true;
-                if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
-                    notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
-                }else
-                    updatesLock=false;
+                updatesLock = false;
+
+
+               //  if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
+                //     notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
+
+
 
 
                 Looper.loop();
@@ -793,6 +802,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private int net, b_id_database, c_id_database,updates, max_number =0 ;
 
     public void get_max_collision(Double latitude, Double longtitude, Integer update ) {
+        if  (updatesLock)
+            return;
+        updatesLock = true;
+
         Log.d("TTRREEE", "4. get_max_collision  ");
         SimpleDateFormat now,ago;
         Calendar cal = Calendar.getInstance();
@@ -828,6 +841,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
         sb.setTransactionSuccessful();
         sb.endTransaction();
+
+        updatesLock = false;
         updates = update;
         new Max_Collision_Number().execute();
 
@@ -908,6 +923,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             Log.d("TTRREEE", "6. Max_Collision_Number - thread  ");
                             Looper.prepare();
                     Boolean error = false ;
+                            if  (updatesLock) {
+                                Looper.loop();
+                                return;
+                            }
+                            updatesLock = true;
+
+
 
                     sb.beginTransaction();
                     for (int i = 0; i < bumps.length(); i++) {
@@ -986,6 +1008,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         // ak nenastala chyba, transakci je uspešna
                         sb.setTransactionSuccessful();
                         sb.endTransaction();
+                        updatesLock = false;
                         // uložím najvyššie b_id  z bumps po uspešnej transakcii
                         SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = sharedPref.edit();
@@ -996,6 +1019,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     else {
                         // rollbacknem databazu
                         sb.endTransaction();
+                        updatesLock = false;
                     }
                     // načítam vytlky
                     LatLng convert_location =  gps.getCurrentLatLng();
@@ -1025,7 +1049,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
         ago = new SimpleDateFormat("yyyy-MM-dd");
         String ago_formated = ago.format(cal.getTime());
-
+        if (updatesLock)
+            return;
+        updatesLock = true;
 
         sb.beginTransaction();
         // vytiahnem najvyššie b_id z bumps
@@ -1050,12 +1076,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             cursor.close();
         }
 
-
+        sb.setTransactionSuccessful();
+        sb.endTransaction();
+        updatesLock = false;
         this.net =net ;
         lang_database =langtitude;
         longt_database =longtitude;
-        sb.setTransactionSuccessful();
-        sb.endTransaction();
+
         new Max_Bump_Number().execute();
 
     }
@@ -1127,6 +1154,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             // insertujem nove data
                             Boolean error = false ;
 
+                            if  (updatesLock) {
+                                Looper.loop();
+                                return;
+                            }
+                            updatesLock = true;
+
+
                             sb.beginTransaction();
                             for (int i = 0; i < bumps.length(); i++) {
                                  JSONObject c = null;
@@ -1169,13 +1203,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 // insert prebehol v poriadku, ukonči transakciu
                                 sb.setTransactionSuccessful();
                                 sb.endTransaction();
+                                updatesLock = false;
                                 Looper.loop();
+
                                 get_max_collision(lang_database, longt_database, 0);
                             } else {
                                 // nastala chyba, načitaj uložene vytlky
                                 sb.endTransaction();
                                 LatLng convert_location =  gps.getCurrentLatLng();
                                 getAllBumps(convert_location.latitude,convert_location.longitude);
+                                updatesLock = false;
                                 Looper.loop();
 
                             }
@@ -1200,7 +1237,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         dialog.cancel();
                     if (!updatesLock && regularUpdatesLock){
                         updatesLock=true;
-
+                        lockHandler=false;
+                        Log.d("TTRREEE", "regularUpdatesLock == 1 v getupdate");
                         ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
                         bumpList.addAll(accelerometer.getPossibleBumps());
                         ArrayList<Integer> bumpsManual = new ArrayList<Integer> ();
@@ -1208,8 +1246,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         accelerometer.getPossibleBumps().clear();
                         accelerometer.getBumpsManual().clear();
                         saveBump(bumpList, bumpsManual,0);
-                    }
+                    }else
                     if (updates==1) {
+                        Log.d("TTRREEE", "updates == 1 v getupdate");
+                        updates=0;
                             // ak povolim, stiahnem data
                         LatLng convert_location = gps.getCurrentLatLng();
                         get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
@@ -1400,7 +1440,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 //vytlky sa do dabatazy odosielaju kazdu minutu
                 new Timer().schedule(new SendBumpsToDb(), 0, 120000);
                 //mapa sa nastavuje kazde 2 minuty
-                new Timer().schedule(new MapSetter(), 0, 120000);   //120000
+             //   new Timer().schedule(new MapSetter(), 0, 120000);   //120000
 
 
             }
@@ -1498,7 +1538,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
 
     public static boolean updatesLock = false;
     private boolean regularUpdatesLock = false;
-
+    private boolean lockHandler =false;
     private class SendBumpsToDb extends TimerTask {
 
         @Override
@@ -1507,6 +1547,8 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
             getActivity().runOnUiThread(new Runnable(){
                 @Override
                 public void run() {
+                    Log.d("TTRREEE", "SendBumpsToDb");
+                    lockHandler = true;
                   //  ak je pripojenie na internet
                     if (isNetworkAvailable()) {
                          if (!(isEneableDownload() && !isConnectedWIFI())) {
@@ -1526,11 +1568,27 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                                          bumpsManual.addAll(accelerometer.getBumpsManual());
                                          accelerometer.getPossibleBumps().clear();
                                          accelerometer.getBumpsManual().clear();
+                                         Log.d("TTRREEE", "saveBump spustam");
                                          saveBump(lista, bumpsManual, 0);
+                                     }else {
+                                         Log.d("TTRREEE", "updatesLock SendBumpsToDb");
+                                         getBumpsWithLevel();
                                      }
+                                 }else{
+                                     Log.d("TTRREEE", "isEmpty  SendBumpsToDb");
+                                     getBumpsWithLevel();
                                  }
+                            }else{
+                                Log.d("TTRREEE", "accelerometer null SendBumpsToDb");
+                                getBumpsWithLevel();
                             }
-                        }
+                        }else{
+                             Log.d("TTRREEE", "isConnectedWIFI SendBumpsToDb");
+                             getBumpsWithLevel();
+                         }
+                    }else{
+                        Log.d("TTRREEE", "isNetworkAvailable SendBumpsToDb");
+                        getBumpsWithLevel();
                     }
                 }}
             );
@@ -1636,13 +1694,28 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                 listHelp=null;
                 bumpsManualHelp=null;
                 updatesLock=false;
+
+                if(regularUpdatesLock) {
+                    Log.d("TTRREEE", "updates == 1 v save");
+                    updates=0;
+                    regularUpdatesLock=false;
+                    lockHandler=false;
+                    LatLng convert_location = gps.getCurrentLatLng();
+                    get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
+
+                }else if(lockHandler==true){
+                    Log.d("TTRREEE", "lockHandler==true");
+                    lockHandler=false;
+                    getBumpsWithLevel();
+                }
+
                 Looper.loop();
         } };
         t.start();
 
     }
 
-    private class MapSetter extends TimerTask {
+   /* private class MapSetter extends TimerTask {
         @Override
         public void run() {
             getActivity().runOnUiThread(new Runnable(){
@@ -1652,7 +1725,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                     getBumpsWithLevel();
                 }});
         }
-    }
+    }*/
 
     public void getBumpsWithLevel() {
         //ak je pripojenie na internet
