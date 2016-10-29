@@ -68,7 +68,7 @@ public class Bump {
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
 
-         /*   JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
+            JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
              int success = 0;
              try {
                  success = json.getInt("success");
@@ -76,10 +76,10 @@ public class Bump {
                     e.printStackTrace();
                     return "error";
                 }
-            if (success == 1)*/
+            if (success == 1)
                 return "success";
-         /*     else
-                return "error";*/
+              else
+                return "error";
         }
     }
 }

@@ -63,7 +63,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Logger;
 
 import static com.example.monikas.navigationapp.Bump.isBetween;
 import static com.example.monikas.navigationapp.MainActivity.add_button;
@@ -119,8 +118,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
     private  boolean regular_update = false;
     private  boolean clear =true ;
-
-
     public static boolean lockZoznam = false;
     public static boolean lockZoznamDB = false;
 
@@ -714,7 +711,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
          Thread t = new Thread() {
             public void run() {
-
                 Looper.prepare();
                 SimpleDateFormat now,ago;
                 Calendar cal = Calendar.getInstance();
@@ -728,53 +724,44 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 // ziskam sučasnu poziciu
                 LatLng convert_location =  gps.getCurrentLatLng();
 
-        // seleknutie vytlk z oblasti a starych 280 dni
-        String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
-              " ( last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
-                + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longitude+",1)) ";
-        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                 // seleknutie vytlk z oblasti a starych 280 dni
+                 String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
+                     " ( last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
+                            + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longitude+",1)) ";
+                SQLiteDatabase database = databaseHelper.getWritableDatabase();
 
                 Cursor cursor  =null;
                 try {
-                cursor   = database.rawQuery(selectQuery, null);
-                int i= 0 ;
-        if (cursor.moveToFirst()) {
-            do {
-                 i++;
-                // pridavanie do mapy
-             gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
-             try {
-                        Thread.sleep(50); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
-                    } catch (InterruptedException e) {
-                        // NOP (no operation)
-                    }
+                    cursor   = database.rawQuery(selectQuery, null);
 
-            }
-            while (cursor.moveToNext());
-        }
+                  if (cursor.moveToFirst()) {
+                        do {
+                            // pridavanie do mapy
+                            gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
+                            try {
+                             Thread.sleep(50);
+                            } catch (InterruptedException e) {
+                                Log.e("error",e.toString());
+                            }
+                        }
+                    while (cursor.moveToNext());
+                   }
                 } finally {
-                    // this gets called even if there is an exception somewhere above
                     if(cursor != null)
                         cursor.close();
                 }
 
                 updatesLock = false;
 
-            if (!lockAdd  && !lockZoznam)
-                 if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
-                     notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
-                 }
-
-
-
+                if (!lockAdd  && !lockZoznam)
+                    if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
+                        notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
+                     }
                 Looper.loop();
-
-
 
             }
         };
         t.start();
-
     }
 
     public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
@@ -811,78 +798,65 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private int net, b_id_database, c_id_database,updates, max_number =0 ;
 
     public void get_max_collision(final Double latitude,final  Double longtitude,final  Integer update ) {
-        Log.d("TTRREEE", "4. get_max_collision  ");
+        Log.d("TTRREEE", "start get_max_collision  ");
 
-
-        if  (updatesLock) {
-            Log.d("TTRREEE", "4. lock v  get_max_collision  ");
-
+         if  (updatesLock) {
+            Log.d("TTRREEE", " lock v  get_max_collision  ");
             return;
-
-        }
+         }
         updatesLock = true;
 
         new Thread() {
             public void run() {
                 Looper.prepare();
+                SimpleDateFormat now,ago;
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(new Date());
+                now = new SimpleDateFormat("yyyy-MM-dd");
+                String now_formated = now.format(cal.getTime());
+                cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
+                ago = new SimpleDateFormat("yyyy-MM-dd");
+                String ago_formated = ago.format(cal.getTime());
 
+                sb.beginTransaction();
+                // max b_id_collisions z databazy
+                String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                    + " where (last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
+                    + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longtitude+",1)))"
+                    + " ORDER BY c_id DESC LIMIT 1 ";
+                SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                Cursor cursor = null;
 
+                try {
+                    cursor = database.rawQuery(selectQuery, null);
 
-        SimpleDateFormat now,ago;
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(new Date());
-        now = new SimpleDateFormat("yyyy-MM-dd");
-        String now_formated = now.format(cal.getTime());
-        cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
-        ago = new SimpleDateFormat("yyyy-MM-dd");
-        String ago_formated = ago.format(cal.getTime());
+                     if (cursor.moveToFirst()) {
+                         do {
+                            c_id_database =cursor.getInt(0);
+                            Log.d("TTRREEE","max v collisions "+ c_id_database);
+                         } while (cursor.moveToNext());
+                     }
+                 } finally {
+                     // this gets called even if there is an exception somewhere above
+                        if(cursor != null)
+                         cursor.close();
+                }
 
-        sb.beginTransaction();
-        // max b_id_collisions z databazy
-        String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
-                + " where (last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
-                + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longtitude+",1)))"
-                + " ORDER BY c_id DESC LIMIT 1 ";
-        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-        Cursor cursor = null;
-
-        try {
-        cursor     = database.rawQuery(selectQuery, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                c_id_database =cursor.getInt(0);
-                Log.d("TTRREEE","max v collisions "+ c_id_database);
-            } while (cursor.moveToNext());
-        }
-        } finally {
-            // this gets called even if there is an exception somewhere above
-            if(cursor != null)
-                cursor.close();
-        }
-
-        sb.setTransactionSuccessful();
-        sb.endTransaction();
+                 sb.setTransactionSuccessful();
+                sb.endTransaction();
                 updatesLock = false;
                 updates = update;
                 new Max_Collision_Number().execute();
-
-
-
-            Looper.loop();
-        }
-    }.start();
-
-
-
+                Looper.loop();
+            }
+         }.start();
     }
 
     class Max_Collision_Number extends AsyncTask<String, Void, JSONArray> {
 
         protected JSONArray doInBackground(String... args) {
-            Log.d("TTRREEE", "5. Max_Collision_Number ");
+            Log.d("TTRREEE", "start Max_Collision_Number ");
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-
             Log.d("TTRREEE","odosielam lang_database   v Max_Collision_Number "+ lang_database);
             Log.d("TTRREEE","odosielam  longt_database v Max_Collision_Number "+ longt_database);
             params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
@@ -965,14 +939,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             Looper.prepare();
                     Boolean error = false ;
                             if  (updatesLock) {
-                                Log.d("TTRREEE", "6. spustam Max_Collision_Number lock <<< ");
+                                Log.d("TTRREEE", "6. spustam Max_Collision_Number lock  ");
                                 Looper.loop();
                                 return;
                             }
                             updatesLock = true;
-
-
-
                     sb.beginTransaction();
                     for (int i = 0; i < bumps.length(); i++) {
                         JSONObject c = null;
@@ -1112,8 +1083,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 ago = new SimpleDateFormat("yyyy-MM-dd");
                 String ago_formated = ago.format(cal.getTime());
 
-
-
                 sb.beginTransaction();
                 // vytiahnem najvyššie b_id z bumps
                 String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
@@ -1148,15 +1117,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 longt_database =longtitude;
 
                 new Max_Bump_Number().execute();
-
-
                 Looper.loop();
             }
         }.start();
-
-
-
-
     }
 
      class Max_Bump_Number extends AsyncTask<String, Void, JSONArray> {
@@ -1296,7 +1259,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                          }
                     };
                     t.start();
-        }
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -1508,9 +1471,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                         }
                     }
+
                     Toast.makeText(getActivity(), "Finding your location....", Toast.LENGTH_SHORT).show();
                     try {
-                        Thread.sleep(100); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                        Thread.sleep(1000); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
                     } catch (InterruptedException e) {
                         // NOP (no operation)
                     }
@@ -1532,7 +1496,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
     public void startGPS() {
-       new Timer().schedule(new SendBumpsToDb(), 0, 120000);
+       new Timer().schedule(new SyncDb(), 0, 120000);
     }
 
     @Override
@@ -1632,7 +1596,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
     public static boolean updatesLock = false;
     private boolean regularUpdatesLock = false;
     private boolean lockHandler =false;
-    private class SendBumpsToDb extends TimerTask {
+    private class SyncDb extends TimerTask {
 
         @Override
         public void run() {
@@ -1640,7 +1604,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
             getActivity().runOnUiThread(new Runnable(){
                 @Override
                 public void run() {
-                    Log.d("TTRREEE", "SendBumpsToDb");
+                    Log.d("TTRREEE", "SyncDb");
                     lockHandler = true;
                   //  ak je pripojenie na internet
                     if (isNetworkAvailable()) {
@@ -1664,23 +1628,23 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                                          Log.d("TTRREEE", "saveBump spustam");
                                          saveBump(lista, bumpsManual, 0);
                                      }else {
-                                         Log.d("TTRREEE", "updatesLock SendBumpsToDb");
+                                         Log.d("TTRREEE", "updatesLock SyncDb");
                                          getBumpsWithLevel();
                                      }
                                  }else{
-                                     Log.d("TTRREEE", "isEmpty  SendBumpsToDb");
+                                     Log.d("TTRREEE", "isEmpty  SyncDb");
                                      getBumpsWithLevel();
                                  }
                             }else{
-                                Log.d("TTRREEE", "accelerometer null SendBumpsToDb");
+                                Log.d("TTRREEE", "accelerometer null SyncDb");
                                 getBumpsWithLevel();
                             }
                         }else{
-                             Log.d("TTRREEE", "isConnectedWIFI SendBumpsToDb");
+                             Log.d("TTRREEE", "isConnectedWIFI SyncDb");
                              getBumpsWithLevel();
                          }
                     }else{
-                        Log.d("TTRREEE", "isNetworkAvailable SendBumpsToDb");
+                        Log.d("TTRREEE", "isNetworkAvailable SyncDb");
                         getBumpsWithLevel();
                     }
                 }}
@@ -1803,7 +1767,6 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                     lockHandler=false;
                     getBumpsWithLevel();
                 }
-
                 Looper.loop();
         } };
         t.start();

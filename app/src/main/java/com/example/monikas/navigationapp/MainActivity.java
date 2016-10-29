@@ -23,7 +23,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -48,8 +47,6 @@ import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
-
-
 
     private Context context;
     private final float ALL_BUMPS = 1.0f;
@@ -82,7 +79,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 mapbox = mapboxMap;
                 if (setOnPosition)
                     mapbox.setMyLocationEnabled(true);
-
             }
         });
 
@@ -129,8 +125,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
 
     }
-
-
 
     public void onClick(View v) {
         switch (v.getId()) {
@@ -192,18 +186,17 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     location.setLongitude(round(convert_location.getLongitude(),7));
                     location.setTime(new Date().getTime());
 
-
-                     new Thread() {
+                    new Thread() {
                         public void run() {
                             Looper.prepare();
                             while(true){
                                 if (!lockAdd && !lockZoznam &&!threadLock ) {
-                                    Log.d("TREEEE","vloyil do yoynamu  ");
+                                    Log.d("TREEEE","vlozil do zoznamu  ");
                                     threadLock=true;
                                     fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                     fragmentActivity.accelerometer.addBumpsManual(1);
                                     if (!lockZoznamDB && !updatesLock) {
-                                        Log.d("TREEEE","vloyil do db ");
+                                        Log.d("TREEEE","vlozil do db ");
                                         fragmentActivity.sb.beginTransaction();
                                         ContentValues contentValues = new ContentValues();
                                         contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
@@ -229,7 +222,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                     // NOP (no operation)
                                 }
                             }
-
                             Looper.loop();
                       }
                     }.start();
@@ -265,7 +257,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 break;
-          //  case R.id.back_button
         }
     }
 
@@ -359,7 +350,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 new Thread() {
                     public void run() {
                         Looper.prepare();
-
                         while (true) {
                             if  (!updatesLock) {
                                 updatesLock = true;
@@ -370,9 +360,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                 break;
                             }
                             try {
-                                Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                                Thread.sleep(20);
                             } catch (InterruptedException e) {
-                                // NOP (no operation)
+
                             }
                         }
                         Looper.loop();
@@ -384,7 +374,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 new Thread() {
                     public void run() {
                         Looper.prepare();
-
                         while (true) {
                             if  (!updatesLock) {
                                 updatesLock = true;
@@ -395,9 +384,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                 break;
                             }
                             try {
-                                Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                                Thread.sleep(20);
                             } catch (InterruptedException e) {
-                                // NOP (no operation)
+
                             }
                         }
                         Looper.loop();
@@ -409,7 +398,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 new Thread() {
                     public void run() {
                         Looper.prepare();
-
                         while (true) {
                             if  (!updatesLock) {
                                 updatesLock = true;
@@ -421,9 +409,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                 break;
                             }
                             try {
-                                Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                                Thread.sleep(20);
                             } catch (InterruptedException e) {
-                                // NOP (no operation)
+
                             }
                         }
                         Looper.loop();
