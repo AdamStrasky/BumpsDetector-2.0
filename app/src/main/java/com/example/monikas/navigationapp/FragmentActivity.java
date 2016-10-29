@@ -239,7 +239,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
     ///////// pomocna funkcia, možem zmazať
-    public void getAllBumpsALL() {
+   /* public void getAllBumpsALL() {
         sb.beginTransaction();
         String selectQuery = "SELECT b_id_bumps,rating,count FROM my_bumps ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
@@ -254,7 +254,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
         sb.setTransactionSuccessful();
         sb.endTransaction();
-    }
+    }*/
 
     /*****************************************************************************************************/
 
@@ -697,7 +697,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     public void getAllBumps(final Double latitude, final Double longitude) {
        // vyčistenie mapy a uprava cesty
-        if (isClear())
+       if (isClear())
             mapbox.deselectMarkers();
         if  (updatesLock) {
            return;
@@ -735,13 +735,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                  i++;
                 // pridavanie do mapy
              gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
-               try {
-                        Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+             try {
+                        Thread.sleep(50); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
                     } catch (InterruptedException e) {
                         // NOP (no operation)
                     }
-               if (i== 500)
-                    break;
+
             }
             while (cursor.moveToNext());
         }
@@ -753,10 +752,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 updatesLock = false;
 
-
-               //  if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
-                //     notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
-
+            if (!lockAdd  && !lockZoznam)
+                 if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
+                     notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
+                 }
 
 
 
@@ -776,6 +775,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         int i=0;
         if (bumps.size()> 0) {
             for (HashMap<Location, Float> bump : bumps) {
+                if (bump!=null)
+                    break;
                 Iterator it = bump.entrySet().iterator();
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
@@ -790,7 +791,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     i++;
                 }
                 try {
-                    Thread.sleep(20);
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
 
                 }
@@ -1065,7 +1066,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     }
                     // načítam vytlky
                     LatLng convert_location =  gps.getCurrentLatLng();
-                    getAllBumpsALL();
+                 //   getAllBumpsALL();
                     getAllBumps(convert_location.latitude,convert_location.longitude);
                     Looper.loop();
                     }
@@ -1700,9 +1701,11 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
 
                                         // ak mi prišlo potvrdenie o odoslaní, mažem z db
                                         sb.beginTransaction();
-                                        sb.execSQL("DELETE FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                                        sb.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)= ROUND("+loc.getLongitude()+",7)"
                                                + " and  ROUND(intensity,6)==ROUND("+data+",6) and manual="+bumpsManualHelp.get(num)+"");
-
+                                        Log.d("TEST", "mazem");
+                                        Log.d("mazem",    listHelp.get(num).toString());
+                                        Log.d("mazem",    bumpsManualHelp.get(num).toString());
                                         listHelp.remove(num);
                                         bumpsManualHelp.remove(num);
                                         sb.setTransactionSuccessful();

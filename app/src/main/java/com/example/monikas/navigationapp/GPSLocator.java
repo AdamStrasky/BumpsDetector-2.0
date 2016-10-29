@@ -115,18 +115,18 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public void showDirection (LatLng from, LatLng to) {
          Route md = new Route();
          Document doc = md.getDocument(from, to);
-         ArrayList<LatLng> directionPoint = md.getDirection(doc);
-         com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
-         for(int i = 0 ; i < directionPoint.size() ; i++) {
+         //ArrayList<LatLng> directionPoint = md.getDirection(doc);
+      //   com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
+        /* for(int i = 0 ; i < directionPoint.size() ; i++) {
             points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
                     directionPoint.get(i).latitude,
                     directionPoint.get(i).longitude);
-         }
+         }*/
 
-        mapbox.addPolyline(new com.mapbox.mapboxsdk.annotations.PolylineOptions()
+       /* mapbox.addPolyline(new com.mapbox.mapboxsdk.annotations.PolylineOptions()
                 .add(points)
                 .color(Color.parseColor("#009688"))
-                .width(5));
+                .width(5));*/
     }
 
     public void addBumpToMap (com.mapbox.mapboxsdk.geometry.LatLng  position, int count, int manual ) {

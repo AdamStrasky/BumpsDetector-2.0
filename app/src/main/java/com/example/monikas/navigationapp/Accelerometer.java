@@ -36,6 +36,7 @@ import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
 import static com.example.monikas.navigationapp.FragmentActivity.lockZoznam;
 import static com.example.monikas.navigationapp.FragmentActivity.lockZoznamDB;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
+import static com.example.monikas.navigationapp.MainActivity.round;
 
 public class Accelerometer extends Service implements SensorEventListener, LocationListener {
 
@@ -207,7 +208,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         Log.d("DETECT", "same location");
                         if (!updatesLock) {
                             lockZoznamDB=true;
-                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
+                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
                             lockZoznamDB=false;
                         }
                         result = "same bump";
@@ -225,7 +226,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                             pair.setValue(data);
                             if (!updatesLock) {
                                 lockZoznamDB=true;
-                                sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE latitude=" + hashLocation.getLatitude() + " and  longitude=" + hashLocation.getLongitude());
+                                sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
                                 lockZoznamDB=false;
                             }
                             result = "under bump";
@@ -242,6 +243,8 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
             result = "new bump";
             System.out.println("lat: "+ location.getLatitude() + ",lng: "+ location.getLongitude() + ",data: " + data);
             HashMap<Location, Float> hashToArray = new HashMap();
+            location.setLatitude(round(location.getLatitude(),7));
+            location.setLongitude(round(location.getLongitude(),7));
             hashToArray.put(location,data);
             //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
             lockZoznam = true;

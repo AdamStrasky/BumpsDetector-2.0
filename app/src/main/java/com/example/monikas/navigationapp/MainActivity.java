@@ -186,27 +186,28 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                   //  !!!!!!! final
                     final double ll = intensity;
                     final Location location = new Location("new");
-                    location.setLatitude(convert_location.getLatitude());
-                    location.setLongitude(convert_location.getLongitude());
+                    location.setLatitude(round(convert_location.getLatitude(),7));
+                    location.setLongitude(round(convert_location.getLongitude(),7));
                     location.setTime(new Date().getTime());
+
 
                      new Thread() {
                         public void run() {
                             Looper.prepare();
                             while(true){
-                                if (!lockAdd && !lockZoznam &&!threadLock) {
+                                if (!lockAdd && !lockZoznam &&!threadLock ) {
+                                    Log.d("TREEEE","vloyil do yoynamu  ");
                                     threadLock=true;
-                                    fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
+                                    fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                     fragmentActivity.accelerometer.addBumpsManual(1);
                                     if (!lockZoznamDB && !updatesLock) {
-                                        BigDecimal bd = new BigDecimal(Float.toString(intensity));
-                                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                        Log.d("TREEEE","vloyil do db ");
                                         fragmentActivity.sb.beginTransaction();
                                         ContentValues contentValues = new ContentValues();
                                         contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
                                         contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
                                         contentValues.put(Provider.new_bumps.MANUAL, 1);
-                                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                        contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
                                         fragmentActivity.sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                                         fragmentActivity.sb.setTransactionSuccessful();
                                         fragmentActivity.sb.endTransaction();
@@ -230,25 +231,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                             Looper.loop();
                       }
                     }.start();
-
-
-
-                    fragmentActivity.accelerometer.addPossibleBumps(location,intensity);
-                    fragmentActivity.accelerometer.addBumpsManual(1);
-                    if (!updatesLock) {
-                        BigDecimal bd = new BigDecimal(Float.toString(intensity));
-                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                        fragmentActivity.sb.beginTransaction();
-                        ContentValues contentValues = new ContentValues();
-                        contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                        contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                        contentValues.put(Provider.new_bumps.MANUAL, 1);
-                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                        fragmentActivity.sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                        fragmentActivity.sb.setTransactionSuccessful();
-                        fragmentActivity.sb.endTransaction();
-                    }
-                    Toast.makeText(this, "New bump added" , Toast.LENGTH_LONG).show();
                 }
                 break;
             case R.id.delete_btn:
@@ -431,7 +413,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                             HashMap.Entry pair = (HashMap.Entry) it.next();
                             Location loc = (Location) pair.getKey();
                             float data = (float) pair.getValue();
-                            String sql = "SELECT intensity FROM new_bumps WHERE latitude=" + loc.getLatitude() + " and  longitude=" + loc.getLongitude()
+                            String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+loc.getLongitude()+",7) "
                                     + " and  ROUND(intensity,6)==ROUND("+data+",6)  and manual="+bumpsManual.get(i);
 
                             BigDecimal bd = new BigDecimal(Float.toString(data));
@@ -500,6 +482,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
         else
            return false;
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
     }
 
 }
