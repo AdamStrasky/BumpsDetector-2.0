@@ -697,7 +697,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     public void getAllBumps(final Double latitude, final Double longitude) {
        // vyčistenie mapy a uprava cesty
-    /*    if (isClear())
+        if (isClear())
             mapbox.deselectMarkers();
         if  (updatesLock) {
            return;
@@ -723,7 +723,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         // seleknutie vytlk z oblasti a starych 280 dni
         String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
               " ( last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
-                + " (ROUND(latitude,0)==ROUND("+latitude+",0) and ROUND(longitude,0)==ROUND("+longitude+",0)) ";
+                + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longitude+",1)) ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
 
                 Cursor cursor  =null;
@@ -767,7 +767,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             }
         };
         t.start();
-*/
+
     }
 
     public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
@@ -832,7 +832,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         // max b_id_collisions z databazy
         String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
                 + " where (last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
-                + " (ROUND(latitude,0)==ROUND("+latitude+",0) and ROUND(longitude,0)==ROUND("+longtitude+",0)))"
+                + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longtitude+",1)))"
                 + " ORDER BY c_id DESC LIMIT 1 ";
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         Cursor cursor = null;
@@ -843,6 +843,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         if (cursor.moveToFirst()) {
             do {
                 c_id_database =cursor.getInt(0);
+                Log.d("TTRREEE","max v collisions "+ c_id_database);
             } while (cursor.moveToNext());
         }
         } finally {
@@ -872,6 +873,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         protected JSONArray doInBackground(String... args) {
             Log.d("TTRREEE", "5. Max_Collision_Number ");
             List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+            Log.d("TTRREEE","odosielam lang_database   v Max_Collision_Number "+ lang_database);
+            Log.d("TTRREEE","odosielam  longt_database v Max_Collision_Number "+ longt_database);
             params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
             params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
             params.add(new BasicNameValuePair("b_id", String.valueOf(b_id_database)));
@@ -970,22 +974,28 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             error= true;
                         }
 
-                        int c_id , b_id, intensity = 0;
+                        int c_id , b_id;
+                        double intensity = 0;
                         String created_at;
-
+                        Log.d("TTRREEE"," bob_id_database  " + b_id_database);
+                        Log.d("TTRREEE"," bloaded_index " + loaded_index);
                         if (c != null) {
                             try {
                                 c_id = c.getInt("c_id");
                                 b_id = c.getInt("b_id");
-                                intensity = c.getInt("intensity");
+                                intensity = c.getDouble("intensity");
                                 created_at = c.getString("created_at");
+                                Log.d("TTRREEE","c_id "+ c_id);
+                                Log.d("TTRREEE","b_id "+ b_id);
+                                Log.d("TTRREEE","intensity "+ intensity);
 
                                 // ak nove collision updatuju stare  vytlky
                                 if (b_id <= loaded_index) {
+                                    Log.d("TTRREEE"," updatujem b_id ");
                                     int rating=0;
-                                    if (isBetween(intensity,0,6)) rating = 1;
-                                    if (isBetween(intensity,6,10)) rating = 2;
-                                    if (isBetween(intensity,10,10000)) rating = 3;
+                                    if (isBetween((float) intensity,0,6)) rating = 1;
+                                    if (isBetween((float) intensity,6,10)) rating = 2;
+                                    if (isBetween( (float) intensity ,10,10000)) rating = 3;
                                     sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
                                 }
 
@@ -994,9 +1004,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                  */
                                if (b_id <= b_id_database && loaded_index < b_id) {
                                     int rating = 0;
-                                    if (isBetween(intensity, 0, 6)) rating = 1;
-                                    if (isBetween(intensity, 6, 10)) rating = 2;
-                                    if (isBetween(intensity, 10, 10000)) rating = 3;
+                                    if (isBetween((float) intensity, 0, 6)) rating = 1;
+                                    if (isBetween((float) intensity, 6, 10)) rating = 2;
+                                    if (isBetween((float) intensity, 10, 10000)) rating = 3;
 
                                     Cursor cursor = null;
                                     String sql ="SELECT * FROM collisions WHERE b_id_collisions="+b_id;
@@ -1005,9 +1015,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                      cursor= sb.rawQuery(sql,null);
 
                                     if(cursor.getCount()>0  ){
+                                        Log.d("TTRREEE"," bolo ich viac v  b_id ");
                                         //  ak ich bolo viac pripičítam
                                         sql=     "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1 WHERE b_id_bumps=" + b_id;
                                     }else{
+                                        Log.d("TTRREEE"," bolo prvy b   b_id ");
                                        // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
                                          sql=   "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1 WHERE b_id_bumps=" + b_id ;
                                     }
@@ -1018,6 +1030,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                            cursor.close();
                                    }
                                 }
+
                                 // insert novych udajov
                                 ContentValues contentValues = new ContentValues();
                                 contentValues.put(Provider.bumps_collision.C_ID, c_id);
@@ -1052,6 +1065,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     }
                     // načítam vytlky
                     LatLng convert_location =  gps.getCurrentLatLng();
+                    getAllBumpsALL();
                     getAllBumps(convert_location.latitude,convert_location.longitude);
                     Looper.loop();
                     }
@@ -1095,7 +1109,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 // vytiahnem najvyššie b_id z bumps
                 String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
                         + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                        + " (ROUND(latitude,0)==ROUND(" + langtitude + ",0) and ROUND(longitude,0)==ROUND(" + longtitude + ",0))"
+                        + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
                         + " ORDER BY b_id_bumps DESC LIMIT 1 ";
                 SQLiteDatabase database = databaseHelper.getWritableDatabase();
                 Cursor cursor = null;
@@ -1105,6 +1119,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     if (cursor.moveToFirst()) {
                         do {
                             b_id_database = cursor.getInt(0);
+                            Log.d("TTRREEE","najvssie  b_id v bumps "+ b_id_database);
                         } while (cursor.moveToNext());
 
                     }
@@ -1228,8 +1243,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     try {
                                       latitude = c.getDouble("latitude");
                                         longitude = c.getDouble("longitude");
+                                        Log.d("TTRREEE","latitude "+ latitude);
+                                        Log.d("TTRREEE","longitude"+ longitude);
+
                                         count = c.getInt("count");
                                         b_id = c.getInt("b_id");
+                                        Log.d("TTRREEE","b_id"+ b_id);
                                         max_number = b_id;
                                         rating = c.getInt("rating");
                                         last_modified = c.getString("last_modified");
