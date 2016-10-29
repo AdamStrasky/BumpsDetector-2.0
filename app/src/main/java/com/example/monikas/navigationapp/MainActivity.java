@@ -49,6 +49,8 @@ import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
+
+
     private Context context;
     private final float ALL_BUMPS = 1.0f;
     private final float MEDIUM_BUMPS = 1.5f;
@@ -411,6 +413,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         while (true) {
                             if  (!updatesLock) {
                                 updatesLock = true;
+
                                 fragmentActivity.level = LARGE_BUMPS;
                                 LatLng largeBumps =  fragmentActivity.gps.getCurrentLatLng();
                                 updatesLock = false;

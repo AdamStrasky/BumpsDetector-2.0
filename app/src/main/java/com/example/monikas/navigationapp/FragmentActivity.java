@@ -63,6 +63,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
 import static com.example.monikas.navigationapp.Bump.isBetween;
 import static com.example.monikas.navigationapp.MainActivity.add_button;
@@ -74,6 +75,8 @@ import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAM
 import android.support.v4.app.NotificationCompat.Builder;
 
 public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+
+
 
     private GoogleApiClient mGoogleApiClient;
     public GPSLocator gps = null;
@@ -696,7 +699,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
     public void getAllBumps(final Double latitude, final Double longitude) {
-       // vyčistenie mapy a uprava cesty
+
+        if (latitude==null || longitude==null) {
+            Toast.makeText(getActivity(), "No GPS signal", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         if  (updatesLock) {
            return;
@@ -1501,8 +1508,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                         }
                     }
-                    else
-                        Toast.makeText(getActivity(), "Finding your location....", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "Finding your location....", Toast.LENGTH_SHORT).show();
+                    try {
+                        Thread.sleep(100); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                    } catch (InterruptedException e) {
+                        // NOP (no operation)
+                    }
+
 
                   //  Log.d("TTRREEE","bezi  sa Thread");
                 }
@@ -1835,8 +1847,13 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
             // ak mám síce internet ale nemám povolené stahovanie, tk načítam z databazy
             else {
                 regular_update =false;
-                LatLng convert_location =  gps.getCurrentLatLng();
-                getAllBumps(convert_location.latitude,convert_location.longitude);
+                if (gps!=null ) {
+                    Log.d("TTRREEE","gps po  null");
+                    LatLng convert_location = gps.getCurrentLatLng();
+                    if (convert_location != null) {
+                         getAllBumps(convert_location.latitude, convert_location.longitude);
+                    }
+                 }
             }
 
         }
