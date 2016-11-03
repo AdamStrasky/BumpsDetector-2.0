@@ -120,6 +120,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private  boolean clear =true ;
     public static boolean lockZoznam = false;
     public static boolean lockZoznamDB = false;
+    com.example.monikas.navigationapp.Location detection = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -1498,7 +1499,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                   //  Log.d("TTRREEE","bezi  sa Thread");
                 }
-                com.example.monikas.navigationapp.Location a = new com.example.monikas.navigationapp.Location();
+                detection = new com.example.monikas.navigationapp.Location();
 
                 startGPS();
                 Looper.loop();

@@ -293,6 +293,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
                     LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
                     fragmentActivity.gps.showDirection(myPosition, to_position);
+                    fragmentActivity.detection.bumps_on_position(to_position);
                  }
             }
             catch (Exception e) {

@@ -271,7 +271,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
 
     //vzdialenost dvoch pozicii v metroch
     //zdroj http://www.androidsnippets.com/distance-between-two-gps-coordinates-in-meter
-    public double getDistance(float lat_a, float lng_a, float lat_b, float lng_b) {
+    public static double getDistance(float lat_a, float lng_a, float lat_b, float lng_b) {
         float pk = (float) (180/3.14169);
 
         float a1 = lat_a / pk;

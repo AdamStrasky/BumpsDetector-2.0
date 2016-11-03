@@ -113,6 +113,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
     //vykresli cestu z miesta from do miesta to
     public void showDirection (final LatLng from, final LatLng to) {
+
         Thread t = new Thread() {
             public void run() {
 
