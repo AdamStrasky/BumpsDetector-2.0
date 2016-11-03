@@ -10,6 +10,7 @@ import android.util.Log;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -69,6 +70,11 @@ public class Bump {
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
 
             JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
+
+            if (json==null) {
+                return "error";
+            }
+
              int success = 0;
              try {
                  success = json.getInt("success");

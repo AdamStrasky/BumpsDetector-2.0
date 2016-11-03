@@ -139,6 +139,9 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
 
     public void addBumpToMap (com.mapbox.mapboxsdk.geometry.LatLng  position, int count, int manual ) {
+        if (mapbox==null)
+            return;
+
         if (position == null) {
             return;
         }
@@ -196,6 +199,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
         if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
             try {
+                if (mapbox!=null)
                 mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
             } catch  (NullPointerException e) {
             }
@@ -208,6 +212,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public void SetZoom() {
         ZoomInit = false;
         com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
+        if (mapbox!=null)
         mapbox.setCameraPosition(new CameraPosition.Builder()
                 .target(yourLatLng )
                 .zoom(ZOOM_LEVEL)

@@ -82,6 +82,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             }
         });
 
+
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);

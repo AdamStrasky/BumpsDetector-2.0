@@ -35,7 +35,8 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
              super(context, DATABASE_NAME, null,DATABASE_VERSION);
         }
 
-        @Override
+
+    @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(createTableSqlBumps());
             db.execSQL(createTableSqlCollisions());

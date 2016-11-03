@@ -706,7 +706,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
            return;
         }
         updatesLock = true;
-        if (isClear())
+        if (isClear() && mapbox!=null)
             mapbox.deselectMarkers();
 
          Thread t = new Thread() {
@@ -866,7 +866,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             params.add(new BasicNameValuePair("c_id", String.valueOf(c_id_database)));
 
             JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_collisions.php", "POST", params);
-
+            if (json==null) {
+                JSONArray response = new JSONArray();
+                try {
+                    response.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return response;
+            }
             try {
                 int success = json.getInt("success");
 
@@ -1133,7 +1141,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                  params.add(new BasicNameValuePair("net", String.valueOf(net)));
 
                  JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_bumps.php", "POST", params);
-
+                 if (json==null) {
+                        JSONArray response = new JSONArray();
+                        try {
+                            response.put(0, "error");
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                        return response;
+                    }
                  try {
                      int success = json.getInt("success");
                      JSONArray response = new JSONArray();
@@ -1482,6 +1498,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                   //  Log.d("TTRREEE","bezi  sa Thread");
                 }
+                com.example.monikas.navigationapp.Location a = new com.example.monikas.navigationapp.Location();
+
                 startGPS();
                 Looper.loop();
                 Log.d("TTRREEE","konci  sa   sa Thread");
