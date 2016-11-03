@@ -703,9 +703,21 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             return;
         }
 
-        if  (updatesLock) {
-           return;
+        while (true) {
+            if  (!updatesLock) {
+                updatesLock = true;
+                break;
+            }
+            Log.d("getAllBumps", "getAllBumps thread lock ");
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+            }
         }
+
+       // if  (updatesLock) {
+        //   return;
+       // }
         updatesLock = true;
         if (isClear() && mapbox!=null)
             mapbox.deselectMarkers();

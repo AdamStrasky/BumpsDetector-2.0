@@ -2,6 +2,7 @@ package com.example.monikas.navigationapp;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Looper;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -54,11 +55,12 @@ public class Location {
                        // Log.d("choise_bump", "analyzePosition");
                         if (road && directionPoint != null) {
                             Log.d("choise_bump", "road and directionPoint");
-                            if (!isLocationOnEdge(new LatLng(location.getLatitude(),location.getLongitude()), directionPoint, true, 2.0)) {
+                            if (!isLocationOnEdge(new LatLng(location.getLatitude(),location.getLongitude()), directionPoint, true, 4.0)) {
                                 Log.d("choise_bump", "nie je na ceste");
-                              //  t.stop();
-                              //  t.start();
-                              //  directionPoint= null;
+                                 t.stop();
+
+                                t.start();
+                                 directionPoint= null;
                                 // estimation.stop();
                                 // wait
                                 //estimation.start();
@@ -67,8 +69,8 @@ public class Location {
                             }else
                                 if (getDistance((float) global_gps.getCurrentLatLng().latitude, (float) global_gps.getCurrentLatLng().longitude, (float) position.latitude, (float) position.longitude) < 10) {
                                     Log.d("choise_bump", "som v cieli");
-                                  //  t.stop();
-                                  //  t = null;
+                                     t.stop();
+                                     t = null;
                                     // estimation.stop();
                                     directionPoint = null;
                                     position = null;
@@ -104,8 +106,18 @@ public class Location {
                         longitude = global_gps.getmCurrentLocation().getLongitude();
                         Log.d("choise_bump", "gps");
 
+                        while (true) {
+                            if  (!updatesLock) {
+                              updatesLock = true;
+                              break;
+                            }
+                             try {
+                                Thread.sleep(20);
+                             } catch (InterruptedException e) {
+                             }
+                        }
 
-                        if (!updatesLock) {
+                       // if (!updatesLock) {
 
                             updatesLock = true;
                             SimpleDateFormat now, ago;
@@ -156,10 +168,10 @@ public class Location {
 
                         }
 
-                        } else {
+                      /*  } else {
                             Log.d("choise_bump", "no gps");
                             //return;
-                        }
+                        }*/
                     try {
                         Thread.sleep(10000);
                     } catch (InterruptedException e) {

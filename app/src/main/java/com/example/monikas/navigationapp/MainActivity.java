@@ -351,47 +351,21 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
                 new Thread() {
                     public void run() {
-                        Looper.prepare();
-                        while (true) {
-                            if  (!updatesLock) {
-                                updatesLock = true;
-                                fragmentActivity.level = ALL_BUMPS;
-                                LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
-                                updatesLock = false;
-                                fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
-                                break;
-                            }
-                            try {
-                                Thread.sleep(20);
-                            } catch (InterruptedException e) {
+                        fragmentActivity.level = ALL_BUMPS;
+                        LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
+                         fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
 
-                            }
-                        }
-                        Looper.loop();
                     }
                 }.start();
                  return true;
 
             case R.id.medium_bumps:
-                new Thread() {
+              new Thread() {
                     public void run() {
-                        Looper.prepare();
-                        while (true) {
-                            if  (!updatesLock) {
-                                updatesLock = true;
-                                fragmentActivity.level = MEDIUM_BUMPS;
-                                LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
-                                updatesLock = false;
-                                fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
-                                break;
-                            }
-                            try {
-                                Thread.sleep(20);
-                            } catch (InterruptedException e) {
+                     fragmentActivity.level = MEDIUM_BUMPS;
+                     LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
+                     fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
 
-                            }
-                        }
-                        Looper.loop();
                     }
                 }.start();
                 return true;
@@ -399,24 +373,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.large_bumps:
                 new Thread() {
                     public void run() {
-                        Looper.prepare();
-                        while (true) {
-                            if  (!updatesLock) {
-                                updatesLock = true;
-
-                                fragmentActivity.level = LARGE_BUMPS;
-                                LatLng largeBumps =  fragmentActivity.gps.getCurrentLatLng();
-                                updatesLock = false;
-                                fragmentActivity.getAllBumps(largeBumps.latitude,largeBumps.longitude);
-                                break;
-                            }
-                            try {
-                                Thread.sleep(20);
-                            } catch (InterruptedException e) {
-
-                            }
-                        }
-                        Looper.loop();
+                        fragmentActivity.level = LARGE_BUMPS;
+                        LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
+                        fragmentActivity.getAllBumps(largeBumps.latitude, largeBumps.longitude);
                     }
                 }.start();
                 return true;
