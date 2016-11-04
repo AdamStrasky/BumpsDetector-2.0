@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
 
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 
@@ -45,6 +46,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     private float level;
     private com.mapbox.mapboxsdk.geometry.LatLng latLng;
     private com.mapbox.mapboxsdk.annotations.Marker marker;
+    private PolylineOptions draw_road= null;
 
     public GPSLocator () {
         this.mGoogleApiClient = global_mGoogleApiClient;
@@ -126,17 +128,24 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
                     directionPoint.get(i).latitude,
                     directionPoint.get(i).longitude);
          }
+          draw_road = new PolylineOptions()
+                        .add(points)
+                        .color(Color.parseColor("#009688"))
+                        .width(5);
 
-       mapbox.addPolyline(new com.mapbox.mapboxsdk.annotations.PolylineOptions()
-                .add(points)
-                .color(Color.parseColor("#009688"))
-                .width(5));
+          mapbox.addPolyline(draw_road);
 
 
             }
         };
         t.start();
 
+    }
+    public void remove_draw_road () {
+        if (draw_road!=null) {
+            mapbox.removeAnnotation(draw_road.getPolyline());
+            draw_road = null;
+        }
     }
 
     public void addBumpToMap (com.mapbox.mapboxsdk.geometry.LatLng  position, int count, int manual ) {

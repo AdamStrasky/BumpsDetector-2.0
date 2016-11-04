@@ -290,11 +290,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         Toast.makeText(this, "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
                 }
                 else {
-                    LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
-                    LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
-                    fragmentActivity.gps.showDirection(myPosition, to_position);
-                    fragmentActivity.detection.bumps_on_position(to_position);
-                 }
+                   final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
+                   final LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
+
+                    new Thread() {
+                        public void run() {
+                            fragmentActivity.gps.remove_draw_road();
+                            fragmentActivity.gps.showDirection(myPosition, to_position);
+                            fragmentActivity.detection.stop_collison_navigate();
+                            fragmentActivity.detection.bumps_on_position(to_position);
+                        }
+                    }.start();
+                }
             }
             catch (Exception e) {
                 if (isEneableShowText())
@@ -345,6 +352,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.navigation:
                 EditText text = (EditText) findViewById(R.id.location);
                 text.setText("Navigate to...");
+                new Thread() {
+                    public void run() {
+                        fragmentActivity.gps.remove_draw_road();
+                        fragmentActivity.detection.setRoad(false);
+                        fragmentActivity.detection.stop_collison_navigate();
+
+                    }
+                }.start();
                 return true;
 
             case R.id.all_bumps:
