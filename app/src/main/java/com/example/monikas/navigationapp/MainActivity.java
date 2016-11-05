@@ -291,14 +291,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 }
                 else {
                    final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
-                   final LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
+                   final  LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
 
-                    new Thread() {
+                   new Thread() {
                         public void run() {
-                            fragmentActivity.gps.remove_draw_road();
-                            fragmentActivity.gps.showDirection(myPosition, to_position);
-                            fragmentActivity.detection.stop_collison_navigate();
-                            fragmentActivity.detection.bumps_on_position(to_position);
+                         //  fragmentActivity.gps.remove_draw_road();
+                           fragmentActivity.gps.showDirection(myPosition, to_position);
+                           fragmentActivity.detection.stop_collison_navigate();
+                           fragmentActivity.detection.bumps_on_position(to_position);
                         }
                     }.start();
                 }

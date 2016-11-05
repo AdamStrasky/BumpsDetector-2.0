@@ -128,12 +128,15 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
                     directionPoint.get(i).latitude,
                     directionPoint.get(i).longitude);
          }
-          draw_road = new PolylineOptions()
+       /*   draw_road = new PolylineOptions()
                         .add(points)
                         .color(Color.parseColor("#009688"))
-                        .width(5);
+                        .width(5);*/
 
-          mapbox.addPolyline(draw_road);
+          mapbox.addPolyline(new PolylineOptions()
+                  .add(points)
+                  .color(Color.parseColor("#009688"))
+                  .width(5));
 
 
             }

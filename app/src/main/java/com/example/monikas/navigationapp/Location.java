@@ -48,23 +48,26 @@ public class Location {
     private boolean lock_choise= false;
     private boolean  new_data = false;
     private boolean  lock_stop = false;
+    private boolean start_bumps = true;
+
+    private boolean  asd = false;
 
 
 
 
-    Thread collision_thread,estimation_thread = null;
+    Thread collision_thread = null ,estimation_thread = null;
 
     private ArrayList<Position> LIFO;
 
     ArrayList<LatLng> select_road = null,  choise_bump = null;
 
-    LatLng position;
+    LatLng position = null;
 
 
     public Location() {
        initialization_database();
         select_road = new  ArrayList<LatLng>();
-       LIFO = new ArrayList<Position>();
+        LIFO = new ArrayList<Position>();
        analyzePosition();
     }
 
@@ -88,12 +91,12 @@ public class Location {
 
                                  Log.d("analyzePosition", "zadaná a nájdena cesta");
 
-                                 if (select_road!= null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
-                                    Log.d("analyzePosition", "moja poloha nie je na ceste");
+                                 if (asd && select_road!= null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
+                                  /*  Log.d("analyzePosition", "moja poloha nie je na ceste");
                                      try {
                                          Thread.sleep(5000);
                                      } catch (InterruptedException e) {
-                                     }
+                                     }*/
 
 
                                      if (collision_thread!=null && collision_thread.isAlive() ) {
@@ -115,17 +118,25 @@ public class Location {
                                             lock_stop = false;
                                         }
                                      }
-                                } else if (getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude) < 10) {
+                                } else {
+                                     Log.d("analyzePosition", String.valueOf(position.latitude));
+                                     Log.d("analyzePosition", String.valueOf(position.longitude));
+                                     Log.d("analyzePosition", String.valueOf(location.getLatitude()));
+                                     Log.d("analyzePosition", String.valueOf(location.getLongitude())) ;
+                                     if ( position!= null && getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude) < 10) {
                                      if (!lock_stop) {
                                          lock_stop = true;
+                                         Log.d("analyzePosition", String.valueOf(getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude)));
                                          Log.d("analyzePosition", "som v cieli");
                                          stop_collision_thread();
                                          stop_estimation_thread();
                                          lock_stop = false;
                                      }
-                                }
+                                }}
+
                              }
-                         }
+                         }else
+                            lock_position = false;
                      }
                      try {
                         Thread.sleep(1000);
@@ -138,6 +149,7 @@ public class Location {
     }
 
     public void stop_collison_navigate() {
+        start_bumps = true;
         Thread stop_navigate = new Thread() {
             public void run() {
                   while (true) {
@@ -152,6 +164,7 @@ public class Location {
                   }
                 stop_collision_thread();
                 stop_estimation_thread();
+                start_bumps = false;;
                 lock_stop = false;
             }
         };
@@ -160,36 +173,61 @@ public class Location {
 
     public void stop_collision_thread() {
         if (collision_thread!=null && collision_thread.isAlive()) {
+            Log.d("stop_collision_thread", "vykonal sa stop");
             collision_thread.interrupt();
             collision_thread= null;
             first_start_estimation = false;
             position=null;
+
         }
     }
 
     public void stop_estimation_thread() {
         if (estimation_thread!=null && estimation_thread.isAlive()) {
+            Log.d("stop_estimation_thread", "vykonal sa stop");
             estimation_thread.interrupt();
             estimation_thread= null;
         }
     }
 
     public void bumps_on_position(final LatLng to_position) {
-        road = true;
-        Log.d("bumps_on_position", "start function");
-        position = to_position;
-        collision_places();
-        Log.d("bumps_on_position", "start thread");
-        collision_thread.start();
+        new Thread() {
+            public void run() {
+                while (true) {
+                    if (start_bumps == false ) {
+                        road = true;
+
+                        Log.d("bumps_on_position", "start function");
+                        position = to_position;
+                        collision_places();
+                        Log.d("bumps_on_position", "start thread");
+                        collision_thread.start();
+                        break;
+                    }
+                    try {
+                        Thread.sleep(20);
+                    } catch (InterruptedException e) {
+
+                    }
+                    Log.d("bumps_on_position", "wait");
+                }
+
+            }
+        }.start();
+
+
     }
 
     public void collision_places() {
         collision_thread = new Thread() {
             public void run() {
-                ArrayList<LatLng> all_bumps = new ArrayList<LatLng>();
-                choise_bump = new ArrayList<LatLng>();
+                Log.d("bumps_on_position", "wtf ");
                 try {
+                    if (this.isInterrupted()) {
+                        Log.d("bumps_on_position", "omg ");
+                    }
                     while(!this.isInterrupted() ) {
+                        Log.d("bumps_on_position", "wtf 2 ");
                         Log.d("collision_places", "name of pid "+ String.valueOf(this.getId()));
 
                         if (Thread.currentThread().isInterrupted()) {
@@ -221,7 +259,7 @@ public class Location {
                                 Log.d("collision_places", "throw intr after while on update lock ");
                                 throw new InterruptedException("");
                             }
-
+                            ArrayList<LatLng> all_bumps = new ArrayList<LatLng>();
                             SimpleDateFormat now, ago;
                             Calendar cal = Calendar.getInstance();
                             cal.setTime(new Date());
@@ -275,25 +313,28 @@ public class Location {
 
                                 choise_bump = new ArrayList<LatLng>();
                                 for (int i = 0; i < all_bumps.size(); i++) {
-                                    if (isLocationOnEdge(all_bumps.get(i), select_road, true, 4.0)) {
+                                    if (select_road!= null && isLocationOnEdge(all_bumps.get(i), select_road, true, 4.0)) {
                                         choise_bump.add(all_bumps.get(i));
                                     }
                                 }
 
                                 lock_choise = false;
-                                all_bumps = new ArrayList<LatLng>();
-                                new_data = true;
+
+
 
                                 if (this.isInterrupted()) {
 
                                     Log.d("collision_places", "pre spustanim estimation ");
                                     throw new InterruptedException();
-                                } else
-                                if (!first_start_estimation) {
-                                    first_start_estimation = true;
-                                    estimation();
-                                    Log.d("collision_places", " estimation start ");
-                                    estimation_thread.start();
+                                } else {
+                                    all_bumps = new ArrayList<LatLng>();
+                                    new_data = true;
+                                    if (!first_start_estimation && estimation_thread == null) {
+                                        first_start_estimation = true;
+                                        estimation();
+                                        Log.d("collision_places", " estimation start ");
+                                        estimation_thread.start();
+                                    }
                                 }
 
                             } else {
@@ -389,12 +430,15 @@ public class Location {
 
                     if (new_data && !lock_choise) {
                         lock_choise = true;
-                        bump_actual.addAll(choise_bump) ;
+                        bump_actual =  new ArrayList<LatLng>();
+                        if (choise_bump!= null && choise_bump.size()> 0)
+                             bump_actual.addAll(choise_bump) ;
                         lock_choise = false;
 
                         if (global_gps != null && global_gps.getmCurrentLocation() != null) {
                             latitude = global_gps.getmCurrentLocation().getLatitude();
                             longitude = global_gps.getmCurrentLocation().getLongitude();
+                            if (bump_actual!=null && bump_actual.size() > 0)
                             directionPoint  = sortLocations(bump_actual,latitude, longitude);
                             for (int i =0; i < directionPoint.size(); i++) {
                                 Log.d("estimation", i + " "+ String.valueOf( directionPoint.get(i)));
@@ -415,6 +459,10 @@ public class Location {
                         if (times_to_sleep > treshold)
                             time_stop = treshold;
                         else if (times_to_sleep < 10) {
+                            if (this.isInterrupted()) {
+                               Log.d("estimation_thread", "throw intr pred upozornenim na výtlk ");
+                                throw new InterruptedException("");
+                            }
                             // pozor výtlk
                             directionPoint.remove(0);
                             time_stop = 0;
@@ -534,7 +582,7 @@ public class Location {
         }
         catch (NumberFormatException nfe)
         {
-            f = 0.f;
+            f = 99999999999.f;
         }
 
         return f*1000;
