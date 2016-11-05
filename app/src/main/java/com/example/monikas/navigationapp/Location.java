@@ -292,7 +292,7 @@ public class Location {
                             updatesLock = false;
                             if (position != null)
                                 select_road = directionPoint(position, this);  // vratim cestu
-                            if (select_road != null) {
+                            if (select_road != null && select_road.size() > 0) {
                                 while (true) {
                                     if (!lock_choise) {
                                         lock_choise = true;
@@ -440,8 +440,10 @@ public class Location {
                             longitude = global_gps.getmCurrentLocation().getLongitude();
                             if (bump_actual!=null && bump_actual.size() > 0)
                             directionPoint  = sortLocations(bump_actual,latitude, longitude);
-                            for (int i =0; i < directionPoint.size(); i++) {
-                                Log.d("estimation", i + " "+ String.valueOf( directionPoint.get(i)));
+                            if (directionPoint!=null) {
+                                for (int i = 0; i < directionPoint.size(); i++) {
+                                    Log.d("estimation", i + " " + String.valueOf(directionPoint.get(i)));
+                                }
                             }
                             new_data = false;
                         }
@@ -455,7 +457,7 @@ public class Location {
                         //  - čas pred výtlkom
 
                         time_stop = 0;
-                        int treshold = 1000;
+                        int treshold = 10000;
                         if (times_to_sleep > treshold)
                             time_stop = treshold;
                         else if (times_to_sleep < 10) {
@@ -511,6 +513,7 @@ public class Location {
     }
 
     public  ArrayList<LatLng>  directionPoint (LatLng to_position, Thread thread) {
+        ArrayList<LatLng> directionPoint = null;
         Log.d("directionPoint", " get selected road");
         double latitude,longitude ;
         if (global_gps!=null  && global_gps.getmCurrentLocation()!= null) {
@@ -518,20 +521,24 @@ public class Location {
             longitude = global_gps.getmCurrentLocation().getLongitude();
             Route md = new Route();
             LatLng myPosition = new LatLng(latitude, longitude);
-            if (myPosition!=null && to_position!=null) {
+            if (myPosition != null && to_position != null) {
 
                 Document doc = md.getDocument(myPosition, to_position);
-                if (doc  == null)
+                if (doc == null)
                     return null;
-                ArrayList<LatLng> directionPoint = new  ArrayList<LatLng>();
+                // = new  ArrayList<LatLng>();
                 directionPoint = md.getDirection(doc);
                 Log.d("choise_bump", " return  directionPoints");
 
                 return directionPoint;
-
             }
         }
-        return null;
+        return directionPoint;
+
+        /*    } else
+                return null;
+        } else
+        return null;*/
     }
 
     public boolean isRoad() {
