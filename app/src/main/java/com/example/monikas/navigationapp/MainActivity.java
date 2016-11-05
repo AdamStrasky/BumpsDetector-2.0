@@ -295,7 +295,12 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
                    new Thread() {
                         public void run() {
-                         //  fragmentActivity.gps.remove_draw_road();
+                            fragmentActivity.gps.remove_draw_road();
+                            if ( fragmentActivity.gps.getCurrentLatLng()!=null ) {
+                                LatLng bumps = fragmentActivity.gps.getCurrentLatLng();
+                                fragmentActivity.getAllBumps(bumps.latitude, bumps.longitude);
+                            }
+
                            fragmentActivity.gps.showDirection(myPosition, to_position);
                            fragmentActivity.detection.stop_collison_navigate();
                            fragmentActivity.detection.bumps_on_position(to_position);
@@ -355,6 +360,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 new Thread() {
                     public void run() {
                         fragmentActivity.gps.remove_draw_road();
+                        if ( fragmentActivity.gps.getCurrentLatLng()!=null ) {
+                            LatLng bumps = fragmentActivity.gps.getCurrentLatLng();
+                            fragmentActivity.getAllBumps(bumps.latitude, bumps.longitude);
+                        }
                         fragmentActivity.detection.setRoad(false);
                         fragmentActivity.detection.stop_collison_navigate();
 

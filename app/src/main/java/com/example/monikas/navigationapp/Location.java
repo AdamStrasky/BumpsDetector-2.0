@@ -119,10 +119,12 @@ public class Location {
                                         }
                                      }
                                 } else {
-                                     Log.d("analyzePosition", String.valueOf(position.latitude));
-                                     Log.d("analyzePosition", String.valueOf(position.longitude));
-                                     Log.d("analyzePosition", String.valueOf(location.getLatitude()));
-                                     Log.d("analyzePosition", String.valueOf(location.getLongitude())) ;
+                                     if(position!= null) {
+                                         Log.d("analyzePosition", String.valueOf(position.latitude));
+                                         Log.d("analyzePosition", String.valueOf(position.longitude));
+                                         Log.d("analyzePosition", String.valueOf(location.getLatitude()));
+                                         Log.d("analyzePosition", String.valueOf(location.getLongitude()));
+                                     }
                                      if ( position!= null && getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude) < 10) {
                                      if (!lock_stop) {
                                          lock_stop = true;
@@ -271,6 +273,7 @@ public class Location {
                             String ago_formated = ago.format(cal.getTime());
                             // ziskam sučasnu poziciu
                             // seleknutie vytlk z oblasti a starych 280 dni
+                            sb.beginTransaction();
                             String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE " +
                                     " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
                                     + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
@@ -288,7 +291,8 @@ public class Location {
                                 if (cursor != null)
                                     cursor.close();
                             }
-
+                            sb.setTransactionSuccessful();
+                            sb.endTransaction();
                             updatesLock = false;
                             if (position != null)
                                 select_road = directionPoint(position, this);  // vratim cestu

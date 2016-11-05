@@ -20,7 +20,11 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
 
+import com.mapbox.mapboxsdk.annotations.Annotation;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.PolygonOptions;
+import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -28,6 +32,9 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import org.w3c.dom.Document;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import android.animation.TypeEvaluator;
 
 import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
@@ -121,23 +128,24 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
          Route md = new Route();
          Document doc = md.getDocument(from, to);
-         ArrayList<LatLng> directionPoint = md.getDirection(doc);
+        List<LatLng> directionPoint = md.getDirection(doc);
        com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
         for(int i = 0 ; i < directionPoint.size() ; i++) {
             points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
                     directionPoint.get(i).latitude,
                     directionPoint.get(i).longitude);
-         }
-       /*   draw_road = new PolylineOptions()
+        }
+
+
+            draw_road =  new PolylineOptions()
                         .add(points)
                         .color(Color.parseColor("#009688"))
-                        .width(5);*/
+                        .width(5);
 
-          mapbox.addPolyline(new PolylineOptions()
-                  .add(points)
-                  .color(Color.parseColor("#009688"))
-                  .width(5));
-
+                mapbox.addPolyline(new PolylineOptions()
+                        .add(points)
+                        .color(Color.parseColor("#009688"))
+                        .width(5));
 
             }
         };
@@ -146,8 +154,8 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
     public void remove_draw_road () {
         if (draw_road!=null) {
-            mapbox.removeAnnotation(draw_road.getPolyline());
-            draw_road = null;
+           mapbox.clear();
+           draw_road=null;
         }
     }
 

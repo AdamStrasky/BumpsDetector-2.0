@@ -855,7 +855,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                          cursor.close();
                 }
 
-                 sb.setTransactionSuccessful();
+                sb.setTransactionSuccessful();
                 sb.endTransaction();
                 updatesLock = false;
                 updates = update;
