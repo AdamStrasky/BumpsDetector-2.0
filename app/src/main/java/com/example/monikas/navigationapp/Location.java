@@ -2,21 +2,14 @@ package com.example.monikas.navigationapp;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -26,9 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
+import static com.example.monikas.navigationapp.Accelerometer.getDistance;
 import static com.example.monikas.navigationapp.FragmentActivity.fragment_context;
 import static com.example.monikas.navigationapp.FragmentActivity.global_gps;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
@@ -49,8 +40,8 @@ public class Location {
     private boolean  new_data = false;
     private boolean  lock_stop = false;
     private boolean start_bumps = true;
-
-    private boolean  asd = false;
+    private boolean get_road = false;
+    private boolean only_for_test = false;
 
 
 
@@ -75,6 +66,7 @@ public class Location {
         Thread analyze_thread = new Thread() {
             android.location.Location location = null;
             public void run() {
+                Looper.prepare();
                 while(true) {
                      if (!lock_position) {
                          lock_position = true;
@@ -87,19 +79,11 @@ public class Location {
                              LIFO.add(new_position);
                              lock_position = false;
                              if (road && select_road!= null) {
-
-
                                  Log.d("analyzePosition", "zadaná a nájdena cesta");
 
-                                 if (asd && select_road!= null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
-                                  /*  Log.d("analyzePosition", "moja poloha nie je na ceste");
-                                     try {
-                                         Thread.sleep(5000);
-                                     } catch (InterruptedException e) {
-                                     }*/
-
-
-                                     if (collision_thread!=null && collision_thread.isAlive() ) {
+                                 if (only_for_test && select_road!= null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
+                                    get_road= true;
+                                    if (collision_thread!=null && collision_thread.isAlive() ) {
                                         if (!lock_stop) {
                                             lock_stop = true;
                                             Log.d("analyzePosition", "beží thread na hľadanie koliznych miest");
@@ -145,6 +129,7 @@ public class Location {
                      } catch (InterruptedException e) {
                       }
                 }
+
             }
         };
          analyze_thread.start();
@@ -276,7 +261,7 @@ public class Location {
                             sb.beginTransaction();
                             String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE " +
                                     " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
+                                    + " (ROUND(latitude,2)==ROUND(" + latitude + ",2) and ROUND(longitude,2)==ROUND(" + longitude + ",2)) ";
                             SQLiteDatabase database = databaseHelper.getWritableDatabase();
                             Cursor cursor = null;
                             try {
@@ -293,10 +278,15 @@ public class Location {
                             }
                             sb.setTransactionSuccessful();
                             sb.endTransaction();
+                            Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
+                            LatLng my_position = new LatLng(latitude,longitude);
                             updatesLock = false;
-                            if (position != null)
-                                select_road = directionPoint(position, this);  // vratim cestu
-                            if (select_road != null && select_road.size() > 0) {
+                          /*  if (!get_road) {
+                                select_road = directionPoint(position, my_position, this);  // vratim cestu
+                                    if (select_road!=null)
+                                        get_road = true;
+                            }*/
+                          //  if (select_road != null && select_road.size() > 0) {
                                 while (true) {
                                     if (!lock_choise) {
                                         lock_choise = true;
@@ -315,19 +305,19 @@ public class Location {
                                     throw new InterruptedException();
                                 }
 
-                                choise_bump = new ArrayList<LatLng>();
+                                    choise_bump = new ArrayList<LatLng>();
                                 for (int i = 0; i < all_bumps.size(); i++) {
+                                    choise_bump.add(all_bumps.get(i));
+                                    Log.d("collision_places", "choise  "+ i );
                                     if (select_road!= null && isLocationOnEdge(all_bumps.get(i), select_road, true, 4.0)) {
-                                        choise_bump.add(all_bumps.get(i));
+                                       // choise_bump.add(all_bumps.get(i));
+                                        Log.d("collision_places", "choise  "+ i );
                                     }
                                 }
 
                                 lock_choise = false;
 
-
-
                                 if (this.isInterrupted()) {
-
                                     Log.d("collision_places", "pre spustanim estimation ");
                                     throw new InterruptedException();
                                 } else {
@@ -341,17 +331,17 @@ public class Location {
                                     }
                                 }
 
-                            } else {
-                                Log.d("collision_places", "no GPS signal");
-                            }
+                          /*  } else {
+                                Log.d("collision_places", "no selected road");
+                            }*/
 
                             try {
-                                Thread.sleep(10000);
+                                Thread.sleep(40000);
                             } catch (InterruptedException e) {
                                 Log.d("collision_places", "throw sleep  for 10 seconds ");
                                 throw new InterruptedException();
                             }
-                        }
+                        }else    Log.d("collision_places", "gps no ");
                     }
                 } catch (InterruptedException t) {
                     Log.d("collision_places", "cath interuoption " + this.getId());
@@ -367,6 +357,7 @@ public class Location {
         Log.d("estimation"," function start");
         estimation_thread = new Thread() {
             public void run() {
+                Looper.prepare();
                 float speed = 0;
                 float avarage_speed = 0;
                 long time = 0;
@@ -449,7 +440,7 @@ public class Location {
                                     Log.d("estimation", i + " " + String.valueOf(directionPoint.get(i)));
                                 }
                             }
-                            new_data = false;
+                         //   new_data = false;
                         }
                     }
                     if (directionPoint!=null && directionPoint.size() > 0 && latitude!= 0 && longitude!=0) {
@@ -459,22 +450,31 @@ public class Location {
                         Log.d("estimation", "čas ku výtlku  " + String.valueOf(times_to_sleep));
 
                         //  - čas pred výtlkom
+                        times_to_sleep -= 1000;
+
 
                         time_stop = 0;
                         int treshold = 10000;
-                        if (times_to_sleep > treshold)
+                        if (times_to_sleep > treshold || times_to_sleep < 0 )
                             time_stop = treshold;
                         else if (times_to_sleep < 10) {
                             if (this.isInterrupted()) {
                                Log.d("estimation_thread", "throw intr pred upozornenim na výtlk ");
                                 throw new InterruptedException("");
                             }
-                            // pozor výtlk
+
+                            fragment_context.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    Toast.makeText(fragment_context, "Hello", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+
                             directionPoint.remove(0);
                             time_stop = 0;
                         } else
                             time_stop = (int) times_to_sleep;
-                    }
+                    }else
+                        Log.d("estimation_thread", "direction point null ");
 
                     try {
                         Thread.sleep(time_stop);
@@ -486,6 +486,7 @@ public class Location {
               } catch (InterruptedException t) {
                   Log.d("estimation_thread", "cath interuption " + this.getId());
               }
+                Looper.loop();
             }
         };
 
@@ -516,34 +517,23 @@ public class Location {
         sb = databaseHelper.getWritableDatabase();
     }
 
-    public  ArrayList<LatLng>  directionPoint (LatLng to_position, Thread thread) {
+    public  ArrayList<LatLng>  directionPoint(LatLng to_position, LatLng my_position, Thread thread) {
         ArrayList<LatLng> directionPoint = null;
         Log.d("directionPoint", " get selected road");
         double latitude,longitude ;
-        if (global_gps!=null  && global_gps.getmCurrentLocation()!= null) {
-            latitude = global_gps.getmCurrentLocation().getLatitude();
-            longitude = global_gps.getmCurrentLocation().getLongitude();
-            Route md = new Route();
-            LatLng myPosition = new LatLng(latitude, longitude);
-            if (myPosition != null && to_position != null) {
+        Route md = new Route();
+        Document doc = md.getDocument(my_position, to_position);
 
-                Document doc = md.getDocument(myPosition, to_position);
                 if (doc == null)
                     return null;
-                // = new  ArrayList<LatLng>();
+                directionPoint = new  ArrayList<LatLng>();
                 directionPoint = md.getDirection(doc);
                 Log.d("choise_bump", " return  directionPoints");
-
-                return directionPoint;
-            }
-        }
-        return directionPoint;
-
-        /*    } else
-                return null;
-        } else
-        return null;*/
-    }
+                if (directionPoint== null)
+                    return null;
+                else
+                    return directionPoint;
+     }
 
     public boolean isRoad() {
         return road;
@@ -553,7 +543,7 @@ public class Location {
         this.road = road;
     }
 
-    public float getDistance(double lat1, double lon1, double lat2, double lon2) {
+   /* public float getDistance(double lat1, double lon1, double lat2, double lon2) {
         String result_in_kms = "";
         String url = "http://maps.google.com/maps/api/directions/xml?origin=" + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric";
         String tag[] = {"value"};
@@ -597,5 +587,5 @@ public class Location {
         }
 
         return f*1000;
-    }
+    }*/
 }
