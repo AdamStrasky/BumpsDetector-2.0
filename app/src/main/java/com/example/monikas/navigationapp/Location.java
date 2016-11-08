@@ -1,8 +1,10 @@
 package com.example.monikas.navigationapp;
 
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.Toast;
@@ -99,8 +101,9 @@ public class Location {
                              Position new_position = new Position(location.getSpeed(), location.getLatitude(), location.getLongitude(),location.getTime());
                              LIFO.add(new_position);
                              lock_position = false;
+
                              if (road && select_road!= null) {
-                                 Log.d("analyzePosition", "zadaná a nájdena cesta");
+                                    Log.d("analyzePosition", "zadaná a nájdena cesta");
 
                                  if (only_for_test && select_road!= null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
                                     get_road= true;
@@ -487,19 +490,29 @@ public class Location {
                                     throw new InterruptedException("");
                                 }
 
-                            fragment_context.runOnUiThread(new Runnable() {
-                                public void run() {
-                                 Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
+
+                           if (!isEneableShow()) {
+                               final double i =  actual_distance;
+                               while (tts.isSpeaking()){
+
                                }
-                            });
+                               fragment_context.runOnUiThread(new Runnable() {
+                                   public void run() {
+                                        tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
+                                    }
+                                });
+                           }
+                            else {
+                               fragment_context.runOnUiThread(new Runnable() {
+                                   public void run() {
+                                       Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
+                                   }
+                               });
+                           }
 
-                            final double i =  actual_distance;;
 
-                            /* fragment_context.runOnUiThread(new Runnable() {
-                                public void run() {
-                                    tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
-                                }
-                            });*/
+
+
 
                             previous_distance = -1;
                             directionPoint.remove(0);
@@ -574,6 +587,16 @@ public class Location {
 
     public void setRoad(boolean road) {
         this.road = road;
+    }
+
+    public  boolean isEneableShow() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(fragment_context);
+        Boolean show = prefs.getBoolean("voice", Boolean.parseBoolean(null));
+        if ((show) /*|| (!show && MainActivity.isActivityVisible())*/) {
+            return true;
+        }
+        else
+            return false;
     }
 
 }

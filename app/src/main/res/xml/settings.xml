@@ -8,5 +8,8 @@
     <CheckBoxPreference android:key="net"
         android:title="Download only wifi"
         android:defaultValue="false"/>
+    <CheckBoxPreference android:key="voice"
+        android:title="Only text warning"
+        android:defaultValue="true"/>
 
 </PreferenceScreen>
