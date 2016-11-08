@@ -446,11 +446,14 @@ public class Location {
 
                          //  - čas pred výtlkom
 
+
+                        long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
+                        double convert_time = result;
                             time_stop = 0;
                             int treshold = 20000;
-                            if (times_to_sleep > treshold || times_to_sleep < 0)
+                            if (convert_time > treshold || convert_time < 0)
                                 time_stop = treshold;
-                            else if (times_to_sleep < 5) {
+                            else if (convert_time < 5000) {
 
                                 if (this.isInterrupted()) {
                                     Log.d("estimation_thread", "throw intr pred upozornenim na výtlk ");
@@ -466,7 +469,7 @@ public class Location {
                                 directionPoint.remove(0);
                                 time_stop = 0;
                             } else
-                                time_stop = (int) times_to_sleep;
+                                time_stop = (int) convert_time;
 
                     }else
                         Log.d("estimation_thread", "no gps ");
