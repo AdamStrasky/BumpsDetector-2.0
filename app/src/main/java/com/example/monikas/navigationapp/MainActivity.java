@@ -13,6 +13,7 @@ import android.location.Address;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
 import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
@@ -124,6 +126,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
+
+
+
 
     }
 

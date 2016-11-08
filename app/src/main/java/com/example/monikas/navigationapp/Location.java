@@ -3,6 +3,7 @@ package com.example.monikas.navigationapp;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,6 +18,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.monikas.navigationapp.Accelerometer.getDistance;
@@ -47,14 +49,40 @@ public class Location {
     private ArrayList<Position> LIFO;
     ArrayList<LatLng> select_road = null,  choise_bump = null;
     LatLng position = null;
-
+    TextToSpeech tts;
 
     public Location() {
         initialization_database();
         select_road = new  ArrayList<LatLng>();
         LIFO = new ArrayList<Position>();
+        tts=new TextToSpeech(fragment_context, new TextToSpeech.OnInitListener() {
+
+            @Override
+            public void onInit(int status) {
+                // TODO Auto-generated method stub
+                if(status == TextToSpeech.SUCCESS){
+                    int result=tts.setLanguage(Locale.US);
+                    if(result==TextToSpeech.LANG_MISSING_DATA ||
+                            result==TextToSpeech.LANG_NOT_SUPPORTED){
+                        Log.e("error", "This Language is not supported");
+                    }
+                    /*else{
+                        ConvertTextToSpeech();
+                    }*/
+                }
+                else
+                    Log.e("error", "Initilization Failed!");
+            }
+        });
+
+
+
         analyzePosition();
+
+
     }
+
+
 
     public void analyzePosition() {
         Thread analyze_thread = new Thread() {
@@ -67,7 +95,6 @@ public class Location {
                          if (global_gps != null && global_gps.getmCurrentLocation() != null) {
                              if (LIFO.size() == lifo_size)
                                  LIFO.remove(0);
-
                              location = global_gps.getmCurrentLocation();
                              Position new_position = new Position(location.getSpeed(), location.getLatitude(), location.getLongitude(),location.getTime());
                              LIFO.add(new_position);
@@ -449,29 +476,38 @@ public class Location {
 
                         long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
                         double convert_time = result;
-                            time_stop = 0;
-                            int treshold = 20000;
-                            if (convert_time > treshold || convert_time < 0)
-                                time_stop = treshold;
-                            else if (convert_time < 5000) {
+                        time_stop = 0;
+                        int treshold = 20000;
 
-                                if (this.isInterrupted()) {
+                        if (convert_time > treshold || convert_time < 0)
+                                time_stop = treshold;
+                        else if (convert_time < 5000) {
+                            if (this.isInterrupted()) {
                                     Log.d("estimation_thread", "throw intr pred upozornenim na výtlk ");
                                     throw new InterruptedException("");
                                 }
 
-                                fragment_context.runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                                previous_distance = -1;
-                                directionPoint.remove(0);
-                                time_stop = 0;
-                            } else
-                                time_stop = (int) convert_time;
+                            fragment_context.runOnUiThread(new Runnable() {
+                                public void run() {
+                                 Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
+                               }
+                            });
 
-                    }else
+                            final double i =  actual_distance;;
+
+                            /* fragment_context.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
+                                }
+                            });*/
+
+                            previous_distance = -1;
+                            directionPoint.remove(0);
+                            time_stop = 0;
+                        } else
+                            time_stop = (int) convert_time;
+
+                    } else
                         Log.d("estimation_thread", "no gps ");
                     try {
                         Thread.sleep(time_stop);
@@ -488,7 +524,6 @@ public class Location {
         };
 
     }
-
 
     public static List<LatLng> sortLocations(List<LatLng> locations, final double myLatitude,final double myLongitude) {
         Comparator comp = new Comparator<LatLng>() {
