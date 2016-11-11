@@ -121,15 +121,12 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
 
     //vykresli cestu z miesta from do miesta to
-    public void showDirection (final LatLng from, final LatLng to) {
+    public void showDirection (final List<LatLng> directionPoint) {
 
         Thread t = new Thread() {
             public void run() {
 
-         Route md = new Route();
-         Document doc = md.getDocument(from, to);
-        List<LatLng> directionPoint = md.getDirection(doc);
-       com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
+        com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
         for(int i = 0 ; i < directionPoint.size() ; i++) {
             points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
                     directionPoint.get(i).latitude,
@@ -153,10 +150,10 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
     }
     public void remove_draw_road () {
-        if (draw_road!=null) {
+       if (draw_road!=null) {
            mapbox.clear();
            draw_road=null;
-        }
+       }
     }
 
     public void addBumpToMap (com.mapbox.mapboxsdk.geometry.LatLng  position, int count, int manual ) {

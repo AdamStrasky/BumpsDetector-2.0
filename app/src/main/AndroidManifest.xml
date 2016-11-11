@@ -42,7 +42,8 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.SEARCH" />
-
+                <action android:name="com.google.android.gms.actions.SEARCH_ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -55,7 +56,12 @@
             android:name=".GPSLocator"
             android:enabled="true"
             android:exported="true" />
+
         <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
+
+
+
+
 
         <activity android:name=".SettingsActivity">
             <intent-filter>

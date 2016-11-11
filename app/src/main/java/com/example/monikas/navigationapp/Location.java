@@ -45,9 +45,10 @@ public class Location {
     private boolean  lock_stop = false;
     private boolean  start_bumps = true;
     private boolean  get_road = false;
+    private boolean  change_map = false;
     private boolean  only_for_test = false;
     Thread collision_thread = null ,estimation_thread = null;
-
+    FragmentActivity activity;
     private ArrayList<Position> LIFO;
     ArrayList<LatLng> select_road = null,  choise_bump = null;
     LatLng position = null;
@@ -104,9 +105,8 @@ public class Location {
 
                              if (road && select_road!= null) {
                                     Log.d("analyzePosition", "zadaná a nájdena cesta");
-
-                                 if (only_for_test && select_road!= null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
-                                    get_road= true;
+                                if (only_for_test && get_road && select_road!= null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
+                                    get_road= false;
                                     if (collision_thread!=null && collision_thread.isAlive() ) {
                                         if (!lock_stop) {
                                             lock_stop = true;
@@ -197,7 +197,8 @@ public class Location {
         }
     }
 
-    public void bumps_on_position(final LatLng to_position) {
+    public void bumps_on_position(FragmentActivity fragmentActivity, final LatLng to_position) {
+        activity = fragmentActivity;
         new Thread() {
             public void run() {
                 while (true) {
@@ -240,6 +241,14 @@ public class Location {
                             Log.d("collision_places", "get gps");
                             latitude = global_gps.getmCurrentLocation().getLatitude();
                             longitude = global_gps.getmCurrentLocation().getLongitude();
+                            LatLng my_position = new LatLng(latitude,longitude);
+                            if (!get_road) {
+                                select_road = directionPoint(position, my_position, this);  // vratim cestu
+                                if (select_road!=null) {
+                                   get_road = true;
+                                }
+                            }
+
 
                             while (true) {
                                 if (!updatesLock) {
@@ -292,13 +301,9 @@ public class Location {
                             sb.setTransactionSuccessful();
                             sb.endTransaction();
                             Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
-                            LatLng my_position = new LatLng(latitude,longitude);
+
                             updatesLock = false;
-                           if (!get_road) {
-                                select_road = directionPoint(position, my_position, this);  // vratim cestu
-                                    if (select_road!=null)
-                                        get_road = true;
-                            }
+
                            if (select_road != null && select_road.size() > 0) {
                                 while (true) {
                                     if (!lock_choise) {
@@ -490,12 +495,9 @@ public class Location {
                                     throw new InterruptedException("");
                                 }
 
-
-                           if (!isEneableShow()) {
+                            if (!isEneableShow()) {
                                final double i =  actual_distance;
-                               while (tts.isSpeaking()){
-
-                               }
+                               while (tts.isSpeaking()){ }
                                fragment_context.runOnUiThread(new Runnable() {
                                    public void run() {
                                         tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
@@ -509,11 +511,6 @@ public class Location {
                                    }
                                });
                            }
-
-
-
-
-
                             previous_distance = -1;
                             directionPoint.remove(0);
                             time_stop = 0;
@@ -575,10 +572,20 @@ public class Location {
                 directionPoint = new  ArrayList<LatLng>();
                 directionPoint = md.getDirection(doc);
                 Log.d("choise_bump", " return  directionPoints");
-                if (directionPoint== null)
+                if (directionPoint== null || directionPoint.size() ==0 )
                     return null;
-                else
+                else {
+                    activity.gps.remove_draw_road();
+                    if ( activity.gps.getCurrentLatLng()!=null ) {
+                        LatLng bumps = activity.gps.getCurrentLatLng();
+                        activity.getAllBumps(bumps.latitude, bumps.longitude);
+                    }
+
+                    activity.gps.showDirection(directionPoint);
+
                     return directionPoint;
+                }
+
      }
 
     public boolean isRoad() {

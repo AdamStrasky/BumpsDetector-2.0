@@ -2,6 +2,7 @@ package com.example.monikas.navigationapp;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.app.SearchManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -71,6 +72,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+      //  MapboxAccountManager.start(this, getString(pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w));
         MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
@@ -126,8 +129,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
-
-
 
 
     }
@@ -300,15 +301,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
                    new Thread() {
                         public void run() {
-                            fragmentActivity.gps.remove_draw_road();
+                         /*  fragmentActivity.gps.remove_draw_road();
                             if ( fragmentActivity.gps.getCurrentLatLng()!=null ) {
                                 LatLng bumps = fragmentActivity.gps.getCurrentLatLng();
                                 fragmentActivity.getAllBumps(bumps.latitude, bumps.longitude);
                             }
 
-                           fragmentActivity.gps.showDirection(myPosition, to_position);
+                           fragmentActivity.gps.showDirection(myPosition, to_position);*/
                            fragmentActivity.detection.stop_collison_navigate();
-                           fragmentActivity.detection.bumps_on_position(to_position);
+                           fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
                         }
                     }.start();
                 }
