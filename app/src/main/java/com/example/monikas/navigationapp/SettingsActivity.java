@@ -40,26 +40,24 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-
+       // reaguje na zmenu nastavenia a sucasneho stavu internetu
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        Log.d("fdsgszdf","change share ");
         boolean NisConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
         if (NisConnected) {
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                Log.d("fdsgszdf", "TYPE_WIFI");
+                Log.d("onSharedChanged", "TYPE_WIFI");
                 MainActivity.manager.setConnected(true);
             }
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
-                Log.d("fdsgszdf", "TYPE_MOBILE");
+                Log.d("onSharedChanged", "TYPE_MOBILE");
                 if (isEneableOnlyWifiMap())
                     MainActivity.manager.setConnected(false);
                 else
                     MainActivity.manager.setConnected(true);
             }
         }
-        Log.d("fdsgszdf","change share ");
-    }
+     }
 
     public boolean isEneableOnlyWifiMap() {
         SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);

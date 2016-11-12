@@ -49,17 +49,11 @@
 
         <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
 
-
-
-
-
         <activity android:name=".SettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
-
 </manifest>

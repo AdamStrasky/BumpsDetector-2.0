@@ -42,7 +42,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
-
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
 import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
 import static com.example.monikas.navigationapp.FragmentActivity.lockZoznam;
@@ -119,7 +118,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         });
         context = this;
 
-
         registerReceiver(netReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
         FragmentManager fragmentManager = getFragmentManager();
@@ -131,17 +129,12 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
-
-
     }
-
-
     private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
             if (intent.getAction().matches("android.net.conn.CONNECTIVITY_CHANGE")) {
-
                 ConnectivityManager connectivityManager
                         = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
@@ -167,9 +160,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public boolean isEneableOnlyWifiMap() {
         SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
         Boolean map = preferences.getBoolean("map", Boolean.parseBoolean(null));
-        if ((map)) {
+        if ((map))
             return true;
-        }
         else
             return false;
     }
@@ -202,18 +194,12 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                 // vybrana intenzita noveho vytlku
                                 if (select== 0) {
                                     intensity = 10.f;
-
-
                                 }
                                 else if (select== 1) {
                                     intensity = 6.f;
-
-
                                 }
                                 else
                                     intensity =0.f;
-
-
                                 // spustenie listenera na mapu
                                fragmentActivity.gps.setUpMap(true);
                                 confirm.setVisibility(View.VISIBLE);
@@ -236,7 +222,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
 
-                  //  !!!!!!! final
                     final double ll = intensity;
                     final Location location = new Location("new");
                     location.setLatitude(round(convert_location.getLatitude(),7));
@@ -547,14 +532,9 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
             }
         }
     }
-
-
-
-
     @Override
     protected void onStop() {
         super.onStop();
-
     }
 
     @Override
@@ -563,22 +543,16 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         mapView.onSaveInstanceState(outState);
     }
 
-
-
     @Override
     public void onLowMemory() {
         super.onLowMemory();
         mapView.onLowMemory();
     }
 
-
-
-
-
     protected void onResume() {
         super.onResume();
         SetUpCamera();
-      mapView.onResume();
+        mapView.onResume();
        MainActivity.activityResumed();
     }
 
@@ -607,6 +581,4 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         long tmp = Math.round(value);
         return (double) tmp / factor;
     }
-
-
 }

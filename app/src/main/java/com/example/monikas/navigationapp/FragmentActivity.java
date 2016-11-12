@@ -136,11 +136,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
         // reaguje na zapnutie/ vypnutie GPS
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-
-
-
-
-
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
         // ak nie je povolené GPS , upozornenie na zapnutie
@@ -153,114 +148,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
         // pravidelný update ak nemám povolený internet
         new Timer().schedule(new Regular_upgrade(), 180000, 180000);// 3600000
-        //////////////////////////////odstranit, len na testovanie
-       // new Timer().schedule(new VkladanieDoDatabazy(), 15000, 15000);// 3600000
     }
-
-   // pravdepodobne vymať
-/*****************************************************************************************************/
-    public  void offlineMapaNaMojejGPS ( ){
-        // asi odstranit
-        gps=mLocnServGPS;
-        if (gps!=null && gps.getCurrentLatLng()!=null) {
-            offlineManager.listOfflineRegions(new OfflineManager.ListOfflineRegionsCallback() {
-                    @Override
-                     public void onList(final OfflineRegion[] offlineRegions) {
-                        if (offlineRegions == null || offlineRegions.length == 0)
-                             return;
-
-                        boolean isInMap= false;
-                        int poradie=0;
-                        for (OfflineRegion offlineRegion : offlineRegions) {
-                            LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[poradie].getDefinition()).getBounds();
-                            if (bounds.contains(new com.mapbox.mapboxsdk.geometry.LatLng(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude)))
-                                isInMap=true;
-                            poradie++;
-                        }
-                        if(isInMap) {
-                            mapNotification=false;
-                        alertMissingMap();
-                        }
-                    }
-
-                    @Override
-                     public void onError(String error) {
-                     }
-            });
-        }
-    }
-    // asi zmazat, ak nebudem riesit net
-    private void alertMissingMap() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Internet connection")
-                .setMessage("Your map is not available. Please connect to internet or download map of region if you want use a map")
-                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-        builder.show();
-    }
-
-    // pravdepodobne vymazať
-    private class VkladanieDoDatabazy extends TimerTask {
-        @Override
-        public void run() {
-
-            if (updatesLock) {
-                Log.d("TEaaaaaST"," nepresiel ");
-                return;
-            }
-
-            if (!updatesLock) {
-                updatesLock=true;
-                sb.beginTransaction();
-                int i=0;
-                for (i = 0; i < 100000; i++) {
-                    Location location = new Location("new");
-                    location.setLatitude(48.222 + i);
-                    location.setLongitude(48.222);
-                    location.setTime(new Date().getTime());
-                    Log.d("TEaaaaaST"," beyiiii");
-                    accelerometer.addPossibleBumps(location, 5.5f);
-                    accelerometer.addBumpsManual(1);
-                    if (i ==99999) {
-                        Log.d("TEaaaaaST"," vypol sa lock v regular A");
-                        updatesLock = false;
-                        sb.setTransactionSuccessful();
-                        sb.endTransaction();
-
-                        break;
-                    }
-
-                }
-
-            }
-            Log.d("TEaaaaaST"," naplnene");
-
-        }
-    }
-
-    ///////// pomocna funkcia, možem zmazať
-   /* public void getAllBumpsALL() {
-        sb.beginTransaction();
-        String selectQuery = "SELECT b_id_bumps,rating,count FROM my_bumps ";
-        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-        Cursor cursor = database.rawQuery(selectQuery, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                Log.d("TEST","id "+ cursor.getInt(0));
-                Log.d("TEST","rating "+ cursor.getInt(1));
-                Log.d("TEST","count "+ cursor.getInt(2));
-            } while (cursor.moveToNext());
-        }
-        sb.setTransactionSuccessful();
-        sb.endTransaction();
-    }*/
-
-    /*****************************************************************************************************/
 
   // presunúť do inej triedy
   /*******************************************************************************************************/
@@ -718,10 +606,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             }
         }
 
-       // if  (updatesLock) {
-        //   return;
-       // }
-        updatesLock = true;
         if (isClear() && mapbox!=null)
             mapbox.deselectMarkers();
 
@@ -1523,11 +1407,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             }
         };
         t.start();
-
-
-
     }
-
 
     public void startGPS() {
        new Timer().schedule(new SyncDb(), 0, 120000);
@@ -1807,8 +1687,6 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
 
     }
 
-
-
     public void getBumpsWithLevel() {
         //ak je pripojenie na internet
         if (isNetworkAvailable()) {
@@ -1908,7 +1786,4 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
-
-
-
 }
