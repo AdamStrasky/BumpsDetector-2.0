@@ -2,19 +2,21 @@ package com.example.monikas.navigationapp;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
-import android.app.SearchManager;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
-import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -39,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Locale;
+
 
 import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
 import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
@@ -49,8 +51,7 @@ import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
 import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
 import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener {
-
+public class MainActivity extends ActionBarActivity  implements View.OnClickListener {
     private Context context;
     private final float ALL_BUMPS = 1.0f;
     private final float MEDIUM_BUMPS = 1.5f;
@@ -67,14 +68,12 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public static LinearLayout mapConfirm;
     public static Button navig_on,add_button;
     public static MapboxMap mapbox;
-
+    public static MapboxAccountManager manager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-      //  MapboxAccountManager.start(this, getString(pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w));
-        MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
+        manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
         mapView.onCreate(savedInstanceState);
@@ -82,11 +81,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             @Override
             public void onMapReady(final MapboxMap mapboxMap) {
                 mapbox = mapboxMap;
+
                 if (setOnPosition)
                     mapbox.setMyLocationEnabled(true);
             }
         });
-
 
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
@@ -120,6 +119,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         });
         context = this;
 
+
+        registerReceiver(netReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
+
         FragmentManager fragmentManager = getFragmentManager();
         fragmentActivity = (FragmentActivity) fragmentManager.findFragmentByTag(FRAGMENTACTIVITY_TAG);
 
@@ -131,6 +133,45 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
 
 
+    }
+
+
+    private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if (intent.getAction().matches("android.net.conn.CONNECTIVITY_CHANGE")) {
+
+                ConnectivityManager connectivityManager
+                        = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+
+                boolean NisConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
+                if (NisConnected) {
+                    if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                        Log.d("fdsgszdf", "TYPE_WIFI");
+                        manager.setConnected(true);
+                    }
+                    if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+                        Log.d("fdsgszdf", "TYPE_MOBILE");
+                        if (isEneableOnlyWifiMap())
+                            manager.setConnected(false);
+                        else
+                            manager.setConnected(true);
+                    }
+                }
+            }
+        }
+    };
+
+    public boolean isEneableOnlyWifiMap() {
+        SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
+        Boolean map = preferences.getBoolean("map", Boolean.parseBoolean(null));
+        if ((map)) {
+            return true;
+        }
+        else
+            return false;
     }
 
     public void onClick(View v) {
@@ -159,14 +200,22 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                             @Override
                             public void onClick(DialogInterface dialog, int select) {
                                 // vybrana intenzita noveho vytlku
-                                if (select== 0)
-                                    intensity =10.f;
-                                else if (select== 1)
-                                    intensity =6.f;
+                                if (select== 0) {
+                                    intensity = 10.f;
+
+
+                                }
+                                else if (select== 1) {
+                                    intensity = 6.f;
+
+
+                                }
                                 else
                                     intensity =0.f;
+
+
                                 // spustenie listenera na mapu
-                                fragmentActivity.gps.setUpMap(true);
+                               fragmentActivity.gps.setUpMap(true);
                                 confirm.setVisibility(View.VISIBLE);
                                 fragmentActivity.setClear(false);
                                 add_button.setVisibility(View.INVISIBLE);
@@ -177,6 +226,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 break;
 
             case R.id.save_btn:
+
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.setClear(true);
@@ -235,6 +285,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 }
                 break;
             case R.id.delete_btn:
+
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
 
@@ -297,17 +348,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 }
                 else {
                    final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
-                   final  LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
 
                    new Thread() {
                         public void run() {
-                         /*  fragmentActivity.gps.remove_draw_road();
-                            if ( fragmentActivity.gps.getCurrentLatLng()!=null ) {
-                                LatLng bumps = fragmentActivity.gps.getCurrentLatLng();
-                                fragmentActivity.getAllBumps(bumps.latitude, bumps.longitude);
-                            }
 
-                           fragmentActivity.gps.showDirection(myPosition, to_position);*/
                            fragmentActivity.detection.stop_collison_navigate();
                            fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
                         }
@@ -411,6 +455,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return true;
 
             case R.id.action_settings:
+
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
 
@@ -486,6 +531,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mapView.onDestroy();
         finish();
         android.os.Process.killProcess(android.os.Process.myPid());
     }
@@ -502,15 +548,44 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
     }
 
+
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
+    }
+
+
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
+
+
+
+
     protected void onResume() {
         super.onResume();
         SetUpCamera();
-        MainActivity.activityResumed();
+      mapView.onResume();
+       MainActivity.activityResumed();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        mapView.onPause();
         MainActivity.activityPaused();
     }
 
@@ -532,5 +607,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         long tmp = Math.round(value);
         return (double) tmp / factor;
     }
+
 
 }

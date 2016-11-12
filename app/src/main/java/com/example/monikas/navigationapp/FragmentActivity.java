@@ -75,8 +75,6 @@ import android.support.v4.app.NotificationCompat.Builder;
 
 public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
-
-
     private GoogleApiClient mGoogleApiClient;
     public GPSLocator gps = null;
     public Accelerometer accelerometer;
@@ -138,6 +136,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
         // reaguje na zapnutie/ vypnutie GPS
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+
+
+
+
+
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
         // ak nie je povolené GPS , upozornenie na zapnutie
@@ -1351,7 +1354,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     };
 
-    ServiceConnection mServconnGPS = new ServiceConnection() {
+   ServiceConnection mServconnGPS = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d("GPS_SERV", "GPS service connected");
@@ -1905,4 +1908,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
+
+
+
 }

@@ -215,7 +215,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         else
             mCurrentLocation=null;
 
-        if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
+       /* if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
             try {
                 if (mapbox!=null)
                 mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
@@ -223,7 +223,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
             }
             if (ZoomInit)
                SetZoom();
-        }
+        }*/
 
     }
     private boolean ZoomInit = true;

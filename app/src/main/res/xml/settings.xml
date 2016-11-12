@@ -11,5 +11,8 @@
     <CheckBoxPreference android:key="voice"
         android:title="Only text warning"
         android:defaultValue="true"/>
+    <CheckBoxPreference android:key="map"
+        android:title="Only wifi map"
+        android:defaultValue="false"/>
 
 </PreferenceScreen>
