@@ -160,6 +160,7 @@ public class Location {
         start_bumps = true;
         Thread stop_navigate = new Thread() {
             public void run() {
+                Looper.prepare();
                   while (true) {
                       if (!lock_stop) {
                          lock_stop = true;
@@ -201,6 +202,7 @@ public class Location {
         activity = fragmentActivity;
         new Thread() {
             public void run() {
+                Looper.prepare();
                 while (true) {
                     if (start_bumps == false ) {
                         road = true;
@@ -224,6 +226,7 @@ public class Location {
     public void collision_places() {
         collision_thread = new Thread() {
             public void run() {
+                Looper.prepare();
                 try {
                     if (this.isInterrupted()) {
                         Log.d("bumps_on_position", "on start  ");
@@ -481,7 +484,10 @@ public class Location {
 
                          //  - čas pred výtlkom
 
-
+                        if (String.valueOf(times_to_sleep).equals("NaN")) {
+                            times_to_sleep = 999999;
+                            Log.d("estimation", "čas ku výtlku bol NAN " );
+                        }
                         long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
                         double convert_time = result;
                         time_stop = 0;
@@ -503,8 +509,10 @@ public class Location {
                                         tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
                                     }
                                 });
+                                while (tts.isSpeaking()){ }
                            }
                             else {
+
                                fragment_context.runOnUiThread(new Runnable() {
                                    public void run() {
                                        Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
@@ -512,7 +520,8 @@ public class Location {
                                });
                            }
                             previous_distance = -1;
-                            directionPoint.remove(0);
+                            if (directionPoint!= null && directionPoint.size() > 0)
+                                directionPoint.remove(0);
                             time_stop = 0;
                         } else
                             time_stop = (int) convert_time;

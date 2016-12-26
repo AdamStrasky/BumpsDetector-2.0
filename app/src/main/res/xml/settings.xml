@@ -14,5 +14,8 @@
     <CheckBoxPreference android:key="map"
         android:title="Only wifi map"
         android:defaultValue="false"/>
+    <CheckBoxPreference android:key="screen"
+        android:title="Always screen on"
+        android:defaultValue="false"/>
 
 </PreferenceScreen>

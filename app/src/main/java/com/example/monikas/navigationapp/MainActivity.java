@@ -17,11 +17,14 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
+import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -72,6 +75,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
@@ -107,6 +111,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         back_button.setOnClickListener(this);
         navig_on.setOnClickListener(this);
 
+
+        isEneableScreen();
+
+
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -130,6 +138,25 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     .commit();
         }
     }
+
+    public void isEneableScreen() {
+        Log.d("rrrrrr","adasdasdasdasdasdasdasdsadsad");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        Boolean imgSett = prefs.getBoolean("screen", Boolean.parseBoolean(null));
+
+        Log.d("rrrrrr", String.valueOf(imgSett));
+        if (imgSett) {
+            Log.d("aasc","qqqqqqqqqqqqqqqqqqq");
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        }
+        else {
+            Log.d("aasc","tttttttttttttttttttt");
+            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+
     private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -550,6 +577,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     }
 
     protected void onResume() {
+        Log.d("rrrrrr","onResume run ");
+        isEneableScreen();
         super.onResume();
         SetUpCamera();
         mapView.onResume();

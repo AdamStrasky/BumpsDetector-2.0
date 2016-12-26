@@ -8,7 +8,9 @@ import android.net.NetworkInfo;
 import android.preference.PreferenceActivity;
 
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.WindowManager;
 
 import static com.example.monikas.navigationapp.MainActivity.PREF_FILE_NAME;
 
@@ -57,15 +59,35 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
                     MainActivity.manager.setConnected(true);
             }
         }
+
+        isEneableScreen();
+
      }
 
     public boolean isEneableOnlyWifiMap() {
-        SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
-        Boolean map = preferences.getBoolean("map", Boolean.parseBoolean(null));
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        Boolean map = prefs.getBoolean("map", Boolean.parseBoolean(null));
+        Log.d("xxxxx", String.valueOf(map));
         if ((map)) {
             return true;
         }
         else
             return false;
+    }
+    public void isEneableScreen() {
+        Log.d("aasc","adasdasdasdasdasdasdasdsadsad");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        Boolean imgSett = prefs.getBoolean("screen", Boolean.parseBoolean(null));
+
+        Log.d("aasc", String.valueOf(imgSett));
+        if (imgSett) {
+            Log.d("aasc","qqqqqqqqqqqqqqqqqqq");
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        }
+        else {
+            Log.d("aasc","tttttttttttttttttttt");
+            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
     }
 }
