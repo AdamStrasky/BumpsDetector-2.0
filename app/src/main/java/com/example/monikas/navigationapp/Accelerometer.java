@@ -118,8 +118,11 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
             } else {
                 currentData = new AccData(x, y, z);
 
-                if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()> 3) {
-                    Log.d("QWER","dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
+                if (global_gps != null ) {
+                   if (global_gps.getmCurrentLocation().getSpeed()> 3) {
+                       Log.d("QWER", "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
+                       Toast.makeText(context, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed(), Toast.LENGTH_SHORT).show();
+                   }
                     final Location location = global_gps.getmCurrentLocation();
                     //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
                     for (AccData temp : LIFO) {
