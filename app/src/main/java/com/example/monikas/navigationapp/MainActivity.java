@@ -424,21 +424,84 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int select) {
-                                // vybrana intenzita noveho vytlku
-                                if (select== 0) {
-                                    mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
+                                switch (select) {
+                                    case 0:
+                                        mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
+                                        break;
 
+                                    case 1:
+                                        mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
+                                        break;
+                                    case 2:
+                                        mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
+                                        break;
                                 }
-                                else if (select== 1) {
-                                    mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
-
-                                }else if (select== 2)
-                                    mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
-
-
                             }
                         });
                 builderSingle.show();
+                return true;
+
+            case R.id.filter:
+                AlertDialog.Builder builderSingles = new AlertDialog.Builder(MainActivity.this);
+                builderSingles.setTitle("Show bumps");
+                final ArrayAdapter<String> arrayAdapters = new ArrayAdapter<String>(
+                        MainActivity.this,android.R.layout.select_dialog_singlechoice);
+                arrayAdapters.add("All bumps");
+                arrayAdapters.add("Medium & large bumps");
+                arrayAdapters.add("Large bumps");
+
+
+
+
+                builderSingles.setNegativeButton(
+                        "Cancel",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                builderSingles.setAdapter(
+                        arrayAdapters,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int select) {
+                                switch (select) {
+                                    case 0:
+                                        new Thread() {
+                                            public void run() {
+                                                fragmentActivity.level = ALL_BUMPS;
+                                                LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
+                                                fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
+
+                                            }
+                                        }.start();
+                                        break;
+
+                                    case 1:
+                                        new Thread() {
+                                            public void run() {
+                                                fragmentActivity.level = MEDIUM_BUMPS;
+                                                LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
+                                                fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
+
+                                            }
+                                        }.start();
+                                        break;
+                                    case 2:
+                                        new Thread() {
+                                            public void run() {
+                                                fragmentActivity.level = LARGE_BUMPS;
+                                                LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                fragmentActivity.getAllBumps(largeBumps.latitude, largeBumps.longitude);
+                                            }
+                                        }.start();
+                                        break;
+                                }
+                            }
+                        });
+                builderSingles.show();
                 return true;
 
             case R.id.clear_map:
@@ -471,38 +534,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 }.start();
                 return true;
 
-            case R.id.all_bumps:
-
-                new Thread() {
-                    public void run() {
-                        fragmentActivity.level = ALL_BUMPS;
-                        LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
-                         fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
-
-                    }
-                }.start();
-                 return true;
-
-            case R.id.medium_bumps:
-              new Thread() {
-                    public void run() {
-                     fragmentActivity.level = MEDIUM_BUMPS;
-                     LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
-                     fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
-
-                    }
-                }.start();
-                return true;
-
-            case R.id.large_bumps:
-                new Thread() {
-                    public void run() {
-                        fragmentActivity.level = LARGE_BUMPS;
-                        LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
-                        fragmentActivity.getAllBumps(largeBumps.latitude, largeBumps.longitude);
-                    }
-                }.start();
-                return true;
 
             case R.id.action_settings:
 
