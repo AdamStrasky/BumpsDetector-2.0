@@ -394,13 +394,51 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-
-            case R.id.satellite:
-                mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
+            case R.id.position:
+                fragmentActivity.gps.getOnPosition();
                 return true;
 
-            case R.id.normal:
-                mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
+            case R.id.layer:
+                AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
+                builderSingle.setTitle("Maps");
+                final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                        MainActivity.this,android.R.layout.select_dialog_singlechoice);
+                arrayAdapter.add("Street");
+                arrayAdapter.add("Satellite");
+                arrayAdapter.add("Outdoors");
+
+
+
+
+                builderSingle.setNegativeButton(
+                        "Cancel",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                builderSingle.setAdapter(
+                        arrayAdapter,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int select) {
+                                // vybrana intenzita noveho vytlku
+                                if (select== 0) {
+                                    mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
+
+                                }
+                                else if (select== 1) {
+                                    mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
+
+                                }else if (select== 2)
+                                    mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
+
+
+                            }
+                        });
+                builderSingle.show();
                 return true;
 
             case R.id.clear_map:

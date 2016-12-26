@@ -8,6 +8,9 @@
     android:orientation="vertical"
     tools:context="com.example.monikas.navigationapp.MainActivity" >
 
+    android:icon="@drawable/icon"
+
+
 
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapboxMarkerMapView"
@@ -23,6 +26,7 @@
         android:layout_alignParentBottom="true"
         mapbox:center_latitude="49.2066418"
         mapbox:center_longitude="18.8746749">
+
 
 
     </com.mapbox.mapboxsdk.maps.MapView>
@@ -135,8 +139,8 @@
         android:onClick="onClick_Search"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_alignTop="@+id/location"
-        android:layout_alignBottom="@+id/location"
-        android:layout_alignRight="@+id/location"
-        android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"/>
+        android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>

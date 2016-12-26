@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
+    <item
+    android:id="@+id/position"
+    android:title="position"
+    android:orderInCategory="1"
+    android:icon="@drawable/gps_fixed"
+    app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/layer"
+        android:title="layer"
+        android:orderInCategory="1"
+        android:icon="@drawable/layers"
+        app:showAsAction="ifRoom" />
     <item android:id="@+id/calibrate" android:title="Calibrate"></item>
     <item android:id="@+id/clear_map" android:title="Clear Map"></item>
     <item android:id="@+id/navigation" android:title="End navigation"></item>
@@ -17,4 +29,8 @@
 
     <item android:id="@+id/exit" android:title="Exit app"></item>
 
+
+
 </menu>
+
+

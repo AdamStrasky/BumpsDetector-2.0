@@ -226,11 +226,16 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public void SetZoom() {
         ZoomInit = false;
         com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
-        if (mapbox!=null)
-        mapbox.setCameraPosition(new CameraPosition.Builder()
-                .target(yourLatLng )
-                .zoom(ZOOM_LEVEL)
-                .build());
+        if (mapbox!=null && yourLatLng!=null)
+            mapbox.setCameraPosition(new CameraPosition.Builder()
+                    .target(yourLatLng )
+                    .zoom(ZOOM_LEVEL)
+                    .build());
+    }
+
+    public void getOnPosition() {
+        ZoomInit = true;
+        SetZoom();
     }
 
     public IBinder onBind(Intent intent) {
