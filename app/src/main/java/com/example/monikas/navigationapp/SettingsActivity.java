@@ -27,6 +27,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
 
     @Override
     public void onResume() {
+        isEneableScreen();
         super.onResume();
         MainActivity.activityResumed();
         getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
