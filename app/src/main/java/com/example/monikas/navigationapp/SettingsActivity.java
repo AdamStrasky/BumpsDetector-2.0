@@ -22,12 +22,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.settings);
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        String query="";
-        if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
-            query = getIntent().getStringExtra(SearchManager.QUERY);
-            Log.e("Query:",query);   //query is the search word
 
-        }
 
     }
 
@@ -98,10 +93,5 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         }
     }
 
-   /* @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        finish();
-        android.os.Process.killProcess(android.os.Process.myPid());
-    }*/
+
 }

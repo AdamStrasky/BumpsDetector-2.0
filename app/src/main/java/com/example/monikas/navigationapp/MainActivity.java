@@ -2,6 +2,7 @@ package com.example.monikas.navigationapp;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
