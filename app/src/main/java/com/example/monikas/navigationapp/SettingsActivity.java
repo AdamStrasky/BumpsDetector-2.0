@@ -98,5 +98,10 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         }
     }
 
-
+   /* @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        finish();
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }*/
 }
