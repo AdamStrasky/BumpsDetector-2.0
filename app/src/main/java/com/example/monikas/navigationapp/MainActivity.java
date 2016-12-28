@@ -228,7 +228,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                 else
                                     intensity =0.f;
                                 // spustenie listenera na mapu
-                               fragmentActivity.gps.setUpMap(true);
+                                fragmentActivity.gps.setUpMap(true);
                                 confirm.setVisibility(View.VISIBLE);
                                 fragmentActivity.setClear(false);
                                 add_button.setVisibility(View.INVISIBLE);
@@ -292,7 +292,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                 }
                             }
                             Looper.loop();
-                      }
+                        }
                     }.start();
                 }
                 break;
@@ -359,25 +359,25 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                         Toast.makeText(this, "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
                 }
                 else {
-                   final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
+                    final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
 
-                   new Thread() {
+                    new Thread() {
                         public void run() {
 
-                           fragmentActivity.detection.stop_collison_navigate();
-                           fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
+                            fragmentActivity.detection.stop_collison_navigate();
+                            fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
                         }
                     }.start();
                 }
             }
             catch (Exception e) {
                 if (isEneableShowText())
-                     Toast.makeText(this, "Unable to find location!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Unable to find location!", Toast.LENGTH_LONG).show();
             }
         }
         else {
             if (isEneableShowText())
-                 Toast.makeText(this, "Unable to find location! Please, connect to network.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Unable to find location! Please, connect to network.", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -508,7 +508,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 if(confirm.isShown()){
                     Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
                 }else
-                mapbox.clear();
+                    mapbox.clear();
                 return true;
 
             case R.id.calibrate:
@@ -548,7 +548,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 if ( flagDownload)
-                   Toast.makeText(this, "Momentálne sťahujete,nemožte 2 naraz", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Momentálne sťahujete,nemožte 2 naraz", Toast.LENGTH_LONG).show();
                 else
                     fragmentActivity.downloadRegionDialog();
                 return true;
@@ -573,35 +573,35 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 SQLiteDatabase  sb = databaseHelper.getWritableDatabase();
                 sb.beginTransaction();
                 int i=0;
-                    for (HashMap<Location, Float> bump : list) {
-                        Iterator it = bump.entrySet().iterator();
-                        while (it.hasNext()) {
-                            HashMap.Entry pair = (HashMap.Entry) it.next();
-                            Location loc = (Location) pair.getKey();
-                            float data = (float) pair.getValue();
-                            String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+loc.getLongitude()+",7) "
-                                    + " and  ROUND(intensity,6)==ROUND("+data+",6)  and manual="+bumpsManual.get(i);
+                for (HashMap<Location, Float> bump : list) {
+                    Iterator it = bump.entrySet().iterator();
+                    while (it.hasNext()) {
+                        HashMap.Entry pair = (HashMap.Entry) it.next();
+                        Location loc = (Location) pair.getKey();
+                        float data = (float) pair.getValue();
+                        String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+loc.getLongitude()+",7) "
+                                + " and  ROUND(intensity,6)==ROUND("+data+",6)  and manual="+bumpsManual.get(i);
 
-                            BigDecimal bd = new BigDecimal(Float.toString(data));
-                            bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                            Cursor cursor = sb.rawQuery(sql, null);
-                                if (cursor.getCount() == 0) {
-                                    Log.d("MainActivity", "vkladam ");
-                                    ContentValues contentValues = new ContentValues();
-                                    contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
-                                    contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
-                                    contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
-                                    contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                                    sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                }
-                            }
-                            i++;
+                        BigDecimal bd = new BigDecimal(Float.toString(data));
+                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                        Cursor cursor = sb.rawQuery(sql, null);
+                        if (cursor.getCount() == 0) {
+                            Log.d("MainActivity", "vkladam ");
+                            ContentValues contentValues = new ContentValues();
+                            contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
+                            contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
+                            contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
+                            contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                            sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                        }
                     }
-                    sb.setTransactionSuccessful();
-                    sb.endTransaction();
-                    fragmentActivity.stop_servise();
-                    onDestroy();
-                    return true;
+                    i++;
+                }
+                sb.setTransactionSuccessful();
+                sb.endTransaction();
+                fragmentActivity.stop_servise();
+                onDestroy();
+                return true;
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -651,7 +651,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         super.onResume();
         SetUpCamera();
         mapView.onResume();
-       MainActivity.activityResumed();
+        MainActivity.activityResumed();
     }
 
     @Override
@@ -665,10 +665,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
         Boolean alarm = preferences.getBoolean("alarm", Boolean.parseBoolean(null));
         if ((alarm) || (!alarm && MainActivity.isActivityVisible())) {
-           return true;
+            return true;
         }
         else
-           return false;
+            return false;
     }
 
     public static double round(double value, int places) {

@@ -1,5 +1,6 @@
 package com.example.monikas.navigationapp;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -21,7 +22,12 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.settings);
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        String query="";
+        if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
+            query = getIntent().getStringExtra(SearchManager.QUERY);
+            Log.e("Query:",query);   //query is the search word
 
+        }
 
     }
 
@@ -91,4 +97,6 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
             getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
+
+
 }

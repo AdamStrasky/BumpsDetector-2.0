@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.NotificationManager;
+import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -129,6 +130,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         get_loaded_index();
         // ak sa pripojím na internet požiam o update
         regular_update = true ;
+
+
 
         if (!isNetworkAvailable()){
             if (isEneableShowText())
