@@ -6,6 +6,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.EditTextPreference;
+import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 
 import android.os.Bundle;
@@ -22,7 +25,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.settings);
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-
+        setName();
 
     }
 
@@ -44,7 +47,14 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-       // reaguje na zmenu nastavenia a sucasneho stavu internetu
+        setName();
+
+
+
+
+
+
+        // reaguje na zmenu nastavenia a sucasneho stavu internetu
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         boolean NisConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
@@ -93,5 +103,18 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         }
     }
 
+    public void setName() {
+        final EditTextPreference pref = (EditTextPreference) findPreference("name");
+        pref.setTitle(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("name", "Default Title"));
+        // Loads the title for the first time
+        // Listens for change in value, and then changes the title if required.
+        pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                pref.setText(newValue.toString());
+                return false;
+            }
+        });
+    }
 
 }
