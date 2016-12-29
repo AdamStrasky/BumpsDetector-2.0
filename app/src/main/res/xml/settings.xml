@@ -7,7 +7,7 @@
             android:selectAllOnFocus="true"
             android:key="name"
             android:title="Your name"
-            android:dialogTitle="Your named"
+            android:dialogTitle="Your name"
             />
     </PreferenceCategory>
 

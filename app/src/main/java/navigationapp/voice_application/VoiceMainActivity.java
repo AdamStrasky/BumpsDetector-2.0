@@ -16,6 +16,8 @@ import navigationapp.main_application.CallBackReturn;
 import navigationapp.main_application.DatabaseOpenHelper;
 import navigationapp.main_application.Provider;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class VoiceMainActivity extends Activity  {
@@ -34,6 +36,8 @@ public class VoiceMainActivity extends Activity  {
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             voice = isEneableVoice();
+
+
             if (!query.equals("bump")) {
                 if (voice) {
                     talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -42,7 +46,7 @@ public class VoiceMainActivity extends Activity  {
                             if (status == TextToSpeech.SUCCESS) {
                                 int result = talker.setLanguage(Locale.UK);
                                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                                    Log.e("DEBUG", "Language Not Supported");
+                                    Toast.makeText(getApplicationContext(),"Please download UK language package " ,Toast.LENGTH_SHORT).show();
                                 } else {
                                     talker.speak("Wrong voice command " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
                                     while (talker.isSpeaking()){}
@@ -100,6 +104,7 @@ public class VoiceMainActivity extends Activity  {
                         if (status == TextToSpeech.SUCCESS) {
                             int result = talker.setLanguage(Locale.UK);
                             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                Toast.makeText(getApplicationContext(), "Language not supported, please download UK language package to use voice ", Toast.LENGTH_LONG).show();
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
                                 talker.speak("Bump was added " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
@@ -112,7 +117,7 @@ public class VoiceMainActivity extends Activity  {
                 });
             }
             else
-                Toast.makeText(this,"Bump was added "  ,Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,"Bump was added "  ,Toast.LENGTH_LONG).show();
 
 
         }else {
@@ -123,6 +128,7 @@ public class VoiceMainActivity extends Activity  {
                       if (status == TextToSpeech.SUCCESS) {
                           int result = talker.setLanguage(Locale.UK);
                             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                Toast.makeText(getApplicationContext(), "Language not supported, please download UK language package to use voice ", Toast.LENGTH_LONG).show();
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
                                 talker.speak("Please turn on your GPS for use this function" + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
@@ -135,7 +141,7 @@ public class VoiceMainActivity extends Activity  {
                 });
             }
             else
-                Toast.makeText(this,"Please turn on your GPS for use this function " ,Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,"Please turn on your GPS for use this function " ,Toast.LENGTH_LONG).show();
         }
          finish();
     }
