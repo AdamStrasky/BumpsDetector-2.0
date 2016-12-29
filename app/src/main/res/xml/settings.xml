@@ -7,7 +7,7 @@
             android:selectAllOnFocus="true"
             android:key="name"
             android:title="Your name"
-            android:dialogTitle="Your name"
+            android:dialogTitle="Your named"
             />
     </PreferenceCategory>
 
@@ -27,5 +27,8 @@
     <CheckBoxPreference android:key="screen"
         android:title="Always screen on"
         android:defaultValue="false"/>
+    <CheckBoxPreference android:key="voice"
+        android:title="Voice alarm"
+        android:defaultValue="true"/>
 
 </PreferenceScreen>

@@ -3,11 +3,13 @@ package com.example.monikas.navigationapp;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.*;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -16,25 +18,29 @@ import java.math.BigDecimal;
 import java.util.Locale;
 
 
-public class AndroidGPSTrackingActivity extends Activity  implements TextToSpeech.OnInitListener {
+public class AndroidGPSTrackingActivity extends Activity  {
 
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
-
+    Boolean voice = false;
     // GPSTracker class
     GPSTracker gps;
     private Bump  Handler;
-    private TextToSpeech tts;
+    TextToSpeech talker;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-        tts = new  TextToSpeech(this , this);
-
+        voice = isEneableVoice();
 
 
-        String query="";
+
+
+
+
+
+
+            String query="";
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             Log.e("Query:",query);   //query is the search word
@@ -61,7 +67,7 @@ public class AndroidGPSTrackingActivity extends Activity  implements TextToSpeec
             Handler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if (results.equals("success")) {
-                        Toast.makeText(getApplicationContext(), "success " + longitude, Toast.LENGTH_LONG).show();
+
 
 
                     } else {
@@ -82,21 +88,64 @@ public class AndroidGPSTrackingActivity extends Activity  implements TextToSpeec
 
 
 
+            if (voice) {
+                talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
 
-            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+                    @Override
+                    public void onInit(int status) {
+                        if (status == TextToSpeech.SUCCESS) {
+                            int result = talker.setLanguage(Locale.UK);
+                            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                Log.e("DEBUG", "Language Not Supported");
+                            } else {
 
-            String toSpeak = "murkito burito ";
-            Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-            convert_text();
+                                talker.speak("Bump was added " + isName(), TextToSpeech.QUEUE_FLUSH, null);
+                                while (talker.isSpeaking()){}
+                            }
+
+                        } else {
+                            Log.i("DEBUG", "MISSION FAILED");
+                        }
+
+                    }
+                });
+
+            }
+            else
+                Toast.makeText(this,"Bump was added "  ,Toast.LENGTH_SHORT).show();
+
 
         }else{
-            // can't get location
-            // GPS or Network is not enabled
-            // Ask user to enable GPS/network in settings
-            gps.showSettingsAlert();
-        }
-   //     finish();
+            if (voice) {
+                talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
 
+                    @Override
+                    public void onInit(int status) {
+                        if (status == TextToSpeech.SUCCESS) {
+                            int result = talker.setLanguage(Locale.UK);
+                            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                Log.e("DEBUG", "Language Not Supported");
+                            } else {
+
+                                talker.speak("Please turn on your GPS for use this function" + isName(), TextToSpeech.QUEUE_FLUSH, null);
+                                while (talker.isSpeaking()){}
+                            }
+
+                        } else {
+                            Log.i("DEBUG", "MISSION FAILED");
+                        }
+
+                    }
+                });
+
+            }
+            else
+                Toast.makeText(this,"Please turn on your GPS for use this function " ,Toast.LENGTH_SHORT).show();
+        }
+
+
+
+    finish();
 
 
     }
@@ -107,36 +156,27 @@ public class AndroidGPSTrackingActivity extends Activity  implements TextToSpeec
         sb = databaseHelper.getWritableDatabase();
     }
 
-
-    private void convert_text() {
-      final  String speech = "Bump was added Adam";
-        tts.speak(speech, TextToSpeech.QUEUE_FLUSH, null);
-
-    }
-    @Override
-    public void onInit(int status) {
-        if(status == TextToSpeech.SUCCESS){
-            int result = tts.setLanguage(Locale.UK);
-            if(result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED){
-                Log.e("DEBUG" , "Language Not Supported");}
-            else{
-
-                convert_text();
-            }
-
-        }
-        else{
-            Log.i("DEBUG" , "MISSION FAILED");
-        }
-
+    public  String isName() {
+        // či mám povolené ukazovať informácia aj mimo aplikácie
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String alarm = prefs.getString("name", "");
+        if (alarm.equals("Your name"))
+            return "";
+        else
+            return alarm;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (tts != null){
-            tts.stop();
-            tts.shutdown();
+    public  boolean isEneableVoice() {
+        // či mám povolené ukazovať informácia aj mimo aplikácie
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        Boolean alarm = prefs.getBoolean("voice", Boolean.parseBoolean(null));
+        if (alarm) {
+            return true;
         }
+        else
+            return false;
     }
+
+
+
 }
