@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp.main_application;
+package navigationapp.main_application;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -30,10 +30,10 @@ import java.util.List;
 
 import android.animation.TypeEvaluator;
 
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.setOnPosition;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
-import static com.example.monikas.navigationapp.main_application.MainActivity.ZOOM_LEVEL;
-import static com.example.monikas.navigationapp.main_application.MainActivity.mapbox;
+import static navigationapp.main_application.FragmentActivity.setOnPosition;
+import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
+import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
+import static navigationapp.main_application.MainActivity.mapbox;
 
 
 /**

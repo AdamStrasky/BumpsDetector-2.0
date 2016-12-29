@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp.main_application;
+package navigationapp.main_application;
 
 //inspiracia z https://excel-to-vb.googlecode.com/svn/trunk/MineralsAtlas/src/com/hk/mineralsatlas/dao/JSONParser.java
 

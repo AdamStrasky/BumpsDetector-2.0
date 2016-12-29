@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp.main_application;
+package navigationapp.main_application;
 
 /**
  * Created by monikas on 23. 3. 2015.
@@ -30,13 +30,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.fragment_context;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.global_gps;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockAdd;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockZoznam;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockZoznamDB;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.updatesLock;
-import static com.example.monikas.navigationapp.main_application.MainActivity.round;
+import static navigationapp.main_application.FragmentActivity.fragment_context;
+import static navigationapp.main_application.FragmentActivity.global_gps;
+import static navigationapp.main_application.FragmentActivity.lockAdd;
+import static navigationapp.main_application.FragmentActivity.lockZoznam;
+import static navigationapp.main_application.FragmentActivity.lockZoznamDB;
+import static navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.MainActivity.round;
 
 public class Accelerometer extends Service implements SensorEventListener, LocationListener {
 

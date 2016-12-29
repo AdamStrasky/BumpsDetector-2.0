@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp.voice_application;
+package navigationapp.voice_application;
 
 import android.app.Activity;
 import android.app.SearchManager;
@@ -11,16 +11,14 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 import android.speech.tts.TextToSpeech;
-
-import com.example.monikas.navigationapp.main_application.Bump;
-import com.example.monikas.navigationapp.main_application.CallBackReturn;
-import com.example.monikas.navigationapp.main_application.DatabaseOpenHelper;
-import com.example.monikas.navigationapp.main_application.Provider;
-
+import navigationapp.main_application.Bump;
+import navigationapp.main_application.CallBackReturn;
+import navigationapp.main_application.DatabaseOpenHelper;
+import navigationapp.main_application.Provider;
 import java.math.BigDecimal;
 import java.util.Locale;
 
-public class AndroidGPSTrackingActivity extends Activity  {
+public class VoiceMainActivity extends Activity  {
 
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
@@ -32,24 +30,13 @@ public class AndroidGPSTrackingActivity extends Activity  {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        voice = isEneableVoice();
-
-
-
-
-
-
-
-
-            String query="";
+        String query="";
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
-            Log.e("Query:",query);   //query is the search word
-            String aa;
+            voice = isEneableVoice();
             if (!query.equals("bump")) {
                 if (voice) {
                     talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-
                         @Override
                         public void onInit(int status) {
                             if (status == TextToSpeech.SUCCESS) {
@@ -57,52 +44,40 @@ public class AndroidGPSTrackingActivity extends Activity  {
                                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                                     Log.e("DEBUG", "Language Not Supported");
                                 } else {
-
-                                    talker.speak("Bad voice command " + isName(), TextToSpeech.QUEUE_FLUSH, null);
+                                    talker.speak("Wrong voice command " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
                                     while (talker.isSpeaking()){}
                                 }
-
                             } else {
                                 Log.i("DEBUG", "MISSION FAILED");
                             }
-
                         }
                     });
-
                 }
                 else
-                    Toast.makeText(this,"Bad voice command " ,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,"Wrong voice command " ,Toast.LENGTH_SHORT).show();
                 finish();
                 return;
             }
         }
 
-
-
-        // show location button click event
-
-        // create class object
         initialization_database();
-        gps = new GPSPosition(AndroidGPSTrackingActivity.this);
+        gps = new GPSPosition(VoiceMainActivity.this);
 
-        // check if GPS enabled
-        if(gps.canGetLocation()){
+        if(gps.canGetLocation()){ // check if GPS enabled
 
            final double latitude = gps.getLatitude();
            final double longitude = gps.getLongitude();
 
-            Location loc = new Location("service Provider");
-            loc.setLatitude(gps.getLatitude());
-            loc.setLongitude(gps.getLongitude());
-            Handler = new Bump(loc, 6.0f, 1);
-            Handler.getResponse(new CallBackReturn() {
+           Location loc = new Location("Location");
+           loc.setLatitude(gps.getLatitude());
+           loc.setLongitude(gps.getLongitude());
+           Handler = new Bump(loc, 6.0f, 1);
+           Handler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if (results.equals("success")) {
-
-
-
+                        Log.d("voice","success handler");
                     } else {
-                        Toast.makeText(getApplicationContext(), "error " + longitude, Toast.LENGTH_LONG).show();
+                        Log.d("voice","error handler");
                         BigDecimal bd = new BigDecimal(Float.toString(6));
                         bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
 
@@ -112,16 +87,14 @@ public class AndroidGPSTrackingActivity extends Activity  {
                         contentValues.put(Provider.new_bumps.MANUAL, 1);
                         contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
                         sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-
                     }
                 }
-            });
+           });
 
-
+            gps.stopUsingGPS();
 
             if (voice) {
                 talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-
                     @Override
                     public void onInit(int status) {
                         if (status == TextToSpeech.SUCCESS) {
@@ -129,56 +102,42 @@ public class AndroidGPSTrackingActivity extends Activity  {
                             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
-
-                                talker.speak("Bump was added " + isName(), TextToSpeech.QUEUE_FLUSH, null);
+                                talker.speak("Bump was added " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
                                 while (talker.isSpeaking()){}
                             }
-
                         } else {
                             Log.i("DEBUG", "MISSION FAILED");
                         }
-
                     }
                 });
-
             }
             else
                 Toast.makeText(this,"Bump was added "  ,Toast.LENGTH_SHORT).show();
 
 
-        }else{
+        }else {
             if (voice) {
                 talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-
-                    @Override
-                    public void onInit(int status) {
-                        if (status == TextToSpeech.SUCCESS) {
-                            int result = talker.setLanguage(Locale.UK);
+                        @Override
+                         public void onInit(int status) {
+                      if (status == TextToSpeech.SUCCESS) {
+                          int result = talker.setLanguage(Locale.UK);
                             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
-
-                                talker.speak("Please turn on your GPS for use this function" + isName(), TextToSpeech.QUEUE_FLUSH, null);
+                                talker.speak("Please turn on your GPS for use this function" + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
                                 while (talker.isSpeaking()){}
                             }
-
-                        } else {
-                            Log.i("DEBUG", "MISSION FAILED");
-                        }
-
+                      } else {
+                          Log.i("DEBUG", "MISSION FAILED");
+                      }
                     }
                 });
-
             }
             else
                 Toast.makeText(this,"Please turn on your GPS for use this function " ,Toast.LENGTH_SHORT).show();
         }
-
-
-
-    finish();
-
-
+         finish();
     }
 
     public void initialization_database(){
@@ -187,27 +146,17 @@ public class AndroidGPSTrackingActivity extends Activity  {
         sb = databaseHelper.getWritableDatabase();
     }
 
-    public  String isName() {
-        // či mám povolené ukazovať informácia aj mimo aplikácie
+    public  String setting_name() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String alarm = prefs.getString("name", "");
-        if (alarm.equals("Your name"))
+        String name = prefs.getString("name", "");
+        if (name.equals("Your name"))
             return "";
         else
-            return alarm;
+            return name;
     }
 
     public  boolean isEneableVoice() {
-        // či mám povolené ukazovať informácia aj mimo aplikácie
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Boolean alarm = prefs.getBoolean("voice", Boolean.parseBoolean(null));
-        if (alarm) {
-            return true;
-        }
-        else
-            return false;
+        return prefs.getBoolean("voice", Boolean.parseBoolean(null));
     }
-
-
-
 }

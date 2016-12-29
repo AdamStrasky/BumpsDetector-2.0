@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp.main_application;
+package navigationapp.main_application;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -65,13 +65,13 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.example.monikas.navigationapp.main_application.Bump.isBetween;
-import static com.example.monikas.navigationapp.main_application.MainActivity.add_button;
-import static com.example.monikas.navigationapp.main_application.MainActivity.mapConfirm;
+import static navigationapp.main_application.Bump.isBetween;
+import static navigationapp.main_application.MainActivity.add_button;
+import static navigationapp.main_application.MainActivity.mapConfirm;
 
-import static com.example.monikas.navigationapp.main_application.MainActivity.mapbox;
-import static com.example.monikas.navigationapp.main_application.MainActivity.navig_on;
-import static  com.example.monikas.navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
+import static navigationapp.main_application.MainActivity.mapbox;
+import static navigationapp.main_application.MainActivity.navig_on;
+import static navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
 import android.support.v4.app.NotificationCompat.Builder;
 
 public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
@@ -119,7 +119,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private  boolean clear =true ;
     public static boolean lockZoznam = false;
     public static boolean lockZoznamDB = false;
-    com.example.monikas.navigationapp.main_application.Location detection = null;
+    navigationapp.main_application.Location detection = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -1401,7 +1401,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                   //  Log.d("TTRREEE","bezi  sa Thread");
                 }
-                detection = new com.example.monikas.navigationapp.main_application.Location();
+                detection = new navigationapp.main_application.Location();
 
                 startGPS();
                 Looper.loop();

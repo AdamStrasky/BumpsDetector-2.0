@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp.main_application;
+package navigationapp.main_application;
 
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.monikas.navigationapp.main_application.Accelerometer.getDistance;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.fragment_context;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.global_gps;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.Accelerometer.getDistance;
+import static navigationapp.main_application.FragmentActivity.fragment_context;
+import static navigationapp.main_application.FragmentActivity.global_gps;
+import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
 
 /**

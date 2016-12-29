@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp.main_application;
+package navigationapp.main_application;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
@@ -45,13 +45,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.flagDownload;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockAdd;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockZoznam;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockZoznamDB;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.setOnPosition;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.selectedName;
-import static com.example.monikas.navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.FragmentActivity.flagDownload;
+import static navigationapp.main_application.FragmentActivity.lockAdd;
+import static navigationapp.main_application.FragmentActivity.lockZoznam;
+import static navigationapp.main_application.FragmentActivity.lockZoznamDB;
+import static navigationapp.main_application.FragmentActivity.setOnPosition;
+import static navigationapp.main_application.FragmentActivity.selectedName;
+import static navigationapp.main_application.FragmentActivity.updatesLock;
 
 public class MainActivity extends ActionBarActivity  implements View.OnClickListener {
     private Context context;
