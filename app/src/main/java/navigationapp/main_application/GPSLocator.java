@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -118,7 +119,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
         Thread t = new Thread() {
             public void run() {
-
+                Looper.prepare();
         com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
         for(int i = 0 ; i < directionPoint.size() ; i++) {
             points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
@@ -134,6 +135,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
                 .add(points)
                 .color(Color.parseColor("#009688"))
                 .width(5));
+                Looper.loop();
             }
         };
         t.start();

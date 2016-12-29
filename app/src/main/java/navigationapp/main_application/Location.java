@@ -171,6 +171,7 @@ public class Location {
                 stop_estimation_thread();
                 start_bumps = false;;
                 lock_stop = false;
+                get_road = false;
             }
         };
         stop_navigate.start();
@@ -243,11 +244,15 @@ public class Location {
                             longitude = global_gps.getmCurrentLocation().getLongitude();
                             LatLng my_position = new LatLng(latitude,longitude);
                             if (!get_road) {
+                                Log.d("aaasssdddd", "get_road false");
                                 select_road = directionPoint(position, my_position, this);  // vratim cestu
                                 if (select_road!=null) {
+                                    Log.d("aaasssdddd", "select_road null");
                                    get_road = true;
-                                }
-                            }
+                                }else
+                                    Log.d("aaasssdddd", "select_road not null");
+                            }else
+                                Log.d("aaasssdddd", "get_road true");
 
 
                             while (true) {
