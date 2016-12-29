@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp;
+package com.example.monikas.navigationapp.main_application;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -14,33 +14,26 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import com.example.monikas.navigationapp.R;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
 
-import com.mapbox.mapboxsdk.annotations.Annotation;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.PolygonOptions;
-import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 
-import org.w3c.dom.Document;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import android.animation.TypeEvaluator;
 
-import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
-import static com.example.monikas.navigationapp.FragmentActivity.global_mGoogleApiClient;
-import static com.example.monikas.navigationapp.MainActivity.ZOOM_LEVEL;
-import static com.example.monikas.navigationapp.MainActivity.mapbox;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.setOnPosition;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
+import static com.example.monikas.navigationapp.main_application.MainActivity.ZOOM_LEVEL;
+import static com.example.monikas.navigationapp.main_application.MainActivity.mapbox;
 
 
 /**

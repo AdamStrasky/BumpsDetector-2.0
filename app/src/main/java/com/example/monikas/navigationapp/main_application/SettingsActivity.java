@@ -1,13 +1,11 @@
-package com.example.monikas.navigationapp;
+package com.example.monikas.navigationapp.main_application;
 
-import android.app.SearchManager;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.EditTextPreference;
-import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 
@@ -16,7 +14,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.WindowManager;
 
-import static com.example.monikas.navigationapp.MainActivity.PREF_FILE_NAME;
+import com.example.monikas.navigationapp.R;
 
 public class SettingsActivity extends PreferenceActivity  implements SharedPreferences.OnSharedPreferenceChangeListener  {
 

@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp;
+package com.example.monikas.navigationapp.main_application;
 
 /**
  * Created by monikas on 4. 5. 2015.

@@ -27,7 +27,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".main_application.MainActivity"
             android:label="@string/title_activity_main"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -37,22 +37,22 @@
         </activity>
 
         <service
-            android:name=".Accelerometer"
+            android:name=".main_application.Accelerometer"
             android:enabled="true"
             android:exported="true" />
         <service
-            android:name=".GPSLocator"
+            android:name=".main_application.GPSLocator"
             android:enabled="true"
             android:exported="true" />
         <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
 
-        <activity android:name=".SettingsActivity">
+        <activity android:name=".main_application.SettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />
 
             </intent-filter>
         </activity>
-        <activity android:name=".AndroidGPSTrackingActivity">
+        <activity android:name=".voice_application.AndroidGPSTrackingActivity">
             <intent-filter>
                 <action android:name="com.google.android.gms.actions.SEARCH_ACTION" />
 
@@ -62,7 +62,7 @@
         </activity>
 
         <service
-            android:name=".GPSTracker"
+            android:name=".voice_application.GPSPosition"
             android:enabled="true"
             android:exported="true"></service>
     </application>

@@ -1,31 +1,32 @@
-package com.example.monikas.navigationapp;
+package com.example.monikas.navigationapp.voice_application;
 
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
-import android.location.*;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.Toast;
 import android.speech.tts.TextToSpeech;
+
+import com.example.monikas.navigationapp.main_application.Bump;
+import com.example.monikas.navigationapp.main_application.CallBackReturn;
+import com.example.monikas.navigationapp.main_application.DatabaseOpenHelper;
+import com.example.monikas.navigationapp.main_application.Provider;
+
 import java.math.BigDecimal;
 import java.util.Locale;
-
 
 public class AndroidGPSTrackingActivity extends Activity  {
 
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
     Boolean voice = false;
-    // GPSTracker class
-    GPSTracker gps;
-    private Bump  Handler;
+    GPSPosition gps;
+    private Bump Handler;
     TextToSpeech talker;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,6 +45,36 @@ public class AndroidGPSTrackingActivity extends Activity  {
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             Log.e("Query:",query);   //query is the search word
+            String aa;
+            if (!query.equals("bump")) {
+                if (voice) {
+                    talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+
+                        @Override
+                        public void onInit(int status) {
+                            if (status == TextToSpeech.SUCCESS) {
+                                int result = talker.setLanguage(Locale.UK);
+                                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                    Log.e("DEBUG", "Language Not Supported");
+                                } else {
+
+                                    talker.speak("Bad voice command " + isName(), TextToSpeech.QUEUE_FLUSH, null);
+                                    while (talker.isSpeaking()){}
+                                }
+
+                            } else {
+                                Log.i("DEBUG", "MISSION FAILED");
+                            }
+
+                        }
+                    });
+
+                }
+                else
+                    Toast.makeText(this,"Bad voice command " ,Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
         }
 
 
@@ -52,7 +83,7 @@ public class AndroidGPSTrackingActivity extends Activity  {
 
         // create class object
         initialization_database();
-        gps = new GPSTracker(AndroidGPSTrackingActivity.this);
+        gps = new GPSPosition(AndroidGPSTrackingActivity.this);
 
         // check if GPS enabled
         if(gps.canGetLocation()){

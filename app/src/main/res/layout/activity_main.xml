@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
 
     android:orientation="vertical"
-    tools:context="com.example.monikas.navigationapp.MainActivity" >
+    tools:context="com.example.monikas.navigationapp.main_application.MainActivity" >
 
 
     <com.mapbox.mapboxsdk.maps.MapView

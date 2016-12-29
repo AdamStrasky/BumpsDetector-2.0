@@ -1,10 +1,9 @@
-package com.example.monikas.navigationapp;
+package com.example.monikas.navigationapp.main_application;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.NotificationManager;
-import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -38,6 +37,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.example.monikas.navigationapp.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -65,13 +65,13 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.example.monikas.navigationapp.Bump.isBetween;
-import static com.example.monikas.navigationapp.MainActivity.add_button;
-import static com.example.monikas.navigationapp.MainActivity.mapConfirm;
+import static com.example.monikas.navigationapp.main_application.Bump.isBetween;
+import static com.example.monikas.navigationapp.main_application.MainActivity.add_button;
+import static com.example.monikas.navigationapp.main_application.MainActivity.mapConfirm;
 
-import static com.example.monikas.navigationapp.MainActivity.mapbox;
-import static com.example.monikas.navigationapp.MainActivity.navig_on;
-import static  com.example.monikas.navigationapp.Provider.bumps_detect.TABLE_NAME_BUMPS;
+import static com.example.monikas.navigationapp.main_application.MainActivity.mapbox;
+import static com.example.monikas.navigationapp.main_application.MainActivity.navig_on;
+import static  com.example.monikas.navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
 import android.support.v4.app.NotificationCompat.Builder;
 
 public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
@@ -119,7 +119,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private  boolean clear =true ;
     public static boolean lockZoznam = false;
     public static boolean lockZoznamDB = false;
-    com.example.monikas.navigationapp.Location detection = null;
+    com.example.monikas.navigationapp.main_application.Location detection = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -887,7 +887,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     if (isBetween((float) intensity,0,6)) rating = 1;
                                     if (isBetween((float) intensity,6,10)) rating = 2;
                                     if (isBetween( (float) intensity ,10,10000)) rating = 3;
-                                    sb.execSQL("UPDATE "+Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
+                                    sb.execSQL("UPDATE "+ Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
                                 }
 
                                 /* ak nastala chyba v transakcii,  musím upraviť udaje
@@ -1401,7 +1401,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                   //  Log.d("TTRREEE","bezi  sa Thread");
                 }
-                detection = new com.example.monikas.navigationapp.Location();
+                detection = new com.example.monikas.navigationapp.main_application.Location();
 
                 startGPS();
                 Looper.loop();
@@ -1568,7 +1568,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
             );
         }
     }
-    private Bump  Handler;
+    private Bump Handler;
     private boolean  lock =true;
     private ArrayList<HashMap<Location, Float>> listHelp;
     private ArrayList<Integer> bumpsManualHelp;

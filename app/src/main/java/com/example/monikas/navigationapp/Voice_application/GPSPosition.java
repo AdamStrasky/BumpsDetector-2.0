@@ -1,4 +1,4 @@
-package com.example.monikas.navigationapp;
+package com.example.monikas.navigationapp.voice_application;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.*;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -19,7 +18,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 
 
-public class GPSTracker extends Service implements LocationListener {
+public class GPSPosition extends Service implements LocationListener {
 
 
     private Context mContext= null;
@@ -46,12 +45,12 @@ public class GPSTracker extends Service implements LocationListener {
     // Declaring a Location Manager
     protected LocationManager locationManager;
 
-    public GPSTracker(Context context) {
+    public GPSPosition(Context context) {
         this.mContext = context;
         getLocation();
     }
 
-    public GPSTracker() {
+    public GPSPosition() {
 
     }
 
@@ -140,7 +139,7 @@ public class GPSTracker extends Service implements LocationListener {
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            locationManager.removeUpdates(GPSTracker.this);
+            locationManager.removeUpdates(GPSPosition.this);
         }
     }
 

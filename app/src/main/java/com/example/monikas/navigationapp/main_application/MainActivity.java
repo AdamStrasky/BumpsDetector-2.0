@@ -1,8 +1,7 @@
-package com.example.monikas.navigationapp;
+package com.example.monikas.navigationapp.main_application;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
-import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -18,7 +17,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
-import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -33,6 +31,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.example.monikas.navigationapp.R;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -46,13 +45,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.example.monikas.navigationapp.FragmentActivity.flagDownload;
-import static com.example.monikas.navigationapp.FragmentActivity.lockAdd;
-import static com.example.monikas.navigationapp.FragmentActivity.lockZoznam;
-import static com.example.monikas.navigationapp.FragmentActivity.lockZoznamDB;
-import static com.example.monikas.navigationapp.FragmentActivity.setOnPosition;
-import static com.example.monikas.navigationapp.FragmentActivity.selectedName;
-import static com.example.monikas.navigationapp.FragmentActivity.updatesLock;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.flagDownload;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockAdd;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockZoznam;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.lockZoznamDB;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.setOnPosition;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.selectedName;
+import static com.example.monikas.navigationapp.main_application.FragmentActivity.updatesLock;
 
 public class MainActivity extends ActionBarActivity  implements View.OnClickListener {
     private Context context;
@@ -60,7 +59,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
     public static int ZOOM_LEVEL = 16;
-    private  FragmentActivity fragmentActivity;
+    private FragmentActivity fragmentActivity;
     public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
