@@ -91,7 +91,7 @@ public class VoiceMainActivity extends Activity  {
                 }
            });
 
-            gps.stopUsingGPS();
+
 
             if (voice) {
                 talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
