@@ -56,6 +56,7 @@ public class Accelerometer extends Service implements SensorEventListener {
     private ArrayList<AccData> LIFO;
     private int LIFOsize = 60;
     private float delta;
+    private boolean recalibrate = true;
     private boolean unlock = true;
 
     private static Timer timer = new Timer();
@@ -68,13 +69,12 @@ public class Accelerometer extends Service implements SensorEventListener {
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
-         possibleBumps = new ArrayList<>();
+        possibleBumps = new ArrayList<>();
         BumpsManual = new ArrayList<>();
-        startService();
     }
-    private void startService()
-    {
-        timer.scheduleAtFixedRate(new mainTask(), 0, 300000);
+    private void startService() {
+        recalibrate=false;
+       //  timer.scheduleAtFixedRate(new mainTask(), 0, 60000);
     }
 
 
@@ -82,12 +82,12 @@ public class Accelerometer extends Service implements SensorEventListener {
     {
         public void run()
         {
-         /*   if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()== 0) {
+           if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()== 0) {
                 Log.d("ACC", "sensor Accelerometer automatic re-calibrate");
                 calibrate();
             }
             else
-                Log.d("ACC", "sensor Accelerometer automatic re-calibrate no gps");*/
+                Log.d("ACC", "sensor Accelerometer automatic re-calibrate no gps");
         }
     }
 
@@ -205,7 +205,8 @@ public class Accelerometer extends Service implements SensorEventListener {
 
 
     public void calibrate () {
-
+        if (recalibrate)
+            startService();
         //values[0], values[1], values[2] = data z akcelerometra pre osi X,Y,Z
         //vypocita sa percentualne rozlozenie gravitacneho zrychlenia
         //na jednotlive osi X,Y,Z

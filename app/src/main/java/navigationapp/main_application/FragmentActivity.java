@@ -642,12 +642,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longitude+",1)) ";
                 DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                 SQLiteDatabase database = databaseHelper.getReadableDatabase();
-
+                database.beginTransaction();
                 Cursor cursor  =null;
                 try {
                     cursor   = database.rawQuery(selectQuery, null);
 
-                  if (cursor.moveToFirst()) {
+                  if (cursor.moveToFirst())     {
                         do {
                             // pridavanie do mapy
                             gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
@@ -663,6 +663,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     if(cursor != null)
                         cursor.close();
                 }
+                database.setTransactionSuccessful();
+                database.endTransaction();
                 database.close();
                 updatesLock = false;
 
