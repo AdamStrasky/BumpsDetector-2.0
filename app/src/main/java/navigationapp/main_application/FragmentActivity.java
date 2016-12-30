@@ -840,8 +840,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     Log.d("TTRREEE", "5. Max_Collision_Number  onPostExecute citam getall");
                     // načítam vytlky na mapu
                     if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
-                        LatLng convert_location = gps.getCurrentLatLng();
-                        getAllBumps(convert_location.latitude, convert_location.longitude);
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                LatLng convert_location = gps.getCurrentLatLng();
+                                getAllBumps(convert_location.latitude, convert_location.longitude);
+                            }
+                        });
+
+
                     }
                 }
                 return;
@@ -851,8 +859,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 if (array.get(0).equals("error")) {
                     Log.d("TTRREEE", "5. Max_Collision_Number  onPostExecute error");
                     // nastala chyba, nacitam mapu
-                    LatLng convert_location =  gps.getCurrentLatLng();
-                    getAllBumps(convert_location.latitude,convert_location.longitude);
+                    if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                LatLng convert_location = gps.getCurrentLatLng();
+                                getAllBumps(convert_location.latitude, convert_location.longitude);
+                            }
+                        });
+                    }
                     return;
 
                 } else  if (array.get(0).equals("update")) {
@@ -972,9 +988,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         updatesLock = false;
                     }
                     // načítam vytlky
-                    LatLng convert_location =  gps.getCurrentLatLng();
-                 //   getAllBumpsALL();
-                    getAllBumps(convert_location.latitude,convert_location.longitude);
+                            if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+
+                                        LatLng convert_location = gps.getCurrentLatLng();
+                                        getAllBumps(convert_location.latitude, convert_location.longitude);
+                                    }
+                                });
+                            }
                     Looper.loop();
                     }
                     };
@@ -1186,8 +1209,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             } else {
                                 // nastala chyba, načitaj uložene vytlky
                                 sb.endTransaction();
-                                LatLng convert_location =  gps.getCurrentLatLng();
-                                getAllBumps(convert_location.latitude,convert_location.longitude);
+                                if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
+                                    getActivity().runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+                                            LatLng convert_location = gps.getCurrentLatLng();
+                                            getAllBumps(convert_location.latitude, convert_location.longitude);
+                                        }
+                                    });
+                                }
                                 updatesLock = false;
                                 Looper.loop();
 
@@ -1238,8 +1269,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         dialog.cancel();
                         regularUpdatesLock =false;
                         // ak nepovolim, zobrazím aké mam doteraz
-                        LatLng convert_location =  gps.getCurrentLatLng();
-                        getAllBumps(convert_location.latitude,convert_location.longitude);
+                        if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    LatLng convert_location = gps.getCurrentLatLng();
+                                    getAllBumps(convert_location.latitude, convert_location.longitude);
+                                }
+                            });
+                        }
                     }
                 });
         alert.show();
@@ -1741,22 +1780,30 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
             // ak mám síce internet ale nemám povolené stahovanie, tk načítam z databazy
             else {
                 regular_update =false;
-                if (gps!=null ) {
-                    Log.d("TTRREEE","gps po  null");
-                    LatLng convert_location = gps.getCurrentLatLng();
-                    if (convert_location != null) {
-                         getAllBumps(convert_location.latitude, convert_location.longitude);
-                    }
-                 }
+                if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            LatLng convert_location = gps.getCurrentLatLng();
+                            getAllBumps(convert_location.latitude, convert_location.longitude);
+                        }
+                    });
+                }
             }
 
         }
         // nemám internet, čítam z databazy
         else {
-            if (gps!=null && gps.getCurrentLatLng()!=null ) {
-                LatLng convert_location = gps.getCurrentLatLng();
-                if (convert_location != null )
-                    getAllBumps(convert_location.latitude, convert_location.longitude);
+            if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        LatLng convert_location = gps.getCurrentLatLng();
+                        getAllBumps(convert_location.latitude, convert_location.longitude);
+                    }
+                });
             }
         }
     }
