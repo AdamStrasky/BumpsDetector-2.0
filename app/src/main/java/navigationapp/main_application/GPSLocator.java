@@ -222,7 +222,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     private boolean ZoomInit = true;
     public void SetZoom() {
         ZoomInit = false;
-        if (mapbox!=null) {
+        if (mapbox!=null  && getmCurrentLocation()!=null) {
             com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
             if (mapbox != null && yourLatLng != null)
                 mapbox.setCameraPosition(new CameraPosition.Builder()

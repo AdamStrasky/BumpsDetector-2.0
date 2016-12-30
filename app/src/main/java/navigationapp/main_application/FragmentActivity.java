@@ -97,8 +97,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     boolean mBoundGPS = false;
     private  GPSLocator mLocnServGPS = null;
     LocationManager locationManager;
-    SQLiteDatabase sb;
-    DatabaseOpenHelper databaseHelper;
+
     private JSONArray bumps;
     private int loaded_index;
     private boolean isEndNotified =true;
@@ -126,7 +125,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
          super.onCreate(savedInstanceState);
         setRetainInstance(true);
         offlineManager = OfflineManager.getInstance(getActivity());
-        initialization_database();
         get_loaded_index();
         // ak sa pripojím na internet požiam o update
         regular_update = true ;
@@ -594,12 +592,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
-    public void initialization_database(){
-        // inicializacia databazy
-        databaseHelper = new DatabaseOpenHelper(getActivity());
-        sb = databaseHelper.getWritableDatabase();
-    }
-
     private class Regular_upgrade extends TimerTask {
         @Override
         public void run() {
@@ -648,7 +640,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                  String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
                      " ( last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
                             + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longitude+",1)) ";
-                SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
                 Cursor cursor  =null;
                 try {
@@ -670,7 +663,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     if(cursor != null)
                         cursor.close();
                 }
-
+                database.close();
                 updatesLock = false;
 
                 if (!lockAdd  && !lockZoznam)
@@ -738,14 +731,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 ago = new SimpleDateFormat("yyyy-MM-dd");
                 String ago_formated = ago.format(cal.getTime());
 
-                sb.beginTransaction();
+                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                database.beginTransaction();
                 // max b_id_collisions z databazy
                 String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
                     + " where (last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
                     + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longtitude+",1)))"
                     + " ORDER BY c_id DESC LIMIT 1 ";
-                SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                Cursor cursor = null;
+               Cursor cursor = null;
 
                 try {
                     cursor = database.rawQuery(selectQuery, null);
@@ -762,8 +756,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                          cursor.close();
                 }
 
-                sb.setTransactionSuccessful();
-                sb.endTransaction();
+                database.setTransactionSuccessful();
+                database.endTransaction();
+                database.close();
                 updatesLock = false;
                 updates = update;
                 new Max_Collision_Number().execute();
@@ -888,7 +883,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 return;
                             }
                             updatesLock = true;
-                    sb.beginTransaction();
+
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                            database.beginTransaction();
                     for (int i = 0; i < bumps.length(); i++) {
                         JSONObject c = null;
                         try {
@@ -920,7 +918,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     if (isBetween((float) intensity,0,6)) rating = 1;
                                     if (isBetween((float) intensity,6,10)) rating = 2;
                                     if (isBetween( (float) intensity ,10,10000)) rating = 3;
-                                    sb.execSQL("UPDATE "+ Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
+                                    database.execSQL("UPDATE "+ Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
                                 }
 
                                 /* ak nastala chyba v transakcii,  musím upraviť udaje
@@ -936,7 +934,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     String sql ="SELECT * FROM collisions WHERE b_id_collisions="+b_id;
 
                                    try {
-                                     cursor= sb.rawQuery(sql,null);
+                                     cursor= database.rawQuery(sql,null);
 
                                     if(cursor.getCount()>0  ){
                                         Log.d("TTRREEE"," bolo ich viac v  b_id ");
@@ -947,7 +945,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                        // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
                                          sql=   "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1 WHERE b_id_bumps=" + b_id ;
                                     }
-                                    sb.execSQL(sql);
+                                       database.execSQL(sql);
                                    } finally {
                                        // this gets called even if there is an exception somewhere above
                                        if(cursor != null)
@@ -961,7 +959,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
                                 contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
                                 contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
-                                sb.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
+                                database.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
 
                             } catch (JSONException e) {
                                 e.printStackTrace();
@@ -972,8 +970,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     }
                     if (!error) {
                         // ak nenastala chyba, transakci je uspešna
-                        sb.setTransactionSuccessful();
-                        sb.endTransaction();
+                        database.setTransactionSuccessful();
+                        database.endTransaction();
+                        database.close();
                         updatesLock = false;
                         // uložím najvyššie b_id  z bumps po uspešnej transakcii
                         SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
@@ -984,7 +983,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     }
                     else {
                         // rollbacknem databazu
-                        sb.endTransaction();
+                        database.endTransaction();
+                        database.close();
                         updatesLock = false;
                     }
                     // načítam vytlky
@@ -1033,14 +1033,14 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
                 ago = new SimpleDateFormat("yyyy-MM-dd");
                 String ago_formated = ago.format(cal.getTime());
-
-                sb.beginTransaction();
+                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                database.beginTransaction();
                 // vytiahnem najvyššie b_id z bumps
                 String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
                         + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
                         + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
                         + " ORDER BY b_id_bumps DESC LIMIT 1 ";
-                SQLiteDatabase database = databaseHelper.getWritableDatabase();
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(selectQuery, null);
@@ -1059,8 +1059,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 }
 
 
-                sb.setTransactionSuccessful();
-                sb.endTransaction();
+                database.setTransactionSuccessful();
+                database.endTransaction();
+                database.close();
 
                 updatesLock = false;
                 net =nets ;
@@ -1155,9 +1156,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 return;
                             }
                             updatesLock = true;
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
 
-
-                            sb.beginTransaction();
+                            database.beginTransaction();
                             for (int i = 0; i < bumps.length(); i++) {
                                  JSONObject c = null;
                                  try {
@@ -1192,7 +1194,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
                                         contentValues.put(Provider.bumps_detect.MANUAL, manual);
                                         contentValues.put(Provider.bumps_detect.RATING, rating);
-                                        sb.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
+                                        database.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
                                     } catch (JSONException e) {
                                 error= true;
                                 e.printStackTrace();
@@ -1201,14 +1203,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
                             if (!error) {
                                 // insert prebehol v poriadku, ukonči transakciu
-                                sb.setTransactionSuccessful();
-                                sb.endTransaction();
+                                database.setTransactionSuccessful();
+                                database.endTransaction();
+                                database.close();
                                 updatesLock = false;
                                 get_max_collision(lang_database, longt_database, 0);
                                 Looper.loop();
                             } else {
                                 // nastala chyba, načitaj uložene vytlky
-                                sb.endTransaction();
+                                database.endTransaction();
+                                database.close();
                                 if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
                                     getActivity().runOnUiThread(new Runnable() {
                                         @Override
@@ -1499,7 +1503,8 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
 
         updatesLock=true;
         String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
-        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor
                 = database.rawQuery(selectQuery, null);
         ArrayList<HashMap<Location, Float>> hashToArray = new  ArrayList <HashMap<Location, Float>>();
@@ -1509,7 +1514,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
         int i=0;
 
         if (cursor!= null && cursor.moveToFirst()) {
-            sb.beginTransaction();
+            database.beginTransaction();
             do {
                 if(!cursor.isNull(0) && !cursor.isNull(1) & !cursor.isNull(2) && !cursor.isNull(3)){
                     Location location = new Location("new");
@@ -1534,8 +1539,9 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                 }else
                     Log.d("loadSaveDB","NULL ACCELEROMETER");
                  updatesLock = false;
-                 sb.setTransactionSuccessful();
-                 sb.endTransaction();
+                database.setTransactionSuccessful();
+                database.endTransaction();
+                database.close();
             }
 
 
@@ -1635,6 +1641,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
         Thread t = new Thread() {
             public void run() {
                 Looper.prepare();
+
                 while (true) {
                     if (lock) {
                       if (!listHelp.isEmpty() && listHelp.size() > poradie) {
@@ -1647,18 +1654,20 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                                 public void callback(String results) {
                                     if (results.equals("success")) {
                                         int num =poradie;
-
+                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
                                         // ak mi prišlo potvrdenie o odoslaní, mažem z db
-                                        sb.beginTransaction();
-                                        sb.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)= ROUND("+loc.getLongitude()+",7)"
+                                        database.beginTransaction();
+                                        database.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)= ROUND("+loc.getLongitude()+",7)"
                                                + " and  ROUND(intensity,6)==ROUND("+data+",6) and manual="+bumpsManualHelp.get(num)+"");
                                         Log.d("TEST", "mazem");
                                         Log.d("mazem",    listHelp.get(num).toString());
                                         Log.d("mazem",    bumpsManualHelp.get(num).toString());
                                         listHelp.remove(num);
                                         bumpsManualHelp.remove(num);
-                                        sb.setTransactionSuccessful();
-                                        sb.endTransaction();
+                                        database.setTransactionSuccessful();
+                                        database.endTransaction();
+                                        database.close();
                                         lock = true;
                                     } else {
                                         // nastala chyba, nemažem
@@ -1680,6 +1689,8 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                 // ak nastala chyba, aktualizujem s udajmi s novými udajmi čo som dostal počas behu saveBUmp
                 if (listHelp.size()>0 && accelerometer.getPossibleBumps().size()>0) {
                     int i=0;
+                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
                     for (HashMap<Location, Float> oldList : listHelp) {
                         Iterator oldListIteam = oldList.entrySet().iterator();
                         while (oldListIteam.hasNext()) {
@@ -1700,7 +1711,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                                                accelerometer.getPossibleBumps().get(0).put(newLocation,(Float) oldData.getValue());
                                         // ak je stará hodnota menšia, updatujem databazu kde je uložená menšia
                                         if ( (Float) oldData.getValue() <(Float) newData.getValue())
-                                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) newData.getValue()+",6) WHERE latitude=" + oldLocation.getLatitude() + " and  longitude=" + oldLocation.getLongitude()
+                                            database.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) newData.getValue()+",6) WHERE latitude=" + oldLocation.getLatitude() + " and  longitude=" + oldLocation.getLongitude()
                                                 + " and  ROUND(intensity,6)==ROUND("+(Float) oldData.getValue()+",6)");
                                         // mažem s pomocného zoznamu updatnuté hodnoty
                                         listHelp.remove(i);
@@ -1711,6 +1722,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                             }
                         }
                     }
+                    database.close();
                     // doplnim do zoznamu povodné, ktoré sa nezmenili
                     accelerometer.getPossibleBumps().addAll(listHelp);
                     accelerometer.getBumpsManual().addAll(bumpsManualHelp);

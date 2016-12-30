@@ -34,8 +34,7 @@ import static com.google.maps.android.PolyUtil.isLocationOnEdge;
  */
 
 public class Location {
-    SQLiteDatabase sb;
-    DatabaseOpenHelper databaseHelper;
+
     private final int lifo_size = 60;
     private boolean  first_start_estimation = false;
     private boolean  road = false;  // nastavi5 na tru ked kliknem  na navigate, ked kliknem na end tak false
@@ -55,7 +54,6 @@ public class Location {
     TextToSpeech tts;
 
     public Location() {
-        initialization_database();
         select_road = new  ArrayList<LatLng>();
         LIFO = new ArrayList<Position>();
         tts=new TextToSpeech(fragment_context, new TextToSpeech.OnInitListener() {
@@ -285,11 +283,13 @@ public class Location {
                             String ago_formated = ago.format(cal.getTime());
                             // ziskam sučasnu poziciu
                             // seleknutie vytlk z oblasti a starych 280 dni
-                            sb.beginTransaction();
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(fragment_context);
+                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                            database.beginTransaction();
                             String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE " +
                                     " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
                                     + " (ROUND(latitude,2)==ROUND(" + latitude + ",2) and ROUND(longitude,2)==ROUND(" + longitude + ",2)) ";
-                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+
                             Cursor cursor = null;
                             try {
                                 cursor = database.rawQuery(selectQuery, null);
@@ -303,8 +303,9 @@ public class Location {
                                 if (cursor != null)
                                     cursor.close();
                             }
-                            sb.setTransactionSuccessful();
-                            sb.endTransaction();
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
                             Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
 
                             updatesLock = false;
@@ -565,11 +566,7 @@ public class Location {
         return locations;
     }
 
-    public void initialization_database(){
-        // inicializacia databazy
-        databaseHelper = new DatabaseOpenHelper(fragment_context);
-        sb = databaseHelper.getWritableDatabase();
-    }
+
 
     public  ArrayList<LatLng>  directionPoint(LatLng to_position, LatLng my_position, Thread thread) {
         ArrayList<LatLng> directionPoint = null;

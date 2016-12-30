@@ -269,6 +269,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     new Thread() {
                         public void run() {
                             Looper.prepare();
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
                             while(true){
                                 if (!lockAdd && !lockZoznam &&!threadLock ) {
                                     Log.d("TREEEE","vlozil do zoznamu  ");
@@ -277,15 +279,15 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                     fragmentActivity.accelerometer.addBumpsManual(1);
                                     if (!lockZoznamDB && !updatesLock) {
                                         Log.d("TREEEE","vlozil do db ");
-                                        fragmentActivity.sb.beginTransaction();
+                                        database.beginTransaction();
                                         ContentValues contentValues = new ContentValues();
                                         contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
                                         contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
                                         contentValues.put(Provider.new_bumps.MANUAL, 1);
                                         contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
-                                        fragmentActivity.sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                        fragmentActivity.sb.setTransactionSuccessful();
-                                        fragmentActivity.sb.endTransaction();
+                                        database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                        database.setTransactionSuccessful();
+                                        database.endTransaction();
                                     }
                                     threadLock=false;
                                     Log.d("TREEEE","casovy lock koniec");
@@ -302,6 +304,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                     // NOP (no operation)
                                 }
                             }
+                            database.close();
                             Looper.loop();
                         }
                     }.start();

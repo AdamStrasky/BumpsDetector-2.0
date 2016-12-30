@@ -57,14 +57,12 @@ public class Accelerometer extends Service implements SensorEventListener {
     private int LIFOsize = 60;
     private float delta;
     private boolean unlock = true;
-    SQLiteDatabase sb;
-    DatabaseOpenHelper databaseHelper;
+
     private static Timer timer = new Timer();
     public Accelerometer(){
         this.contexts = fragment_context;
         LIFO = new ArrayList<>();
         flag = false;
-        initialization_database();
         mSensorManager = (SensorManager) contexts.getSystemService(contexts.SENSOR_SERVICE);
         mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -204,11 +202,7 @@ public class Accelerometer extends Service implements SensorEventListener {
         }
     }
 
-    public void initialization_database(){
-        // inicializacia databazy
-        databaseHelper = new DatabaseOpenHelper(contexts);
-        sb = databaseHelper.getWritableDatabase();
-    }
+
 
     public void calibrate () {
 
@@ -250,7 +244,10 @@ public class Accelerometer extends Service implements SensorEventListener {
                         Log.d("DETECT", "same location");
                         if (!updatesLock) {
                             lockZoznamDB=true;
-                            sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                            database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
+                            database.close();
                             lockZoznamDB=false;
                         }
                         result = "same bump";
@@ -268,7 +265,10 @@ public class Accelerometer extends Service implements SensorEventListener {
                             pair.setValue(data);
                             if (!updatesLock) {
                                 lockZoznamDB=true;
-                                sb.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
+                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                                SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
+                                database.close();
                                 lockZoznamDB=false;
                             }
                             result = "under bump";
@@ -296,6 +296,8 @@ public class Accelerometer extends Service implements SensorEventListener {
             lockZoznam = false;
             if (!updatesLock) {
                 lockZoznamDB=true;
+                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                SQLiteDatabase database = databaseHelper.getWritableDatabase();
                 BigDecimal bd = new BigDecimal(Float.toString(data));
                 bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
                 hashToArray.put(location,data);
@@ -304,7 +306,8 @@ public class Accelerometer extends Service implements SensorEventListener {
                 contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
                 contentValues.put(Provider.new_bumps.MANUAL, 0);
                 contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                database.close();
                 lockZoznamDB=false;
             }
         }
