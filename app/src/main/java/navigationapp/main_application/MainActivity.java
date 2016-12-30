@@ -327,11 +327,14 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 mapConfirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
                 setOnPosition =true;
-                SetUpCamera();
+                if (fragmentActivity.gps!=null)
+                    fragmentActivity.gps.getOnPosition();
+
                 break;
             case R.id.navig_on:
                 setOnPosition =true;
-                SetUpCamera();
+                if (fragmentActivity.gps!=null)
+                    fragmentActivity.gps.getOnPosition();
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 break;
@@ -410,7 +413,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
                     return true;
                 }
-                fragmentActivity.gps.getOnPosition();
+                if (fragmentActivity.gps!=null)
+                    fragmentActivity.gps.getOnPosition();
                 return true;
 
             case R.id.layer:
@@ -615,9 +619,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return true;
 
             case R.id.exit:
-                fragmentActivity.downloadNotification(false);
-                    fragmentActivity.downloadNotification(false);
-                if (fragmentActivity.accelerometer!=null) {
+
+               if (fragmentActivity.accelerometer!=null) {
                     ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
                     ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
@@ -666,11 +669,9 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         fragmentActivity.downloadNotification(false);
         super.onDestroy();
         mapView.onDestroy();
-        fragmentActivity.downloadNotification(false);
         finish();
-        fragmentActivity.downloadNotification(false);
         android.os.Process.killProcess(android.os.Process.myPid());
-        fragmentActivity.downloadNotification(false);
+
     }
 
     public void SetUpCamera(){
@@ -705,7 +706,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         Log.d("rrrrrr","onResume run ");
         isEneableScreen();
         super.onResume();
-        SetUpCamera();
+       if (fragmentActivity.gps!=null)
+        fragmentActivity.gps.getOnPosition();
         mapView.onResume();
         MainActivity.activityResumed();
     }

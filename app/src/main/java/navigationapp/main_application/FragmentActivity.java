@@ -101,7 +101,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     DatabaseOpenHelper databaseHelper;
     private JSONArray bumps;
     private int loaded_index;
-    private boolean isEndNotified;
+    private boolean isEndNotified =true;
     public static boolean setOnPosition =true;
     public static boolean flagDownload=false;
     public static boolean lockAdd=false;
@@ -561,26 +561,23 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     private NotificationManager mNotifyManager;
     private Builder mBuilder;
-    private boolean aa= true;
-    public void downloadNotification(Boolean progress) {
-        if (progress) {
-            if (aa=false) return;
-        mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
-        mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
 
+    public void downloadNotification(Boolean progress) {
+
+        if (progress) {
+            mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
+            mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
             mBuilder.setContentTitle("Map download")
                     .setContentText("Download in progress")
                     .setSmallIcon(R.drawable.green_icon);
         }
-        else
-        {
-            aa= false;
-            mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
-            mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
-
-            mBuilder.setContentTitle("Map error")
-                    .setContentText("Download in error")
-                    .setSmallIcon(R.drawable.green_icon);
+        else {
+          if (flagDownload) {
+              mBuilder.setContentTitle("Download error")
+                      .setContentText("Download was interrupted")
+                      .setProgress(0, 0, false);
+              mNotifyManager.notify(0, mBuilder.build());
+          }
         }
     }
     /*******************************************************************************************************/
