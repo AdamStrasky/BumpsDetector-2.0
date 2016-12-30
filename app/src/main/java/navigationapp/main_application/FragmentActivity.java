@@ -680,7 +680,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
     public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
-        updatesLock=false;
+       /// updatesLock=false;      toto tu nema čo robiť podľa mna !!!!!!!!!!!!!!!!!!!!!!!!!
         int rating;
         int i=0;
         if (bumps.size()> 0) {

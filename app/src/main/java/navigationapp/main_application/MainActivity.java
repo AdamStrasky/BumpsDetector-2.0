@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -77,7 +78,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        threadLock.getAndSet(false);
 
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
@@ -272,9 +273,9 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
                             while(true){
-                                if (!lockAdd && !lockZoznam &&!threadLock ) {
+                                if (!lockAdd && !lockZoznam &&!threadLock.get() ) {
                                     Log.d("TREEEE","vlozil do zoznamu  ");
-                                    threadLock=true;
+                                    threadLock.getAndSet(true);
                                     fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                     fragmentActivity.accelerometer.addBumpsManual(1);
                                     if (!lockZoznamDB && !updatesLock) {
@@ -289,7 +290,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                         database.setTransactionSuccessful();
                                         database.endTransaction();
                                     }
-                                    threadLock=false;
+                                    threadLock.getAndSet(false);
                                     Log.d("TREEEE","casovy lock koniec");
                                     break;
 
@@ -347,7 +348,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         }
     }
 
-    private boolean threadLock= false;
+    private AtomicBoolean threadLock;
 
     public static boolean isActivityVisible() {
         return activityVisible;
