@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static navigationapp.main_application.FragmentActivity.flagDownload;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
@@ -71,6 +73,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public static Button navig_on,add_button;
     public static MapboxMap mapbox;
     public static MapboxAccountManager manager;
+    static Lock lock = new ReentrantLock();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
