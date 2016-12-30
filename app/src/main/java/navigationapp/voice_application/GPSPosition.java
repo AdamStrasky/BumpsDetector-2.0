@@ -27,6 +27,9 @@ public class GPSPosition extends Service implements LocationListener {
         this.mContext = context;
          getLocation();
     }
+    public GPSPosition() {
+
+    }
 
     public android.location.Location getLocation() {
         try {

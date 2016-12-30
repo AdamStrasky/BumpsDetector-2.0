@@ -143,8 +143,10 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
     public void remove_draw_road () {
        if (draw_road!=null) {
-           mapbox.clear();
-           draw_road=null;
+           if(mapbox!=null) {
+             mapbox.clear();
+             draw_road=null;
+           }
        }
     }
 
@@ -221,7 +223,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public void SetZoom() {
         ZoomInit = false;
         com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
-        if (mapbox!=null)
+        if (mapbox!=null && yourLatLng!=null)
         mapbox.setCameraPosition(new CameraPosition.Builder()
                 .target(yourLatLng )
                 .zoom(ZOOM_LEVEL)

@@ -196,6 +196,14 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.add_button:
+                if (!fragmentActivity.checkGPSEnable()) {
+                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    break;
+                }
+                if (mapbox==null) {
+                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    break;
+                }
                 AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
                 builderSingle.setTitle("Select type of bump");
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
@@ -393,12 +401,25 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
+
         switch (item.getItemId()) {
+
+
             case R.id.position:
+                if (!fragmentActivity.checkGPSEnable()) {
+                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    return true;
+                }
                 fragmentActivity.gps.getOnPosition();
                 return true;
 
             case R.id.layer:
+                if (!fragmentActivity.isNetworkAvailable() || mapbox==null) {
+                    Toast.makeText(this, "Please connect to internet to change map", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
+
                 AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
                 builderSingle.setTitle("Maps");
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
@@ -442,6 +463,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return true;
 
             case R.id.filter:
+                if (!fragmentActivity.checkGPSEnable()) {
+                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    return true;
+                }
                 AlertDialog.Builder builderSingles = new AlertDialog.Builder(MainActivity.this);
                 builderSingles.setTitle("Show bumps");
                 final ArrayAdapter<String> arrayAdapters = new ArrayAdapter<String>(
@@ -505,33 +530,42 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return true;
 
             case R.id.clear_map:
+
                 if(confirm.isShown()){
                     Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
-                }else
-                    mapbox.clear();
+                }else {
+                    if (mapbox!=null)
+                         mapbox.clear();
+                }
                 return true;
 
             case R.id.calibrate:
-                fragmentActivity.accelerometer.calibrate();
-                if (isEneableShowText())
-                    Toast.makeText(context,"Your phone was calibrated.",Toast.LENGTH_SHORT).show();
+                if ( fragmentActivity.accelerometer!=null) {
+                    fragmentActivity.accelerometer.calibrate();
+                    if (isEneableShowText())
+                        Toast.makeText(context, "Your phone was calibrated.", Toast.LENGTH_SHORT).show();
+                }else {
+                    Toast.makeText(context, "Turn on your GPS before calibrate", Toast.LENGTH_SHORT).show();
+                }
                 return true;
 
             case R.id.navigation:
                 EditText text = (EditText) findViewById(R.id.location);
                 text.setText("Navigate to...");
-                new Thread() {
-                    public void run() {
-                        fragmentActivity.gps.remove_draw_road();
-                        if ( fragmentActivity.gps.getCurrentLatLng()!=null ) {
-                            LatLng bumps = fragmentActivity.gps.getCurrentLatLng();
-                            fragmentActivity.getAllBumps(bumps.latitude, bumps.longitude);
-                        }
-                        fragmentActivity.detection.setRoad(false);
-                        fragmentActivity.detection.stop_collison_navigate();
+                if ( fragmentActivity.gps!=null) {
+                    new Thread() {
+                        public void run() {
+                            fragmentActivity.gps.remove_draw_road();
+                            if (fragmentActivity.gps.getCurrentLatLng() != null) {
+                                LatLng bumps = fragmentActivity.gps.getCurrentLatLng();
+                                fragmentActivity.getAllBumps(bumps.latitude, bumps.longitude);
+                            }
+                            fragmentActivity.detection.setRoad(false);
+                            fragmentActivity.detection.stop_collison_navigate();
 
-                    }
-                }.start();
+                        }
+                    }.start();
+                }
                 return true;
 
 
@@ -541,6 +575,14 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return true;
 
             case R.id.download:
+                if (!fragmentActivity.checkGPSEnable()) {
+                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                if ( mapbox==null) {
+                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    return true;
+                }
                 fragmentActivity.gps.setUpMap(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
@@ -554,7 +596,13 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return true;
 
             case R.id.list:
-                fragmentActivity.gps.setUpMap(false);
+                if ( fragmentActivity.gps!=null  && mapbox!=null)
+                    fragmentActivity.gps.setUpMap(false);
+                if ( mapbox==null) {
+                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
                 add_button.setVisibility(View.VISIBLE);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
@@ -567,39 +615,43 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return true;
 
             case R.id.exit:
-                ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
-                ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
-                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                SQLiteDatabase  sb = databaseHelper.getWritableDatabase();
-                sb.beginTransaction();
-                int i=0;
-                for (HashMap<Location, Float> bump : list) {
-                    Iterator it = bump.entrySet().iterator();
-                    while (it.hasNext()) {
-                        HashMap.Entry pair = (HashMap.Entry) it.next();
-                        Location loc = (Location) pair.getKey();
-                        float data = (float) pair.getValue();
-                        String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+loc.getLongitude()+",7) "
-                                + " and  ROUND(intensity,6)==ROUND("+data+",6)  and manual="+bumpsManual.get(i);
+                fragmentActivity.downloadNotification(false);
+                    fragmentActivity.downloadNotification(false);
+                if (fragmentActivity.accelerometer!=null) {
+                    ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
+                    ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
+                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                    SQLiteDatabase sb = databaseHelper.getWritableDatabase();
+                    sb.beginTransaction();
+                    int i = 0;
+                    for (HashMap<Location, Float> bump : list) {
+                        Iterator it = bump.entrySet().iterator();
+                        while (it.hasNext()) {
+                            HashMap.Entry pair = (HashMap.Entry) it.next();
+                            Location loc = (Location) pair.getKey();
+                            float data = (float) pair.getValue();
+                            String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + loc.getLongitude() + ",7) "
+                                    + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and manual=" + bumpsManual.get(i);
 
-                        BigDecimal bd = new BigDecimal(Float.toString(data));
-                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                        Cursor cursor = sb.rawQuery(sql, null);
-                        if (cursor.getCount() == 0) {
-                            Log.d("MainActivity", "vkladam ");
-                            ContentValues contentValues = new ContentValues();
-                            contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
-                            contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
-                            contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
-                            contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                            sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                            BigDecimal bd = new BigDecimal(Float.toString(data));
+                            bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                            Cursor cursor = sb.rawQuery(sql, null);
+                            if (cursor.getCount() == 0) {
+                                Log.d("MainActivity", "vkladam ");
+                                ContentValues contentValues = new ContentValues();
+                                contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
+                                contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
+                                contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
+                                contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                            }
                         }
+                        i++;
                     }
-                    i++;
+                    sb.setTransactionSuccessful();
+                    sb.endTransaction();
+                    fragmentActivity.stop_servise();
                 }
-                sb.setTransactionSuccessful();
-                sb.endTransaction();
-                fragmentActivity.stop_servise();
                 onDestroy();
                 return true;
 
@@ -611,10 +663,14 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
     @Override
     protected void onDestroy() {
+        fragmentActivity.downloadNotification(false);
         super.onDestroy();
         mapView.onDestroy();
+        fragmentActivity.downloadNotification(false);
         finish();
+        fragmentActivity.downloadNotification(false);
         android.os.Process.killProcess(android.os.Process.myPid());
+        fragmentActivity.downloadNotification(false);
     }
 
     public void SetUpCamera(){

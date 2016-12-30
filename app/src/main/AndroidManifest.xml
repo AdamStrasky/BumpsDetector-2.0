@@ -37,10 +37,14 @@
         </activity>
 
         <service
+            android:priority="1000"
+            android:launchMode="singleTop"
             android:name="navigationapp.main_application.Accelerometer"
             android:enabled="true"
             android:exported="true" />
         <service
+            android:priority="1000"
+            android:launchMode="singleTop"
             android:name="navigationapp.main_application.GPSLocator"
             android:enabled="true"
             android:exported="true" />

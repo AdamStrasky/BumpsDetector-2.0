@@ -15,12 +15,12 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -29,6 +29,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_gps;
@@ -38,10 +40,10 @@ import static navigationapp.main_application.FragmentActivity.lockZoznamDB;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.MainActivity.round;
 
-public class Accelerometer extends Service implements SensorEventListener, LocationListener {
+public class Accelerometer extends Service implements SensorEventListener {
 
     private boolean flag = false;
-    private Context context;
+    private Context contexts;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private float THRESHOLD = 4.5f;
@@ -57,19 +59,40 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private boolean unlock = true;
     SQLiteDatabase sb;
     DatabaseOpenHelper databaseHelper;
-
+    private static Timer timer = new Timer();
     public Accelerometer(){
-        this.context = fragment_context;
+        this.contexts = fragment_context;
         LIFO = new ArrayList<>();
         flag = false;
         initialization_database();
-        mSensorManager = (SensorManager) context.getSystemService(context.SENSOR_SERVICE);
+        mSensorManager = (SensorManager) contexts.getSystemService(contexts.SENSOR_SERVICE);
         mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        possibleBumps = new ArrayList<>();
+
+         possibleBumps = new ArrayList<>();
         BumpsManual = new ArrayList<>();
+        startService();
     }
+    private void startService()
+    {
+        timer.scheduleAtFixedRate(new mainTask(), 0, 300000);
+    }
+
+
+    private class mainTask extends TimerTask
+    {
+        public void run()
+        {
+         /*   if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()== 0) {
+                Log.d("ACC", "sensor Accelerometer automatic re-calibrate");
+                calibrate();
+            }
+            else
+                Log.d("ACC", "sensor Accelerometer automatic re-calibrate no gps");*/
+        }
+    }
+
 
      public ArrayList<HashMap<Location, Float>> getPossibleBumps() {
          return possibleBumps;
@@ -98,6 +121,7 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     private class SensorEventLoggerTask extends AsyncTask<SensorEvent, Void, String> {
         @Override
         protected String doInBackground(SensorEvent... events) {
+            Log.d("ACC", "sensor Accelerometer running");
             String result = null;
             SensorEvent event = events[0];
             float deltaZ = 0, deltaX = 0, deltaY = 0;
@@ -115,9 +139,12 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                 currentData = new AccData(x, y, z);
                 //premenna LIFO je pole velkosti 60, obsahuje objekty AccData
                 LIFO.add(currentData);
+                Log.d("ACC", "sensor Accelerometer toto by malo byt iba raz");
             } else {
+
                 currentData = new AccData(x, y, z);
                 if (global_gps != null) {
+                    Log.d("ACC", "sensor Accelerometer mam aj gps");
                     final Location location = global_gps.getmCurrentLocation();
                     //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
                     for (AccData temp : LIFO) {
@@ -140,13 +167,15 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                         if (location != null && data != null) {
                             //pokial je znama aktualna pozicia a intenzita otrasu
                             if (unlock) {
-                                Log.d("ACC", "sensor Accelerometer");
+                                Log.d("ACC", "sensor Accelerometer detect bump");
                                 unlock = false;
                                 result = detect(location, data);
                                 unlock = true;
                             }
                         }
                     }
+                    else
+                        Log.d("ACC", "sensor Accelerometer no detect bump");
                     //najstarsi prvok z LIFO sa vymaze a ulozi sa na koniec najnovsi
                     if (LIFO.size() >= LIFOsize) {
                         LIFO.remove(0);
@@ -154,20 +183,30 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
                     LIFO.add(currentData);
                 }
             }
+
             return result;
         }
 
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(final String result) {
+            Log.d("ACC", "sensor Accelerometer result" + result);
             if (result != null) {
-               if (isEneableShowText())
-                    Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+               if (isEneableShowText()) {
+                   Handler handler = new Handler(Looper.getMainLooper());
+                   handler.post(new Runnable() {
+                       @Override
+                       public void run() {
+                           Toast.makeText(getApplicationContext(), result , Toast.LENGTH_SHORT).show();
+                       }
+                   });
+
+               }
             }
         }
     }
 
     public void initialization_database(){
         // inicializacia databazy
-        databaseHelper = new DatabaseOpenHelper(context);
+        databaseHelper = new DatabaseOpenHelper(contexts);
         sb = databaseHelper.getWritableDatabase();
     }
 
@@ -191,8 +230,11 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
     public synchronized String detect (Location location, Float data) {
         String result = null;
         boolean isToClose = false;
-        if (lockAdd)
+        if (lockAdd) {
+            Log.d("ACC", "sensor Accelerometer func detect lock");
             return "lock";
+        }
+        Log.d("DETECT", "sensor Accelerometer func detect no lock");
         //possibleBumps je zoznam vytlkov, ktore sa poslu do databazy
         lockZoznam = true;
         for (HashMap<Location, Float> bump : possibleBumps) {
@@ -311,28 +353,8 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
 
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
     public  boolean isEneableShowText() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean alarm = prefs.getBoolean("alarm", Boolean.parseBoolean(null));
         if ((alarm) || (!alarm && MainActivity.isActivityVisible())) {
             return true;
@@ -340,4 +362,6 @@ public class Accelerometer extends Service implements SensorEventListener, Locat
         else
             return false;
     }
+
+
 }

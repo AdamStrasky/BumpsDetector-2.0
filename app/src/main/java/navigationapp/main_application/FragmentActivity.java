@@ -78,9 +78,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     private GoogleApiClient mGoogleApiClient;
     public GPSLocator gps = null;
-    public Accelerometer accelerometer;
+    public Accelerometer accelerometer=null;
     public static Activity fragment_context;
-    public static GPSLocator global_gps;
+    public static GPSLocator global_gps= null;
     public static GoogleApiClient global_mGoogleApiClient;
     //konstanty pre level (podiel rating/count pre vytlk v databaze)
     private final float ALL_BUMPS = 1.0f;
@@ -142,7 +142,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
         // ak nie je povolené GPS , upozornenie na zapnutie
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        if(!checkGPSEnable()) {
            showGPSDisabledAlertToUser();
         } else {
             GPS_FLAG = false;
@@ -256,35 +256,37 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                     @Override
                     public void onClick(View view) {
-                        Address address=null;
-                        String regionName = regionNameEdit.getText().toString();
-                        try {
-                            address = Route.findLocality(regionName, getActivity());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
 
-                        if (address == null) {
-                            Toast.makeText(getActivity(), "Region not exist", Toast.LENGTH_LONG).show();
+                            Address address = null;
+                            String regionName = regionNameEdit.getText().toString();
+                            try {
+                                address = Route.findLocality(regionName, getActivity());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-                        }else {
-                           setOnPosition =false;
-                            mapbox.setMyLocationEnabled(false);
-                            mAlertDialog.cancel();
+                            if (address == null) {
+                                Toast.makeText(getActivity(), "Region not exist", Toast.LENGTH_LONG).show();
 
-                            selectedName =regionName;
-                            LatLng position = new LatLng(address.getLatitude(), address.getLongitude());
-                            CameraPosition cameraPosition = new CameraPosition.Builder()
-                                    .target(new com.mapbox.mapboxsdk.geometry.LatLng(position.latitude, position.longitude))
-                                    .zoom(15)
-                                    .build();
+                            } else {
+                                setOnPosition = false;
+                                mapbox.setMyLocationEnabled(false);
+                                mAlertDialog.cancel();
 
-                            //  posun kamery na novu poziciu
-                            mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                            // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
-                            mapConfirm.setVisibility(View.VISIBLE);
-                            add_button.setVisibility(View.INVISIBLE);
-                        }
+                                selectedName = regionName;
+                                LatLng position = new LatLng(address.getLatitude(), address.getLongitude());
+                                CameraPosition cameraPosition = new CameraPosition.Builder()
+                                        .target(new com.mapbox.mapboxsdk.geometry.LatLng(position.latitude, position.longitude))
+                                        .zoom(15)
+                                        .build();
+
+                                //  posun kamery na novu poziciu
+                                mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
+                                mapConfirm.setVisibility(View.VISIBLE);
+                                add_button.setVisibility(View.INVISIBLE);
+                            }
+
                     }
                 });
 
@@ -449,24 +451,28 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         .setPositiveButton("Navigate to", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
-                                setOnPosition = false;
-                                Toast.makeText(getActivity(), items[regionSelected], Toast.LENGTH_LONG).show();
+                                if (!checkGPSEnable()) {
+                                    Toast.makeText(getActivity(), "Turn on your GPS", Toast.LENGTH_LONG).show();
+                                } else {
+                                    setOnPosition = false;
+                                    Toast.makeText(getActivity(), items[regionSelected], Toast.LENGTH_LONG).show();
 
-                                // Get the region bounds and zoom
-                                LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getBounds();
-                                double regionZoom = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getMinZoom();
+                                    // Get the region bounds and zoom
+                                    LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getBounds();
+                                    double regionZoom = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getMinZoom();
 
-                                // Create new camera position
-                                CameraPosition cameraPosition = new CameraPosition.Builder()
-                                        .target(bounds.getCenter())
-                                        .zoom(regionZoom)
-                                        .build();
+                                    // Create new camera position
+                                    CameraPosition cameraPosition = new CameraPosition.Builder()
+                                            .target(bounds.getCenter())
+                                            .zoom(regionZoom)
+                                            .build();
 
-                                // Move camera to new position
-                                add_button.setVisibility(View.INVISIBLE);
-                                navig_on.setVisibility(View.VISIBLE);
-                                mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                    // Move camera to new position
+                                    add_button.setVisibility(View.INVISIBLE);
+                                    navig_on.setVisibility(View.VISIBLE);
+                                    mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
+                                }
                             }
                         })
                         .setNeutralButton("Delete", new DialogInterface.OnClickListener() {
@@ -532,7 +538,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     // Progress bar methods
     private void startProgress() {
         Toast.makeText(getActivity(), "Download start", Toast.LENGTH_LONG).show();
-        downloadNotification();
+        downloadNotification(true);
         flagDownload=true;
         isEndNotified = false;
     }
@@ -555,13 +561,27 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     private NotificationManager mNotifyManager;
     private Builder mBuilder;
-
-    public void downloadNotification() {
+    private boolean aa= true;
+    public void downloadNotification(Boolean progress) {
+        if (progress) {
+            if (aa=false) return;
         mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
         mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
-        mBuilder.setContentTitle("Map download")
-                .setContentText("Download in progress")
-                .setSmallIcon(R.drawable.bump_white);
+
+            mBuilder.setContentTitle("Map download")
+                    .setContentText("Download in progress")
+                    .setSmallIcon(R.drawable.green_icon);
+        }
+        else
+        {
+            aa= false;
+            mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
+            mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
+
+            mBuilder.setContentTitle("Map error")
+                    .setContentText("Download in error")
+                    .setSmallIcon(R.drawable.green_icon);
+        }
     }
     /*******************************************************************************************************/
     public void get_loaded_index (){
@@ -1327,7 +1347,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
         global_mGoogleApiClient= mGoogleApiClient;
         mServiceConnectedGPS =   getActivity().bindService(new Intent(getActivity().getApplicationContext(), GPSLocator.class), mServconnGPS, Context.BIND_AUTO_CREATE);
-
          new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -1788,5 +1807,9 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
                 = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    public boolean checkGPSEnable(){
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 }
