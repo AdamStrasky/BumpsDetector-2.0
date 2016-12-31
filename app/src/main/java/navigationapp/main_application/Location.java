@@ -160,7 +160,7 @@ public class Location {
 
                     try {
                         Thread.sleep(1000);
-                     } catch (InterruptedException e) { }
+                    } catch (InterruptedException e) { }
                 }
             }
         };
@@ -267,7 +267,7 @@ public class Location {
                                 select_road = directionPoint(position, my_position, this);  // vratim cestu
                                 if (select_road!=null) {
                                     Log.d("aaasssdddd", "select_road null");
-                                   get_road = true;
+                                    get_road = true;
                                 }else
                                     Log.d("aaasssdddd", "select_road not null");
                             }else
@@ -331,7 +331,7 @@ public class Location {
 
                             updatesLock = false;
 
-                           if (select_road != null && select_road.size() > 0) {
+                            if (select_road != null && select_road.size() > 0) {
                                 while (true) {
                                     if (lock_choise.tryLock())
                                     {
@@ -367,7 +367,7 @@ public class Location {
 
                                 all_bumps = new ArrayList<LatLng>();
 
-                               if (this.isInterrupted()) {
+                                if (this.isInterrupted()) {
                                     Log.d("collision_places", "pre spustanim estimation ");
                                     throw new InterruptedException();
                                 } else {
@@ -396,7 +396,7 @@ public class Location {
                     Log.d("collision_places", "cath interuoption " + this.getId());
                 }
 
-             Log.d("bumps_on_position", " end pid  "+String.valueOf(this.getId()));
+                Log.d("bumps_on_position", " end pid  "+String.valueOf(this.getId()));
 
             }
         };
@@ -418,84 +418,98 @@ public class Location {
                 List<LatLng> directionPoint = null;
                 double  previous_distance = - 1;
                 ArrayList<LatLng> bump_actual = new ArrayList<LatLng>();
-              try {
-                while(!this.isInterrupted() ) {
+                try {
+                    while(!this.isInterrupted() ) {
 
-                   while (true) {
+                        while (true) {
 
-                       if (lock_position.tryLock()) {
-                           // Got the lock
-                           try {
-                               for (int i = 0; i < LIFO.size(); i++) {
-                                   speed += LIFO.get(i).getSpeed();
-                               }
-                               avarage_speed = speed / LIFO.size();
-
-                               Log.d("estimation", "avarage_speed " + String.valueOf(avarage_speed));
-                               Log.d("estimation", "getLatitude " + String.valueOf(LIFO.get(0).getLatitude()));
-                               Log.d("estimation", "getLongitude " + String.valueOf(LIFO.get(0).getLongitude()));
-                               Log.d("estimation", " last getLatitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLatitude()));
-                               Log.d("estimation", "last  getLongitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLongitude()));
-
-                               distance = getDistance((float) LIFO.get(0).getLatitude(), (float) LIFO.get(0).getLongitude(), (float) LIFO.get(LIFO.size() - 1).getLatitude(), (float) LIFO.get(LIFO.size() - 1).getLongitude());
-                               Log.d("estimation", "distance " + String.valueOf(distance));
-                               time = LIFO.get(LIFO.size() - 1).getTime() - LIFO.get(0).getTime();
-                               Log.d("estimation", "time " + String.valueOf(time));
-                           } finally {
-                               // Make sure to unlock so that we don't cause a deadlock
-                               lock_position.unlock();
-                               break;
-                           }
-                       } else {
-                           try {
-                               Thread.sleep(20);
-                           } catch (InterruptedException e) {
-                               Log.d("estimation_thread", "throw intr  while on update lock_position ");
-                               throw new InterruptedException("");
-                           }
-                       }
-                   }
-
-                    long minutes = TimeUnit.MILLISECONDS.toMinutes((long) time);
-                    time -= TimeUnit.MINUTES.toMillis(minutes);
-                    long seconds = TimeUnit.MILLISECONDS.toSeconds(time);
-                    avarage_speed_second = (float) (distance/ (minutes+seconds));
-                    Log.d("estimation", "Mins "+ String.valueOf(minutes));
-                    Log.d("estimation", "seconds "+ String.valueOf(seconds));
-                    Log.d("estimation", "avarage_speed_second "+ String.valueOf(avarage_speed_second));
-
-                     if (avarage_speed > avarage_speed_second )
-                         best_cause = avarage_speed_second;
-                     else
-                         best_cause = avarage_speed_second;
-
-                    double actual_distance = 999999999 ;
-
-                    if (global_gps != null && global_gps.getmCurrentLocation() != null) {
-                        latitude = global_gps.getmCurrentLocation().getLatitude();
-                        longitude = global_gps.getmCurrentLocation().getLongitude();
-                        if (new_data) {
-                            if (lock_choise.tryLock()) {
+                            if (lock_position.tryLock()) {
                                 // Got the lock
                                 try {
-                                    bump_actual = new ArrayList<LatLng>();
-                                    if (choise_bump != null && choise_bump.size() > 0)
-                                        bump_actual.addAll(choise_bump);
+                                    for (int i = 0; i < LIFO.size(); i++) {
+                                        speed += LIFO.get(i).getSpeed();
+                                    }
+                                    avarage_speed = speed / LIFO.size();
+
+                                    Log.d("estimation", "avarage_speed " + String.valueOf(avarage_speed));
+                                    Log.d("estimation", "getLatitude " + String.valueOf(LIFO.get(0).getLatitude()));
+                                    Log.d("estimation", "getLongitude " + String.valueOf(LIFO.get(0).getLongitude()));
+                                    Log.d("estimation", " last getLatitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLatitude()));
+                                    Log.d("estimation", "last  getLongitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLongitude()));
+
+                                    distance = getDistance((float) LIFO.get(0).getLatitude(), (float) LIFO.get(0).getLongitude(), (float) LIFO.get(LIFO.size() - 1).getLatitude(), (float) LIFO.get(LIFO.size() - 1).getLongitude());
+                                    Log.d("estimation", "distance " + String.valueOf(distance));
+                                    time = LIFO.get(LIFO.size() - 1).getTime() - LIFO.get(0).getTime();
+                                    Log.d("estimation", "time " + String.valueOf(time));
                                 } finally {
                                     // Make sure to unlock so that we don't cause a deadlock
-                                    lock_choise.unlock();
-
-
-                                }
-                                new_data = false;
-                                if (bump_actual != null && bump_actual.size() > 0) {
-                                    directionPoint = sortLocations(bump_actual, latitude, longitude);
-                                    actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
-                                    previous_distance = actual_distance;
+                                    lock_position.unlock();
+                                    break;
                                 }
                             } else {
-                                if (directionPoint != null &&  directionPoint.size() > 0 )
-                                    actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
+                                try {
+                                    Thread.sleep(20);
+                                } catch (InterruptedException e) {
+                                    Log.d("estimation_thread", "throw intr  while on update lock_position ");
+                                    throw new InterruptedException("");
+                                }
+                            }
+                        }
+
+                        long minutes = TimeUnit.MILLISECONDS.toMinutes((long) time);
+                        time -= TimeUnit.MINUTES.toMillis(minutes);
+                        long seconds = TimeUnit.MILLISECONDS.toSeconds(time);
+                        avarage_speed_second = (float) (distance/ (minutes+seconds));
+                        Log.d("estimation", "Mins "+ String.valueOf(minutes));
+                        Log.d("estimation", "seconds "+ String.valueOf(seconds));
+                        Log.d("estimation", "avarage_speed_second "+ String.valueOf(avarage_speed_second));
+
+                        if (avarage_speed > avarage_speed_second )
+                            best_cause = avarage_speed_second;
+                        else
+                            best_cause = avarage_speed_second;
+
+                        double actual_distance = 999999999 ;
+
+                        if (global_gps != null && global_gps.getmCurrentLocation() != null) {
+                            latitude = global_gps.getmCurrentLocation().getLatitude();
+                            longitude = global_gps.getmCurrentLocation().getLongitude();
+                            if (new_data) {
+                                if (lock_choise.tryLock()) {
+                                    // Got the lock
+                                    try {
+                                        bump_actual = new ArrayList<LatLng>();
+                                        if (choise_bump != null && choise_bump.size() > 0)
+                                            bump_actual.addAll(choise_bump);
+                                    } finally {
+                                        // Make sure to unlock so that we don't cause a deadlock
+                                        lock_choise.unlock();
+
+
+                                    }
+                                    new_data = false;
+                                    if (bump_actual != null && bump_actual.size() > 0) {
+                                        directionPoint = sortLocations(bump_actual, latitude, longitude);
+                                        actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
+                                        previous_distance = actual_distance;
+                                    }
+                                } else {
+                                    if (directionPoint != null &&  directionPoint.size() > 0 )
+                                        actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
+
+                                    if (previous_distance < actual_distance) {
+                                        if (bump_actual != null && bump_actual.size() > 0) {
+                                            if (directionPoint != null) {
+                                                directionPoint = sortLocations(bump_actual, latitude, longitude);
+                                                actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
+                                                previous_distance = actual_distance;
+                                            }
+                                        }
+                                    }
+                                }
+
+                            } else {   if (directionPoint != null &&  directionPoint.size() > 0 )
+                                actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
 
                                 if (previous_distance < actual_distance) {
                                     if (bump_actual != null && bump_actual.size() > 0) {
@@ -508,80 +522,66 @@ public class Location {
                                 }
                             }
 
-                        } else {   if (directionPoint != null &&  directionPoint.size() > 0 )
-                            actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
+                            Log.d("estimation", "actual distance   " + String.valueOf(actual_distance));
+                            double times_to_sleep = actual_distance / best_cause;
+                            Log.d("estimation", "čas ku výtlku  " + String.valueOf(times_to_sleep));
 
-                            if (previous_distance < actual_distance) {
-                                if (bump_actual != null && bump_actual.size() > 0) {
-                                    if (directionPoint != null) {
-                                        directionPoint = sortLocations(bump_actual, latitude, longitude);
-                                        actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
-                                        previous_distance = actual_distance;
-                                    }
-                                }
+                            //  - čas pred výtlkom
+
+                            if (String.valueOf(times_to_sleep).equals("NaN")) {
+                                times_to_sleep = 999999;
+                                Log.d("estimation", "čas ku výtlku bol NAN " );
                             }
-                        }
+                            long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
+                            double convert_time = result;
+                            time_stop = 0;
+                            int treshold = 20000;
 
-                        Log.d("estimation", "actual distance   " + String.valueOf(actual_distance));
-                         double times_to_sleep = actual_distance / best_cause;
-                         Log.d("estimation", "čas ku výtlku  " + String.valueOf(times_to_sleep));
-
-                         //  - čas pred výtlkom
-
-                        if (String.valueOf(times_to_sleep).equals("NaN")) {
-                            times_to_sleep = 999999;
-                            Log.d("estimation", "čas ku výtlku bol NAN " );
-                        }
-                        long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
-                        double convert_time = result;
-                        time_stop = 0;
-                        int treshold = 20000;
-
-                        if (convert_time > treshold || convert_time < 0)
+                            if (convert_time > treshold || convert_time < 0)
                                 time_stop = treshold;
-                        else if (convert_time < 5000) {
-                            if (this.isInterrupted()) {
+                            else if (convert_time < 5000) {
+                                if (this.isInterrupted()) {
                                     Log.d("estimation_thread", "throw intr pred upozornenim na výtlk ");
                                     throw new InterruptedException("");
                                 }
 
-                            if (!isEneableShow()) {
-                               final double i =  actual_distance;
-                               while (tts.isSpeaking()){ }
-                               fragment_context.runOnUiThread(new Runnable() {
-                                   public void run() {
-                                        tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
-                                    }
-                                });
-                                while (tts.isSpeaking()){ }
-                           }
-                            else {
+                                if (!isEneableShow()) {
+                                    final double i =  actual_distance;
+                                    while (tts.isSpeaking()){ }
+                                    fragment_context.runOnUiThread(new Runnable() {
+                                        public void run() {
+                                            tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
+                                        }
+                                    });
+                                    while (tts.isSpeaking()){ }
+                                }
+                                else {
 
-                               fragment_context.runOnUiThread(new Runnable() {
-                                   public void run() {
-                                       Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
-                                   }
-                               });
-                           }
-                            previous_distance = -1;
-                            if (directionPoint!= null && directionPoint.size() > 0)
-                                directionPoint.remove(0);
-                            time_stop = 0;
+                                    fragment_context.runOnUiThread(new Runnable() {
+                                        public void run() {
+                                            Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                                previous_distance = -1;
+                                if (directionPoint!= null && directionPoint.size() > 0)
+                                    directionPoint.remove(0);
+                                time_stop = 0;
+                            } else
+                                time_stop = (int) convert_time;
+
                         } else
-                            time_stop = (int) convert_time;
-
-                    } else
-                        Log.d("estimation_thread", "no gps ");
-                    try {
-                        Thread.sleep(time_stop);
-                    } catch (InterruptedException e) {
-                        Log.d("estimation_thread", "throw intr sleep  ");
-                        throw new InterruptedException();
+                            Log.d("estimation_thread", "no gps ");
+                        try {
+                            Thread.sleep(time_stop);
+                        } catch (InterruptedException e) {
+                            Log.d("estimation_thread", "throw intr sleep  ");
+                            throw new InterruptedException();
+                        }
                     }
+                } catch (InterruptedException t) {
+                    Log.d("estimation_thread", "cath interuption " + this.getId());
                 }
-              } catch (InterruptedException t) {
-                  Log.d("estimation_thread", "cath interuption " + this.getId());
-              }
                 Looper.loop();
             }
         };
@@ -616,26 +616,26 @@ public class Location {
         Route md = new Route();
         Document doc = md.getDocument(my_position, to_position);
 
-                if (doc == null)
-                    return null;
-                directionPoint = new  ArrayList<LatLng>();
-                directionPoint = md.getDirection(doc);
-                Log.d("choise_bump", " return  directionPoints");
-                if (directionPoint== null || directionPoint.size() ==0 )
-                    return null;
-                else {
-                    activity.gps.remove_draw_road();
-                    if ( activity.gps.getCurrentLatLng()!=null ) {
-                        LatLng bumps = activity.gps.getCurrentLatLng();
-                        activity.getAllBumps(bumps.latitude, bumps.longitude);
-                    }
+        if (doc == null)
+            return null;
+        directionPoint = new  ArrayList<LatLng>();
+        directionPoint = md.getDirection(doc);
+        Log.d("choise_bump", " return  directionPoints");
+        if (directionPoint== null || directionPoint.size() ==0 )
+            return null;
+        else {
+            activity.gps.remove_draw_road();
+            if ( activity.gps.getCurrentLatLng()!=null ) {
+                LatLng bumps = activity.gps.getCurrentLatLng();
+                activity.getAllBumps(bumps.latitude, bumps.longitude);
+            }
 
-                    activity.gps.showDirection(directionPoint);
+            activity.gps.showDirection(directionPoint);
 
-                    return directionPoint;
-                }
+            return directionPoint;
+        }
 
-     }
+    }
 
     public boolean isRoad() {
         return road;

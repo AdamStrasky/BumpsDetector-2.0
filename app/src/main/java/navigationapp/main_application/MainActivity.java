@@ -270,60 +270,77 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                         public void run() {
                             Looper.prepare();
 
-                            while(true){
-                                if (!lockAdd &&!threadLock.get() ) {
-                                    if (lockZoznam.tryLock())
+                            while(true) {
+
+                                if (!threadLock.get() ) {
+
+                                    if (lockAdd.tryLock())
                                     {
                                         // Got the lock
                                         try
                                         {
-                                            Log.d("TREEEE","vlozil do zoznamu  ");
-                                            threadLock.getAndSet(true);
-                                            fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
-                                            fragmentActivity.accelerometer.addBumpsManual(1);
-                                            if ( !updatesLock) {
-
-                                                if (lockZoznamDB.tryLock())
+                                            if (lockZoznam.tryLock())
+                                            {
+                                                // Got the lock
+                                                try
                                                 {
-                                                    // Got the lock
-                                                    try
-                                                    {
-                                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                                        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                                                        Log.d("TREEEE","vlozil do db ");
-                                                        database.beginTransaction();
-                                                        ContentValues contentValues = new ContentValues();
-                                                        contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                                        contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                                        contentValues.put(Provider.new_bumps.MANUAL, 1);
-                                                        contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
-                                                        database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                                        database.setTransactionSuccessful();
-                                                        database.endTransaction();
-                                                        database.close();
+                                                    Log.d("TREEEE","vlozil do zoznamu  ");
+                                                    threadLock.getAndSet(true);
+                                                    fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
+                                                    fragmentActivity.accelerometer.addBumpsManual(1);
+                                                    if ( !updatesLock) {
+
+                                                        if (lockZoznamDB.tryLock())
+                                                        {
+                                                            // Got the lock
+                                                            try
+                                                            {
+                                                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                                                SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                                                                Log.d("TREEEE","vlozil do db ");
+                                                                database.beginTransaction();
+                                                                ContentValues contentValues = new ContentValues();
+                                                                contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                                                contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                                                contentValues.put(Provider.new_bumps.MANUAL, 1);
+                                                                contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
+                                                                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                                                database.setTransactionSuccessful();
+                                                                database.endTransaction();
+                                                                database.close();
+                                                            }
+                                                            finally
+                                                            {
+                                                                // Make sure to unlock so that we don't cause a deadlock
+                                                                lockZoznamDB.unlock();
+                                                            }
+                                                        }
                                                     }
-                                                    finally
-                                                    {
-                                                        // Make sure to unlock so that we don't cause a deadlock
-                                                        lockZoznamDB.unlock();
-                                                    }
+                                                    threadLock.getAndSet(false);
+                                                    Log.d("TREEEE","casovy lock koniec");
+
+                                                }
+                                                finally
+                                                {
+                                                    // Make sure to unlock so that we don't cause a deadlock
+                                                    lockZoznam.unlock();
+                                                    break;
                                                 }
                                             }
-                                            threadLock.getAndSet(false);
-                                            Log.d("TREEEE","casovy lock koniec");
-
                                         }
                                         finally
                                         {
                                             // Make sure to unlock so that we don't cause a deadlock
-                                            lockZoznam.unlock();
-                                            break;
+                                            lockAdd.unlock();
                                         }
                                     }
+                                 }
 
 
 
-                                }
+
+
+
                                 Log.d("TREEEE","casovy lock");
                                 Log.d("TREEEE", String.valueOf(location.getLatitude()));
                                 Log.d("TREEEE", String.valueOf(location.getLongitude()));
@@ -575,7 +592,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
                 }else {
                     if (mapbox!=null)
-                         mapbox.clear();
+                        mapbox.clear();
                 }
                 return true;
 
@@ -656,7 +673,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
             case R.id.exit:
 
-               if (fragmentActivity.accelerometer!=null) {
+                if (fragmentActivity.accelerometer!=null) {
                     ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
                     ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
