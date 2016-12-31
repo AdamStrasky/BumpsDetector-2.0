@@ -64,6 +64,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static navigationapp.main_application.Bump.isBetween;
 import static navigationapp.main_application.MainActivity.add_button;
@@ -105,6 +107,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public static boolean flagDownload=false;
     public static boolean lockAdd=false;
     private int regionSelected;
+    private boolean mapNotification=true;
     // Offline objects
     private OfflineManager offlineManager;
     private OfflineRegion offlineRegion;
@@ -115,8 +118,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
     private  boolean regular_update = false;
     private  boolean clear =true ;
-    public static boolean lockZoznam = false;
-    public static boolean lockZoznamDB = false;
+    static Lock lockZoznam = new ReentrantLock();
+    static Lock lockZoznamDB = new ReentrantLock();
     navigationapp.main_application.Location detection = null;
 
     @Override
@@ -605,7 +608,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             return;
         }
 
-        while (true) {
+            while (true) {
             if  (!updatesLock) {
                 updatesLock = true;
                 break;
@@ -666,11 +669,25 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 database.endTransaction();
                 database.close();
                 updatesLock = false;
+                ArrayList<HashMap<Location, Float>> temp_possibleBumps;
+                if (!lockAdd  ) {
+                    ArrayList<HashMap<Location, Float>> ada = new ArrayList<HashMap<Location, Float>> () ;
+                    ArrayList<Integer> adas = new  ArrayList<Integer>();
+                    if (lockZoznam.tryLock()) {
+                        // Got the lock
+                        try {
+                            if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
+                                 ada = accelerometer.getPossibleBumps();
+                                adas = accelerometer.getBumpsManual();
 
-                if (!lockAdd  && !lockZoznam)
-                    if (accelerometer!= null && accelerometer.getPossibleBumps().size() > 0) {
-                        notSendBumps(accelerometer.getPossibleBumps(), accelerometer.getBumpsManual());
-                     }
+                            }
+                        } finally {
+                            lockZoznam.unlock();
+                        }
+                        notSendBumps(ada, adas);
+                    }
+
+                }
                 Looper.loop();
 
             }
@@ -1573,6 +1590,7 @@ Log.d("TTRREEE","pustilo sa loadSaveDB");
     }
 
     public static boolean updatesLock = false;
+
     private boolean regularUpdatesLock = false;
     private boolean lockHandler =false;
     private class SyncDb extends TimerTask {
