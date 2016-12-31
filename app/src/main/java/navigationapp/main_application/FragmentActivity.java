@@ -105,7 +105,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public static boolean flagDownload=false;
     public static boolean lockAdd=false;
     private int regionSelected;
-    private boolean mapNotification=true;
     // Offline objects
     private OfflineManager offlineManager;
     private OfflineRegion offlineRegion;

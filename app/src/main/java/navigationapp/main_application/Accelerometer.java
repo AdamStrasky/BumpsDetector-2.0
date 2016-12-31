@@ -119,7 +119,7 @@ public class Accelerometer extends Service implements SensorEventListener {
     private class SensorEventLoggerTask extends AsyncTask<SensorEvent, Void, String> {
         @Override
         protected String doInBackground(SensorEvent... events) {
-            Log.d("ACC", "sensor Accelerometer running");
+         /////////////////   Log.d("ACC", "sensor Accelerometer running");
             String result = null;
             SensorEvent event = events[0];
             float deltaZ = 0, deltaX = 0, deltaY = 0;
@@ -142,7 +142,7 @@ public class Accelerometer extends Service implements SensorEventListener {
 
                 currentData = new AccData(x, y, z);
                 if (global_gps != null) {
-                    Log.d("ACC", "sensor Accelerometer mam aj gps");
+             /////////////////       Log.d("ACC", "sensor Accelerometer mam aj gps");
                     final Location location = global_gps.getmCurrentLocation();
                     //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
                     for (AccData temp : LIFO) {
@@ -165,7 +165,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                         if (location != null && data != null) {
                             //pokial je znama aktualna pozicia a intenzita otrasu
                             if (unlock) {
-                                Log.d("ACC", "sensor Accelerometer detect bump");
+                    //////////////////            Log.d("ACC", "sensor Accelerometer detect bump");
                                 unlock = false;
                                 result = detect(location, data);
                                 unlock = true;
@@ -173,7 +173,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                         }
                     }
                     else
-                        Log.d("ACC", "sensor Accelerometer no detect bump");
+                    //    Log.d("ACC", "sensor Accelerometer no detect bump");
                     //najstarsi prvok z LIFO sa vymaze a ulozi sa na koniec najnovsi
                     if (LIFO.size() >= LIFOsize) {
                         LIFO.remove(0);
@@ -186,7 +186,7 @@ public class Accelerometer extends Service implements SensorEventListener {
         }
 
         protected void onPostExecute(final String result) {
-            Log.d("ACC", "sensor Accelerometer result" + result);
+         //   Log.d("ACC", "sensor Accelerometer result" + result);
             if (result != null) {
                if (isEneableShowText()) {
                    Handler handler = new Handler(Looper.getMainLooper());
@@ -226,10 +226,10 @@ public class Accelerometer extends Service implements SensorEventListener {
         String result = null;
         boolean isToClose = false;
         if (lockAdd) {
-            Log.d("ACC", "sensor Accelerometer func detect lock");
+    /////////////////////////        Log.d("ACC", "sensor Accelerometer func detect lock");
             return "lock";
         }
-        Log.d("DETECT", "sensor Accelerometer func detect no lock");
+   ////////////////////////////////     Log.d("DETECT", "sensor Accelerometer func detect no lock");
         //possibleBumps je zoznam vytlkov, ktore sa poslu do databazy
         lockZoznam = true;
         for (HashMap<Location, Float> bump : possibleBumps) {

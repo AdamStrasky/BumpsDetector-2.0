@@ -58,6 +58,7 @@ import static navigationapp.main_application.FragmentActivity.updatesLock;
 
 public class MainActivity extends ActionBarActivity  implements View.OnClickListener {
     private Context context;
+    private AtomicBoolean threadLock = new AtomicBoolean(false);
     private final float ALL_BUMPS = 1.0f;
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
@@ -78,8 +79,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        threadLock.getAndSet(false);
-
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
@@ -348,7 +347,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         }
     }
 
-    private AtomicBoolean threadLock;
+
 
     public static boolean isActivityVisible() {
         return activityVisible;
