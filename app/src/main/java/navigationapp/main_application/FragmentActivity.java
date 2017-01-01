@@ -64,6 +64,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -616,92 +617,106 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 Looper.prepare();
 
                 while (true) {
-                    if  (!updatesLock) {
-                        updatesLock = true;
+                    if (!updatesLock.get()) {
+                        updatesLock.getAndSet(true);
                         break;
                     }
-                    Log.d("getAllBumps", "getAllBumps thread lock ");
+                    Log.d("getAllBumps", "getAllBumps thread lockAAAAAA ");
                     try {
-                        Thread.sleep(20);
+                        Thread.sleep(2);
                     } catch (InterruptedException e) {
                     }
                 }
 
-                if (isClear() && mapbox!=null)
+                if (isClear() && mapbox != null)
                     mapbox.deselectMarkers();
 
 
-                SimpleDateFormat now,ago;
+                SimpleDateFormat now, ago;
                 Calendar cal = Calendar.getInstance();
                 cal.setTime(new Date());
                 now = new SimpleDateFormat("yyyy-MM-dd");
                 String now_formated = now.format(cal.getTime());
                 // posun od dnesneho dna o 280 dni
-                cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
+                cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
                 ago = new SimpleDateFormat("yyyy-MM-dd");
                 String ago_formated = ago.format(cal.getTime());
                 // ziskam sučasnu poziciu
-                LatLng convert_location =  gps.getCurrentLatLng();
+                LatLng convert_location = gps.getCurrentLatLng();
 
                 // seleknutie vytlk z oblasti a starych 280 dni
-                String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >="+ level +" AND " +
-                        " ( last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
-                        + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longitude+",1)) ";
+                String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >=" + level + " AND " +
+                        " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                        + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
                 DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                 SQLiteDatabase database = databaseHelper.getReadableDatabase();
                 database.beginTransaction();
-                Cursor cursor  =null;
+                Cursor cursor = null;
                 try {
-                    cursor   = database.rawQuery(selectQuery, null);
+                    cursor = database.rawQuery(selectQuery, null);
 
-                    if (cursor.moveToFirst())     {
+                    if (cursor.moveToFirst()) {
                         do {
                             // pridavanie do mapy
                             gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
                             try {
                                 Thread.sleep(50);
                             } catch (InterruptedException e) {
-                                Log.e("error",e.toString());
+                                Log.e("error", e.toString());
                             }
                         }
                         while (cursor.moveToNext());
                     }
                 } finally {
-                    if(cursor != null)
+                    if (cursor != null)
                         cursor.close();
                 }
                 database.setTransactionSuccessful();
                 database.endTransaction();
                 database.close();
-                updatesLock = false;
+                updatesLock.getAndSet(false);
 
-                if (lockAdd.tryLock())
-                {
-                    // Got the lock
-                    try
-                    {
-                        ArrayList<HashMap<Location, Float>> ada = new ArrayList<HashMap<Location, Float>> () ;
-                        ArrayList<Integer> adas = new  ArrayList<Integer>();
-                        if (lockZoznam.tryLock()) {
-                            // Got the lock
-                            try {
-                                if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
-                                    ada = accelerometer.getPossibleBumps();
-                                    adas = accelerometer.getBumpsManual();
+                ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
+                ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
+                while (true) {
+                    if (lockAdd.tryLock()) {
+                        // Got the lock
+                        try {
 
+                            while (true) {
+                            if (lockZoznam.tryLock()) {
+                                // Got the lock
+                                try {
+                                    if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
+
+
+                                        bumpList.addAll(accelerometer.getPossibleBumps());
+                                        bumpsManual.addAll(accelerometer.getBumpsManual());
+
+                                    }
+                                } finally {
+                                    lockZoznam.unlock();
+                                    break;
                                 }
-                            } finally {
-                                lockZoznam.unlock();
+                            }else {try {
+                                Thread.sleep(20);
+                            } catch (InterruptedException e) {
+                            }}
+
                             }
-                            notSendBumps(ada, adas);
+                        } finally {
+                            // Make sure to unlock so that we don't cause a deadlock
+                            lockAdd.unlock();
+                            break;
+                        }
+                    } else {
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException e) {
                         }
                     }
-                    finally
-                    {
-                        // Make sure to unlock so that we don't cause a deadlock
-                        lockAdd.unlock();
-                    }
                 }
+                notSendBumps(bumpList, bumpsManual);
 
 
 
@@ -718,7 +733,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         int i=0;
         if (bumps.size()> 0) {
             for (HashMap<Location, Float> bump : bumps) {
-                if (bump!=null)
+                if (bump==null)
                     break;
                 Iterator it = bump.entrySet().iterator();
                 while (it.hasNext()) {
@@ -756,11 +771,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
                 while (true) {
-                    if  (!updatesLock) {
-                        updatesLock = true;
+                    if  (!updatesLock.get()) {
+                        updatesLock.getAndSet(true);
                         break;
                     }
-                    Log.d("getAllBumps", "getAllBumps thread lock ");
+                    Log.d("getAllBumps", "getAllBumps thread lock bbbbbbbb ");
                     try {
                         Thread.sleep(20);
                     } catch (InterruptedException e) {
@@ -805,7 +820,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 database.setTransactionSuccessful();
                 database.endTransaction();
                 database.close();
-                updatesLock = false;
+                updatesLock.getAndSet(false);
                 updates = update;
                 new Max_Collision_Number().execute();
                 Looper.loop();
@@ -924,11 +939,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             Looper.prepare();
                             Boolean error = false ;
                             while (true) {
-                                if  (!updatesLock) {
-                                    updatesLock = true;
+                                if  (!updatesLock.get()) {
+                                    updatesLock.getAndSet(true);
                                     break;
                                 }
-                                Log.d("getAllBumps", "getAllBumps thread lock ");
+                                Log.d("getAllBumps", "getAllBumps thread lock ccccccccccc");
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
@@ -1024,7 +1039,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 database.setTransactionSuccessful();
                                 database.endTransaction();
                                 database.close();
-                                updatesLock = false;
+                                updatesLock.getAndSet(false);
                                 // uložím najvyššie b_id  z bumps po uspešnej transakcii
                                 SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPref.edit();
@@ -1036,7 +1051,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 // rollbacknem databazu
                                 database.endTransaction();
                                 database.close();
-                                updatesLock = false;
+                                updatesLock.getAndSet(false);
                             }
                             // načítam vytlky
                             if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
@@ -1074,11 +1089,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 Looper.prepare();
 
                 while (true) {
-                    if  (!updatesLock) {
-                        updatesLock = true;
+                    if  (!updatesLock.get()) {
+                        updatesLock.getAndSet(true);
                         break;
                     }
-                    Log.d("getAllBumps", "getAllBumps thread lock ");
+                    Log.d("getAllBumps", "getAllBumps thread lock ddddddddd");
                     try {
                         Thread.sleep(20);
                     } catch (InterruptedException e) {
@@ -1123,7 +1138,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 database.endTransaction();
                 database.close();
 
-                updatesLock = false;
+                updatesLock.getAndSet(false);
                 net =nets ;
                 lang_database =langtitude;
                 longt_database =longtitude;
@@ -1210,11 +1225,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             Boolean error = false ;
 
                             while (true) {
-                                if  (!updatesLock) {
-                                    updatesLock = true;
+                                if  (!updatesLock.get()) {
+                                    updatesLock.getAndSet(true);
                                     break;
                                 }
-                                Log.d("getAllBumps", "getAllBumps thread lock ");
+                                Log.d("getAllBumps", "getAllBumps thread lock eeeeeeeeeeeeeeeeeeeee");
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
@@ -1270,7 +1285,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 database.setTransactionSuccessful();
                                 database.endTransaction();
                                 database.close();
-                                updatesLock = false;
+                                updatesLock.getAndSet(false);
                                 get_max_collision(lang_database, longt_database, 0);
                                 Looper.loop();
                             } else {
@@ -1287,7 +1302,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         }
                                     });
                                 }
-                                updatesLock = false;
+                                updatesLock.getAndSet(false);
                                 Looper.loop();
 
                             }
@@ -1311,17 +1326,29 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
                         if ( regularUpdatesLock){
-                            while (true) {
-                                if  (!updatesLock) {
-                                    updatesLock = true;
-                                    break;
+                            Thread t = new Thread() {
+                                public void run() {
+                                    Looper.prepare();
+                                    while (true) {
+                                        if  (!updatesLock.get()) {
+                                            updatesLock.getAndSet(true);
+                                            break;
+                                        }
+                                        Log.d("getAllBumps", "getAllBumps thread lock xxxxxxxxxxxxxxxxx");
+                                        try {
+                                            Thread.sleep(20);
+                                        } catch (InterruptedException e) {
+                                        }
+                                    }
+
+
+
+                                    Looper.loop();
+                                    Log.d("TTRREEE","konci  sa   sa Thread");
+
                                 }
-                                Log.d("getAllBumps", "getAllBumps thread lock ");
-                                try {
-                                    Thread.sleep(20);
-                                } catch (InterruptedException e) {
-                                }
-                            }
+                            };
+                            t.start();
                             lockHandler=false;
                             Log.d("TTRREEE", "regularUpdatesLock == 1 v getupdate");
                             ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
@@ -1331,21 +1358,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             accelerometer.getPossibleBumps().clear();
                             accelerometer.getBumpsManual().clear();
                             saveBump(bumpList, bumpsManual,0);
-                            updatesLock=false;
 
-                            if(regularUpdatesLock) {
-                                Log.d("TTRREEE", "updates == 1 v save");
-                                updates=0;
-                                regularUpdatesLock=false;
-                                lockHandler=false;
-                                LatLng convert_location = gps.getCurrentLatLng();
-                                get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
-
-                            }else if(lockHandler){
-                                Log.d("TTRREEE", "lockHandler==true");
-                                lockHandler=false;
-                                getBumpsWithLevel();
-                            }
                         }else
                         if (updates==1) {
                             Log.d("TTRREEE", "updates == 1 v getupdate");
@@ -1532,7 +1545,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     gps = mLocnServGPS;
                     if (gps != null) {
                         LatLng convert_location = gps.getCurrentLatLng();
-                        if (convert_location != null && !updatesLock && !dbEnd) {
+                        if (convert_location != null && !updatesLock.get() && !dbEnd) {
                             Log.d("TTRREEE","break sa Thread");
                             break;
 
@@ -1552,6 +1565,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 detection = new navigationapp.main_application.Location();
 
                 startGPS();
+
                 Looper.loop();
                 Log.d("TTRREEE","konci  sa   sa Thread");
 
@@ -1580,7 +1594,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
     private boolean dbEnd= true;
     public void loadSaveDB(){
-        if (updatesLock) {
+        if (updatesLock.get()) {
             dbEnd=false;
             return;
         }
@@ -1590,7 +1604,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 Looper.prepare();
 
-                updatesLock=true;
+                updatesLock.getAndSet(true);
                 String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
                 DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                 SQLiteDatabase database = databaseHelper.getReadableDatabase();
@@ -1627,7 +1641,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             mLocnServAcc.getBumpsManual().addAll(listA);
                         }else
                             Log.d("loadSaveDB","NULL ACCELEROMETER");
-                        updatesLock = false;
+                        updatesLock.getAndSet(false);
                         database.setTransactionSuccessful();
                         database.endTransaction();
                         database.close();
@@ -1635,7 +1649,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
                 } else
-                    updatesLock = false;
+                    updatesLock.getAndSet(false);;
 
 
                 dbEnd=false;
@@ -1660,7 +1674,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
-    public static boolean updatesLock = false;
+
+    static AtomicBoolean updatesLock = new AtomicBoolean(false);
 
     private boolean regularUpdatesLock = false;
     private boolean lockHandler =false;
@@ -1684,17 +1699,35 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
 
                                 if (!list.isEmpty()) {
-                                    while (true) {
-                                        if  (!updatesLock) {
-                                            updatesLock = true;
-                                            break;
+                                    Thread t = new Thread() {
+                                        public void run() {
+                                            Looper.prepare();
+                                            while (true) {
+                                                if  (!updatesLock.get()) {
+                                                    updatesLock.getAndSet(true);
+                                                    break;
+                                                }
+                                                Log.d("getAllBumps", "getAllBumps thread lock fffffffffffffffffffffff");
+                                                try {
+                                                    Thread.sleep(20);
+                                                } catch (InterruptedException e) {
+                                                }
+                                            }
+
+
+
+                                            Looper.loop();
+                                            Log.d("TTRREEE","konci  sa   sa Thread");
+
                                         }
-                                        Log.d("getAllBumps", "getAllBumps thread lock ");
-                                        try {
-                                            Thread.sleep(20);
-                                        } catch (InterruptedException e) {
-                                        }
-                                    }
+                                    };
+                                    t.start();
+
+
+
+
+
+
                                         regularUpdatesLock = false;
                                         ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
                                         lista.addAll(accelerometer.getPossibleBumps());
@@ -1704,22 +1737,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         accelerometer.getBumpsManual().clear();
                                         Log.d("TTRREEE", "saveBump spustam");
                                         saveBump(lista, bumpsManual, 0);
-                                    updatesLock=false;
-
-                                    if(regularUpdatesLock) {
-                                        Log.d("TTRREEE", "updates == 1 v save");
-                                        updates=0;
-                                        regularUpdatesLock=false;
-                                        lockHandler=false;
-                                        LatLng convert_location = gps.getCurrentLatLng();
-                                        get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
-
-                                    }else if(lockHandler){
-                                        Log.d("TTRREEE", "lockHandler==true");
-                                        lockHandler=false;
-                                        getBumpsWithLevel();
-                                    }
-
                                 }else{
                                     Log.d("TTRREEE", "isEmpty  SyncDb");
                                     getBumpsWithLevel();
@@ -1868,6 +1885,21 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 listHelp=null;
                 bumpsManualHelp=null;
+                updatesLock.getAndSet(false);
+
+                if(regularUpdatesLock) {
+                    Log.d("TTRREEE", "updates == 1 v save");
+                    updates=0;
+                    regularUpdatesLock=false;
+                    lockHandler=false;
+                    LatLng convert_location = gps.getCurrentLatLng();
+                    get_max_bumps(convert_location.latitude, convert_location.longitude, 1);
+
+                }else if(lockHandler){
+                    Log.d("TTRREEE", "lockHandler==true");
+                    lockHandler=false;
+                    getBumpsWithLevel();
+                }
 
                 Looper.loop();
             } };

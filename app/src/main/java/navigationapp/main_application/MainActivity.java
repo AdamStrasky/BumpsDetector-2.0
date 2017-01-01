@@ -287,8 +287,9 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                                     threadLock.getAndSet(true);
                                                     fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                                     fragmentActivity.accelerometer.addBumpsManual(1);
-                                                    if ( !updatesLock) {
-                                                        updatesLock=true;
+                                                    if ( !updatesLock.get()) {
+                                                        updatesLock.getAndSet(true);
+
                                                         if (lockZoznamDB.tryLock())
                                                         {
                                                             // Got the lock
@@ -314,7 +315,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                                                 lockZoznamDB.unlock();
                                                             }
                                                         }
-                                                        updatesLock=false;
+                                                        updatesLock.getAndSet(false);
+
                                                     }
                                                     threadLock.getAndSet(false);
                                                     Log.d("TREEEE","casovy lock koniec");
@@ -674,6 +676,17 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
             case R.id.exit:
 
                 if (fragmentActivity.accelerometer!=null) {
+                    while (true) {
+                        if  (!updatesLock.get()) {
+                            updatesLock.getAndSet(true);
+                            break;
+                        }
+                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException e) {
+                        }
+                    }
                     ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
                     ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
@@ -706,6 +719,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     }
                     sb.setTransactionSuccessful();
                     sb.endTransaction();
+                    updatesLock.getAndSet(false);
                     fragmentActivity.stop_servise();
                 }
                 onDestroy();

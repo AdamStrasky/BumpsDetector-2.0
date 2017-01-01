@@ -28,8 +28,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import static navigationapp.main_application.Accelerometer.getDistance;
 import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_gps;
-import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
+import static navigationapp.main_application.FragmentActivity.updatesLock;
 
 /**
  * Created by Adam on 2.11.2016.
@@ -275,8 +275,9 @@ public class Location {
 
 
                             while (true) {
-                                if (!updatesLock) {
-                                    updatesLock = true;
+                                if (!updatesLock.get()) {
+                                    updatesLock.getAndSet(true);
+
                                     break;
                                 }
                                 try {
@@ -287,8 +288,8 @@ public class Location {
                                 }
                             }
 
-                            if (this.isInterrupted() && updatesLock) {
-                                updatesLock = false;
+                            if (this.isInterrupted() && updatesLock.get()) {
+                                updatesLock.getAndSet(false);
                                 Log.d("collision_places", "throw intr after while on update lock ");
                                 throw new InterruptedException("");
                             }
@@ -328,8 +329,8 @@ public class Location {
                             database.endTransaction();
                             database.close();
                             Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
+                            updatesLock.getAndSet(false);
 
-                            updatesLock = false;
 
                             if (select_road != null && select_road.size() > 0) {
                                 while (true) {

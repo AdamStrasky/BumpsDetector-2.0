@@ -249,8 +249,9 @@ public class Accelerometer extends Service implements SensorEventListener {
                                     if (data > (Float) pair.getValue()) {
                                         pair.setValue(data);
                                         Log.d("DETECT", "same location");
-                                        if (!updatesLock) {
-                                            updatesLock=true;
+                                        if (!updatesLock.get()) {
+                                            updatesLock.getAndSet(true);
+                                            Log.d("Acccelerometer", "updatesLock llllllll ");
                                             if (lockZoznamDB.tryLock())
                                             {
                                                 // Got the lock
@@ -267,7 +268,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                     lockZoznamDB.unlock();
                                                 }
                                             }
-                                            updatesLock=false;
+                                            updatesLock.getAndSet(false);
 
                                         }
                                         result = "same bump";
@@ -283,8 +284,9 @@ public class Accelerometer extends Service implements SensorEventListener {
                                         if (data > (Float) pair.getValue()) {
                                             Log.d("DETECT", "under 2 meters ");
                                             pair.setValue(data);
-                                            if (!updatesLock) {
-                                                updatesLock=true;
+                                            if (!updatesLock.get()) {
+                                                updatesLock.getAndSet(true);
+                                                Log.d("Acccelerometer", "updatesLock qqqqqqqq  ");
                                                 if (lockZoznamDB.tryLock())
                                                 {
                                                     // Got the lock
@@ -301,7 +303,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                         lockZoznamDB.unlock();
                                                     }
                                                 }
-                                                updatesLock=false;
+                                                updatesLock.getAndSet(false);
                                             }
                                             result = "under bump";
                                         }
@@ -344,8 +346,9 @@ public class Accelerometer extends Service implements SensorEventListener {
                         }
                     }
 
-                    if (!updatesLock) {
-                        updatesLock=true;
+                    if (!updatesLock.get()) {
+                        updatesLock.getAndSet(true);
+                        Log.d("Acccelerometer", "updatesLock pppppp ");
                         if (lockZoznamDB.tryLock())
                         {
                             // Got the lock
@@ -370,7 +373,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                 lockZoznamDB.unlock();
                             }
                         }
-                        updatesLock=false;
+                        updatesLock.getAndSet(false);
                     }
                 }
 
