@@ -75,7 +75,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public static Button navig_on,add_button;
     public static MapboxMap mapbox;
     public static MapboxAccountManager manager;
-    static Lock lock = new ReentrantLock();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -288,44 +287,35 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                                     threadLock.getAndSet(true);
                                                     fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                                     fragmentActivity.accelerometer.addBumpsManual(1);
-                                                    if (updatesLock.tryLock())
-                                                    {
-                                                        // Got the lock
-                                                        try
+                                                    if ( !updatesLock) {
+                                                        updatesLock=true;
+                                                        if (lockZoznamDB.tryLock())
                                                         {
-                                                            if (lockZoznamDB.tryLock())
+                                                            // Got the lock
+                                                            try
                                                             {
-                                                                // Got the lock
-                                                                try
-                                                                {
-                                                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                                                    SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                                                                    Log.d("TREEEE","vlozil do db ");
-                                                                    database.beginTransaction();
-                                                                    ContentValues contentValues = new ContentValues();
-                                                                    contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                                                    contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                                                    contentValues.put(Provider.new_bumps.MANUAL, 1);
-                                                                    contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
-                                                                    database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                                                    database.setTransactionSuccessful();
-                                                                    database.endTransaction();
-                                                                    database.close();
-                                                                }
-                                                                finally
-                                                                {
-                                                                    // Make sure to unlock so that we don't cause a deadlock
-                                                                    lockZoznamDB.unlock();
-                                                                }
+                                                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                                                SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                                                                Log.d("TREEEE","vlozil do db ");
+                                                                database.beginTransaction();
+                                                                ContentValues contentValues = new ContentValues();
+                                                                contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                                                contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                                                contentValues.put(Provider.new_bumps.MANUAL, 1);
+                                                                contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
+                                                                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                                                database.setTransactionSuccessful();
+                                                                database.endTransaction();
+                                                                database.close();
+                                                            }
+                                                            finally
+                                                            {
+                                                                // Make sure to unlock so that we don't cause a deadlock
+                                                                lockZoznamDB.unlock();
                                                             }
                                                         }
-                                                        finally
-                                                        {
-                                                            // Make sure to unlock so that we don't cause a deadlock
-                                                            updatesLock.unlock();
-                                                        }
+                                                        updatesLock=false;
                                                     }
-
                                                     threadLock.getAndSet(false);
                                                     Log.d("TREEEE","casovy lock koniec");
 
@@ -344,7 +334,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                             lockAdd.unlock();
                                         }
                                     }
-                                 }
+                                }
 
 
 

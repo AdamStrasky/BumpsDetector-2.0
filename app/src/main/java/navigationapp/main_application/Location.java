@@ -273,72 +273,63 @@ public class Location {
                             }else
                                 Log.d("aaasssdddd", "get_road true");
 
-                            ArrayList<LatLng> all_bumps = new ArrayList<LatLng>();
+
                             while (true) {
-                                if (updatesLock.tryLock())
-                                {
-                                    // Got the lock
-                                    try
-                                    {
-
-                                        SimpleDateFormat now, ago;
-                                        Calendar cal = Calendar.getInstance();
-                                        cal.setTime(new Date());
-                                        now = new SimpleDateFormat("yyyy-MM-dd");
-                                        String now_formated = now.format(cal.getTime());
-                                        // posun od dnesneho dna o 280 dni
-                                        cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
-                                        ago = new SimpleDateFormat("yyyy-MM-dd");
-                                        String ago_formated = ago.format(cal.getTime());
-                                        // ziskam sučasnu poziciu
-                                        // seleknutie vytlk z oblasti a starych 280 dni
-                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(fragment_context);
-                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                        database.beginTransaction();
-                                        String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE " +
-                                                " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                                + " (ROUND(latitude,2)==ROUND(" + latitude + ",2) and ROUND(longitude,2)==ROUND(" + longitude + ",2)) ";
-
-                                        Cursor cursor = null;
-                                        try {
-                                            cursor = database.rawQuery(selectQuery, null);
-                                            if (cursor.moveToFirst()) {
-                                                do {
-                                                    all_bumps.add(new LatLng(cursor.getDouble(0), cursor.getDouble(1)));
-                                                }
-                                                while (cursor.moveToNext());
-                                            }
-                                        } finally {
-                                            if (cursor != null)
-                                                cursor.close();
-                                        }
-                                        database.setTransactionSuccessful();
-                                        database.endTransaction();
-                                        database.close();
-                                        Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
-                                    }
-                                    finally
-                                    {
-                                        // Make sure to unlock so that we don't cause a deadlock
-                                        updatesLock.unlock();
-                                        break;
-                                    }
+                                if (!updatesLock) {
+                                    updatesLock = true;
+                                    break;
                                 }
-                                else
-                                {
-                                    try {
-                                        Thread.sleep(20);
-                                    } catch (InterruptedException e) {
-                                    }
+                                try {
+                                    Thread.sleep(20);
+                                } catch (InterruptedException e) {
+                                    Log.d("collision_places", "throw intr on update lock ");
+                                    throw new InterruptedException("Stopped by ifInterruptedStop()");
                                 }
                             }
 
-
-                            if (this.isInterrupted() ) {
+                            if (this.isInterrupted() && updatesLock) {
+                                updatesLock = false;
                                 Log.d("collision_places", "throw intr after while on update lock ");
                                 throw new InterruptedException("");
                             }
+                            ArrayList<LatLng> all_bumps = new ArrayList<LatLng>();
+                            SimpleDateFormat now, ago;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            now = new SimpleDateFormat("yyyy-MM-dd");
+                            String now_formated = now.format(cal.getTime());
+                            // posun od dnesneho dna o 280 dni
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            String ago_formated = ago.format(cal.getTime());
+                            // ziskam sučasnu poziciu
+                            // seleknutie vytlk z oblasti a starych 280 dni
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(fragment_context);
+                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                            database.beginTransaction();
+                            String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE " +
+                                    " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                    + " (ROUND(latitude,2)==ROUND(" + latitude + ",2) and ROUND(longitude,2)==ROUND(" + longitude + ",2)) ";
 
+                            Cursor cursor = null;
+                            try {
+                                cursor = database.rawQuery(selectQuery, null);
+                                if (cursor.moveToFirst()) {
+                                    do {
+                                        all_bumps.add(new LatLng(cursor.getDouble(0), cursor.getDouble(1)));
+                                    }
+                                    while (cursor.moveToNext());
+                                }
+                            } finally {
+                                if (cursor != null)
+                                    cursor.close();
+                            }
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
+                            Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
+
+                            updatesLock = false;
 
                             if (select_road != null && select_road.size() > 0) {
                                 while (true) {
