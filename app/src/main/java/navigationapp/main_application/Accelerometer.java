@@ -249,44 +249,12 @@ public class Accelerometer extends Service implements SensorEventListener {
                                     if (data > (Float) pair.getValue()) {
                                         pair.setValue(data);
                                         Log.d("DETECT", "same location");
-                                        if (!updatesLock.get()) {
-                                            updatesLock.getAndSet(true);
-                                            Log.d("Acccelerometer", "updatesLock llllllll ");
-                                            if (lockZoznamDB.tryLock())
+                                        if (updatesLock.tryLock())
+                                        {
+                                            // Got the lock
+                                            try
                                             {
-                                                // Got the lock
-                                                try
-                                                {
-                                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                                                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                                    database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
-                                                    database.close();
-                                                }
-                                                finally
-                                                {
-                                                    // Make sure to unlock so that we don't cause a deadlock
-                                                    lockZoznamDB.unlock();
-                                                }
-                                            }
-                                            updatesLock.getAndSet(false);
-
-                                        }
-                                        result = "same bump";
-                                    }
-                                    isToClose = true;
-                                }
-                                else {
-                                    double distance = getDistance((float) location.getLatitude(), (float) location.getLongitude(),
-                                            (float) hashLocation.getLatitude(), (float) hashLocation.getLongitude());
-                                    //nie je to novy bump, pretoze z jeho okolia uz jeden pridavam (okolie 2m)
-                                    if (distance < 2000.0) {
-                                        //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
-                                        if (data > (Float) pair.getValue()) {
-                                            Log.d("DETECT", "under 2 meters ");
-                                            pair.setValue(data);
-                                            if (!updatesLock.get()) {
-                                                updatesLock.getAndSet(true);
-                                                Log.d("Acccelerometer", "updatesLock qqqqqqqq  ");
+                                                Log.d("Acccelerometer", "updatesLock llllllll ");
                                                 if (lockZoznamDB.tryLock())
                                                 {
                                                     // Got the lock
@@ -303,8 +271,65 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                         lockZoznamDB.unlock();
                                                     }
                                                 }
-                                                updatesLock.getAndSet(false);
                                             }
+                                            finally
+                                            {
+                                                // Make sure to unlock so that we don't cause a deadlock
+                                                updatesLock.unlock();
+                                            }
+                                        }
+
+
+
+
+
+                                        result = "same bump";
+                                    }
+                                    isToClose = true;
+                                }
+                                else {
+                                    double distance = getDistance((float) location.getLatitude(), (float) location.getLongitude(),
+                                            (float) hashLocation.getLatitude(), (float) hashLocation.getLongitude());
+                                    //nie je to novy bump, pretoze z jeho okolia uz jeden pridavam (okolie 2m)
+                                    if (distance < 2000.0) {
+                                        //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
+                                        if (data > (Float) pair.getValue()) {
+                                            Log.d("DETECT", "under 2 meters ");
+                                            pair.setValue(data);
+
+                                            if (updatesLock.tryLock())
+                                            {
+                                                // Got the lock
+                                                try
+                                                {
+                                                    Log.d("Acccelerometer", "updatesLock qqqqqqqq  ");
+                                                    if (lockZoznamDB.tryLock())
+                                                    {
+                                                        // Got the lock
+                                                        try
+                                                        {
+                                                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                                                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                                            database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
+                                                            database.close();
+                                                        }
+                                                        finally
+                                                        {
+                                                            // Make sure to unlock so that we don't cause a deadlock
+                                                            lockZoznamDB.unlock();
+                                                        }
+                                                    }
+                                                }
+                                                finally
+                                                {
+                                                    // Make sure to unlock so that we don't cause a deadlock
+                                                    updatesLock.unlock();
+                                                }
+                                            }
+
+
+
+
                                             result = "under bump";
                                         }
                                         isToClose = true;
@@ -345,36 +370,44 @@ public class Accelerometer extends Service implements SensorEventListener {
                             lockZoznam.unlock();
                         }
                     }
-
-                    if (!updatesLock.get()) {
-                        updatesLock.getAndSet(true);
-                        Log.d("Acccelerometer", "updatesLock pppppp ");
-                        if (lockZoznamDB.tryLock())
+                    if (updatesLock.tryLock())
+                    {
+                        // Got the lock
+                        try
                         {
-                            // Got the lock
-                            try
+                            Log.d("Acccelerometer", "updatesLock pppppp ");
+                            if (lockZoznamDB.tryLock())
                             {
-                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                                SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                BigDecimal bd = new BigDecimal(Float.toString(data));
-                                bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                                hashToArray.put(location,data);
-                                ContentValues contentValues = new ContentValues();
-                                contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                contentValues.put(Provider.new_bumps.MANUAL, 0);
-                                contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                database.close();
-                            }
-                            finally
-                            {
-                                // Make sure to unlock so that we don't cause a deadlock
-                                lockZoznamDB.unlock();
+                                // Got the lock
+                                try
+                                {
+                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                    BigDecimal bd = new BigDecimal(Float.toString(data));
+                                    bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                    hashToArray.put(location,data);
+                                    ContentValues contentValues = new ContentValues();
+                                    contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                    contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                    contentValues.put(Provider.new_bumps.MANUAL, 0);
+                                    contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                    database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                    database.close();
+                                }
+                                finally
+                                {
+                                    // Make sure to unlock so that we don't cause a deadlock
+                                    lockZoznamDB.unlock();
+                                }
                             }
                         }
-                        updatesLock.getAndSet(false);
+                        finally
+                        {
+                            // Make sure to unlock so that we don't cause a deadlock
+                            updatesLock.unlock();
+                        }
                     }
+
                 }
 
             }

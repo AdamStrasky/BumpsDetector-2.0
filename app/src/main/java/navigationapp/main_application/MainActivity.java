@@ -287,37 +287,47 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                                     threadLock.getAndSet(true);
                                                     fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                                     fragmentActivity.accelerometer.addBumpsManual(1);
-                                                    if ( !updatesLock.get()) {
-                                                        updatesLock.getAndSet(true);
-
-                                                        if (lockZoznamDB.tryLock())
+                                                    if (updatesLock.tryLock())
+                                                    {
+                                                        // Got the lock
+                                                        try
                                                         {
-                                                            // Got the lock
-                                                            try
+                                                            if (lockZoznamDB.tryLock())
                                                             {
-                                                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                                                SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                                                                Log.d("TREEEE","vlozil do db ");
-                                                                database.beginTransaction();
-                                                                ContentValues contentValues = new ContentValues();
-                                                                contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                                                contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                                                contentValues.put(Provider.new_bumps.MANUAL, 1);
-                                                                contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
-                                                                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                                                database.setTransactionSuccessful();
-                                                                database.endTransaction();
-                                                                database.close();
-                                                            }
-                                                            finally
-                                                            {
-                                                                // Make sure to unlock so that we don't cause a deadlock
-                                                                lockZoznamDB.unlock();
+                                                                // Got the lock
+                                                                try
+                                                                {
+                                                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                                                    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                                                                    Log.d("TREEEE","vlozil do db ");
+                                                                    database.beginTransaction();
+                                                                    ContentValues contentValues = new ContentValues();
+                                                                    contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                                                    contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                                                    contentValues.put(Provider.new_bumps.MANUAL, 1);
+                                                                    contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
+                                                                    database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                                                    database.setTransactionSuccessful();
+                                                                    database.endTransaction();
+                                                                    database.close();
+                                                                }
+                                                                finally
+                                                                {
+                                                                    // Make sure to unlock so that we don't cause a deadlock
+                                                                    lockZoznamDB.unlock();
+                                                                }
                                                             }
                                                         }
-                                                        updatesLock.getAndSet(false);
-
+                                                        finally
+                                                        {
+                                                            // Make sure to unlock so that we don't cause a deadlock
+                                                            updatesLock.unlock();
+                                                        }
                                                     }
+
+
+
+
                                                     threadLock.getAndSet(false);
                                                     Log.d("TREEEE","casovy lock koniec");
 
@@ -677,49 +687,67 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
                 if (fragmentActivity.accelerometer!=null) {
                     while (true) {
-                        if  (!updatesLock.get()) {
-                            updatesLock.getAndSet(true);
-                            break;
+                        if (updatesLock.tryLock())
+                        {
+                            // Got the lock
+                            try
+                            {
+                                ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
+                                ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
+                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                                SQLiteDatabase sb = databaseHelper.getWritableDatabase();
+                                sb.beginTransaction();
+                                int i = 0;
+                                for (HashMap<Location, Float> bump : list) {
+                                    Iterator it = bump.entrySet().iterator();
+                                    while (it.hasNext()) {
+                                        HashMap.Entry pair = (HashMap.Entry) it.next();
+                                        Location loc = (Location) pair.getKey();
+                                        float data = (float) pair.getValue();
+                                        String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + loc.getLongitude() + ",7) "
+                                                + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and manual=" + bumpsManual.get(i);
+
+                                        BigDecimal bd = new BigDecimal(Float.toString(data));
+                                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                        Cursor cursor = sb.rawQuery(sql, null);
+                                        if (cursor.getCount() == 0) {
+                                            Log.d("MainActivity", "vkladam ");
+                                            ContentValues contentValues = new ContentValues();
+                                            contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
+                                            contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
+                                            contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
+                                            contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                            sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                        }
+                                    }
+                                    i++;
+                                }
+                                sb.setTransactionSuccessful();
+                                sb.endTransaction();
+
+                            }
+                            finally
+                            {
+                                // Make sure to unlock so that we don't cause a deadlock
+                                updatesLock.unlock();
+                                break;
+                            }
+                        } else {
+                            Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                            try {
+                                Thread.sleep(20);
+                            } catch (InterruptedException e) {
+                            }
                         }
+
+
                         Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
                         try {
                             Thread.sleep(20);
                         } catch (InterruptedException e) {
                         }
                     }
-                    ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
-                    ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
-                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                    SQLiteDatabase sb = databaseHelper.getWritableDatabase();
-                    sb.beginTransaction();
-                    int i = 0;
-                    for (HashMap<Location, Float> bump : list) {
-                        Iterator it = bump.entrySet().iterator();
-                        while (it.hasNext()) {
-                            HashMap.Entry pair = (HashMap.Entry) it.next();
-                            Location loc = (Location) pair.getKey();
-                            float data = (float) pair.getValue();
-                            String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + loc.getLongitude() + ",7) "
-                                    + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and manual=" + bumpsManual.get(i);
 
-                            BigDecimal bd = new BigDecimal(Float.toString(data));
-                            bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                            Cursor cursor = sb.rawQuery(sql, null);
-                            if (cursor.getCount() == 0) {
-                                Log.d("MainActivity", "vkladam ");
-                                ContentValues contentValues = new ContentValues();
-                                contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
-                                contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
-                                contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
-                                contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                                sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                            }
-                        }
-                        i++;
-                    }
-                    sb.setTransactionSuccessful();
-                    sb.endTransaction();
-                    updatesLock.getAndSet(false);
                     fragmentActivity.stop_servise();
                 }
                 onDestroy();

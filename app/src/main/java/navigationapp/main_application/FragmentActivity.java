@@ -62,6 +62,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -122,6 +123,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     static Lock lockZoznam = new ReentrantLock();
     static Lock lockZoznamDB = new ReentrantLock();
     static Lock lockAdd = new ReentrantLock();
+   static Lock updatesLock = new ReentrantLock();
     navigationapp.main_application.Location detection = null;
 
     @Override
@@ -617,64 +619,77 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 Looper.prepare();
 
                 while (true) {
-                    if (!updatesLock.get()) {
-                        updatesLock.getAndSet(true);
-                        break;
-                    }
-                    Log.d("getAllBumps", "getAllBumps thread lockAAAAAA ");
-                    try {
-                        Thread.sleep(2);
-                    } catch (InterruptedException e) {
-                    }
-                }
-
-                if (isClear() && mapbox != null)
-                    mapbox.deselectMarkers();
+                    if (updatesLock.tryLock())
+                    {
+                        // Got the lock
+                        try
+                        {
+                            if (isClear() && mapbox != null)
+                                mapbox.deselectMarkers();
 
 
-                SimpleDateFormat now, ago;
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(new Date());
-                now = new SimpleDateFormat("yyyy-MM-dd");
-                String now_formated = now.format(cal.getTime());
-                // posun od dnesneho dna o 280 dni
-                cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
-                ago = new SimpleDateFormat("yyyy-MM-dd");
-                String ago_formated = ago.format(cal.getTime());
-                // ziskam sučasnu poziciu
-                LatLng convert_location = gps.getCurrentLatLng();
+                            SimpleDateFormat now, ago;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            now = new SimpleDateFormat("yyyy-MM-dd");
+                            String now_formated = now.format(cal.getTime());
+                            // posun od dnesneho dna o 280 dni
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            String ago_formated = ago.format(cal.getTime());
+                            // ziskam sučasnu poziciu
+                            LatLng convert_location = gps.getCurrentLatLng();
 
-                // seleknutie vytlk z oblasti a starych 280 dni
-                String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >=" + level + " AND " +
-                        " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                        + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
-                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                database.beginTransaction();
-                Cursor cursor = null;
-                try {
-                    cursor = database.rawQuery(selectQuery, null);
-
-                    if (cursor.moveToFirst()) {
-                        do {
-                            // pridavanie do mapy
-                            gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
+                            // seleknutie vytlk z oblasti a starych 280 dni
+                            String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >=" + level + " AND " +
+                                    " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                            database.beginTransaction();
+                            Cursor cursor = null;
                             try {
-                                Thread.sleep(50);
-                            } catch (InterruptedException e) {
-                                Log.e("error", e.toString());
+                                cursor = database.rawQuery(selectQuery, null);
+
+                                if (cursor.moveToFirst()) {
+                                    do {
+                                        // pridavanie do mapy
+                                      //  gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
+                                        try {
+                                            Thread.sleep(50);
+                                        } catch (InterruptedException e) {
+                                            Log.e("error", e.toString());
+                                        }
+                                    }
+                                    while (cursor.moveToNext());
+                                }
+                            } finally {
+                                if (cursor != null)
+                                    cursor.close();
                             }
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
+
                         }
-                        while (cursor.moveToNext());
+                        finally
+                        {
+                            // Make sure to unlock so that we don't cause a deadlock
+                            updatesLock.unlock();
+                            break;
+                        }
+                    } else {
+                        Log.d("getAllBumps", "getAllBumps thread lockAAAAAA ");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
+                        }
                     }
-                } finally {
-                    if (cursor != null)
-                        cursor.close();
                 }
-                database.setTransactionSuccessful();
-                database.endTransaction();
-                database.close();
-                updatesLock.getAndSet(false);
+
+
 
                 ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
                 ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
@@ -699,7 +714,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     break;
                                 }
                             }else {try {
-                                Thread.sleep(20);
+                                Random ran = new Random();
+                                int x = ran.nextInt(20) + 1;
+                                Thread.sleep(x);
+
                             } catch (InterruptedException e) {
                             }}
 
@@ -711,7 +729,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
                     } else {
                         try {
-                            Thread.sleep(20);
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
                         } catch (InterruptedException e) {
                         }
                     }
@@ -745,7 +765,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     if (isBetween(data, 6, 10)) rating = 2;
                     if (isBetween(data, 10, 10000)) rating = 3;
                     if (rating == level)
-                        gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
+                     //   gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
                     i++;
                 }
                 try {
@@ -771,56 +791,71 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
                 while (true) {
-                    if  (!updatesLock.get()) {
-                        updatesLock.getAndSet(true);
-                        break;
+
+                    if (updatesLock.tryLock())
+                    {
+                        // Got the lock
+                        try
+                        {
+                            SimpleDateFormat now,ago;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            now = new SimpleDateFormat("yyyy-MM-dd");
+                            String now_formated = now.format(cal.getTime());
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            String ago_formated = ago.format(cal.getTime());
+
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                            database.beginTransaction();
+                            // max b_id_collisions z databazy
+                            String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                                    + " where (last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
+                                    + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longtitude+",1)))"
+                                    + " ORDER BY c_id DESC LIMIT 1 ";
+                            Cursor cursor = null;
+
+                            try {
+                                cursor = database.rawQuery(selectQuery, null);
+
+                                if (cursor.moveToFirst()) {
+                                    do {
+                                        c_id_database =cursor.getInt(0);
+                                        Log.d("TTRREEE","max v collisions "+ c_id_database);
+                                    } while (cursor.moveToNext());
+                                }
+                            } finally {
+                                // this gets called even if there is an exception somewhere above
+                                if(cursor != null)
+                                    cursor.close();
+                            }
+
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
+
+                        }
+                        finally
+                        {
+                            // Make sure to unlock so that we don't cause a deadlock
+                            updatesLock.unlock();
+                            break;
+                        }
                     }
-                    Log.d("getAllBumps", "getAllBumps thread lock bbbbbbbb ");
-                    try {
-                        Thread.sleep(20);
-                    } catch (InterruptedException e) {
+                    else {
+                        Log.d("getAllBumps", "getAllBumps thread lock bbbbbbbb ");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
+                        }
                     }
                 }
 
 
-                SimpleDateFormat now,ago;
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(new Date());
-                now = new SimpleDateFormat("yyyy-MM-dd");
-                String now_formated = now.format(cal.getTime());
-                cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
-                ago = new SimpleDateFormat("yyyy-MM-dd");
-                String ago_formated = ago.format(cal.getTime());
 
-                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                database.beginTransaction();
-                // max b_id_collisions z databazy
-                String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
-                        + " where (last_modified BETWEEN '"+ago_formated+" 00:00:00' AND '"+now_formated+" 23:59:59') and  "
-                        + " (ROUND(latitude,1)==ROUND("+latitude+",1) and ROUND(longitude,1)==ROUND("+longtitude+",1)))"
-                        + " ORDER BY c_id DESC LIMIT 1 ";
-                Cursor cursor = null;
-
-                try {
-                    cursor = database.rawQuery(selectQuery, null);
-
-                    if (cursor.moveToFirst()) {
-                        do {
-                            c_id_database =cursor.getInt(0);
-                            Log.d("TTRREEE","max v collisions "+ c_id_database);
-                        } while (cursor.moveToNext());
-                    }
-                } finally {
-                    // this gets called even if there is an exception somewhere above
-                    if(cursor != null)
-                        cursor.close();
-                }
-
-                database.setTransactionSuccessful();
-                database.endTransaction();
-                database.close();
-                updatesLock.getAndSet(false);
                 updates = update;
                 new Max_Collision_Number().execute();
                 Looper.loop();
@@ -939,119 +974,144 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             Looper.prepare();
                             Boolean error = false ;
                             while (true) {
-                                if  (!updatesLock.get()) {
-                                    updatesLock.getAndSet(true);
-                                    break;
-                                }
-                                Log.d("getAllBumps", "getAllBumps thread lock ccccccccccc");
-                                try {
-                                    Thread.sleep(20);
-                                } catch (InterruptedException e) {
-                                }
-                            }
+                                if (updatesLock.tryLock())
+                                {
+                                    // Got the lock
+                                    try
+                                    {
+                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                        database.beginTransaction();
+                                        for (int i = 0; i < bumps.length(); i++) {
+                                            JSONObject c = null;
+                                            try {
+                                                c = bumps.getJSONObject(i);
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
+                                                error= true;
+                                            }
 
-                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                            database.beginTransaction();
-                            for (int i = 0; i < bumps.length(); i++) {
-                                JSONObject c = null;
-                                try {
-                                    c = bumps.getJSONObject(i);
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                    error= true;
-                                }
+                                            int c_id , b_id;
+                                            double intensity = 0;
+                                            String created_at;
+                                            Log.d("TTRREEE"," bob_id_database  " + b_id_database);
+                                            Log.d("TTRREEE"," bloaded_index " + loaded_index);
+                                            if (c != null) {
+                                                try {
+                                                    c_id = c.getInt("c_id");
+                                                    b_id = c.getInt("b_id");
+                                                    intensity = c.getDouble("intensity");
+                                                    created_at = c.getString("created_at");
+                                                    Log.d("TTRREEE","c_id "+ c_id);
+                                                    Log.d("TTRREEE","b_id "+ b_id);
+                                                    Log.d("TTRREEE","intensity "+ intensity);
 
-                                int c_id , b_id;
-                                double intensity = 0;
-                                String created_at;
-                                Log.d("TTRREEE"," bob_id_database  " + b_id_database);
-                                Log.d("TTRREEE"," bloaded_index " + loaded_index);
-                                if (c != null) {
-                                    try {
-                                        c_id = c.getInt("c_id");
-                                        b_id = c.getInt("b_id");
-                                        intensity = c.getDouble("intensity");
-                                        created_at = c.getString("created_at");
-                                        Log.d("TTRREEE","c_id "+ c_id);
-                                        Log.d("TTRREEE","b_id "+ b_id);
-                                        Log.d("TTRREEE","intensity "+ intensity);
-
-                                        // ak nove collision updatuju stare  vytlky
-                                        if (b_id <= loaded_index) {
-                                            Log.d("TTRREEE"," updatujem b_id ");
-                                            int rating=0;
-                                            if (isBetween((float) intensity,0,6)) rating = 1;
-                                            if (isBetween((float) intensity,6,10)) rating = 2;
-                                            if (isBetween( (float) intensity ,10,10000)) rating = 3;
-                                            database.execSQL("UPDATE "+ Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
-                                        }
+                                                    // ak nove collision updatuju stare  vytlky
+                                                    if (b_id <= loaded_index) {
+                                                        Log.d("TTRREEE"," updatujem b_id ");
+                                                        int rating=0;
+                                                        if (isBetween((float) intensity,0,6)) rating = 1;
+                                                        if (isBetween((float) intensity,6,10)) rating = 2;
+                                                        if (isBetween( (float) intensity ,10,10000)) rating = 3;
+                                                        database.execSQL("UPDATE "+ Provider.bumps_detect.TABLE_NAME_BUMPS+" SET rating=rating+ "+rating+", count=count +1 WHERE b_id_bumps="+b_id );
+                                                    }
 
                                 /* ak nastala chyba v transakcii,  musím upraviť udaje
                                   beriem od poslendej uspešnej transakcie collision po načitane max id z bumps
                                  */
-                                        if (b_id <= b_id_database && loaded_index < b_id) {
-                                            int rating = 0;
-                                            if (isBetween((float) intensity, 0, 6)) rating = 1;
-                                            if (isBetween((float) intensity, 6, 10)) rating = 2;
-                                            if (isBetween((float) intensity, 10, 10000)) rating = 3;
+                                                    if (b_id <= b_id_database && loaded_index < b_id) {
+                                                        int rating = 0;
+                                                        if (isBetween((float) intensity, 0, 6)) rating = 1;
+                                                        if (isBetween((float) intensity, 6, 10)) rating = 2;
+                                                        if (isBetween((float) intensity, 10, 10000)) rating = 3;
 
-                                            Cursor cursor = null;
-                                            String sql ="SELECT * FROM collisions WHERE b_id_collisions="+b_id;
+                                                        Cursor cursor = null;
+                                                        String sql ="SELECT * FROM collisions WHERE b_id_collisions="+b_id;
 
-                                            try {
-                                                cursor= database.rawQuery(sql,null);
+                                                        try {
+                                                            cursor= database.rawQuery(sql,null);
 
-                                                if(cursor.getCount()>0  ){
-                                                    Log.d("TTRREEE"," bolo ich viac v  b_id ");
-                                                    //  ak ich bolo viac pripičítam
-                                                    sql=     "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1 WHERE b_id_bumps=" + b_id;
-                                                }else{
-                                                    Log.d("TTRREEE"," bolo prvy b   b_id ");
-                                                    // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
-                                                    sql=   "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1 WHERE b_id_bumps=" + b_id ;
+                                                            if(cursor.getCount()>0  ){
+                                                                Log.d("TTRREEE"," bolo ich viac v  b_id ");
+                                                                //  ak ich bolo viac pripičítam
+                                                                sql=     "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1 WHERE b_id_bumps=" + b_id;
+                                                            }else{
+                                                                Log.d("TTRREEE"," bolo prvy b   b_id ");
+                                                                // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
+                                                                sql=   "UPDATE " + Provider.bumps_detect.TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1 WHERE b_id_bumps=" + b_id ;
+                                                            }
+                                                            database.execSQL(sql);
+                                                        } finally {
+                                                            // this gets called even if there is an exception somewhere above
+                                                            if(cursor != null)
+                                                                cursor.close();
+                                                        }
+                                                    }
+
+                                                    // insert novych udajov
+                                                    ContentValues contentValues = new ContentValues();
+                                                    contentValues.put(Provider.bumps_collision.C_ID, c_id);
+                                                    contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
+                                                    contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
+                                                    contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
+                                                    database.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
+
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                    // ak nastane chyba, tak si ju poznačim
+                                                    error= true;
                                                 }
-                                                database.execSQL(sql);
-                                            } finally {
-                                                // this gets called even if there is an exception somewhere above
-                                                if(cursor != null)
-                                                    cursor.close();
                                             }
                                         }
+                                        if (!error) {
+                                            // ak nenastala chyba, transakci je uspešna
+                                            database.setTransactionSuccessful();
+                                            database.endTransaction();
+                                            database.close();
 
-                                        // insert novych udajov
-                                        ContentValues contentValues = new ContentValues();
-                                        contentValues.put(Provider.bumps_collision.C_ID, c_id);
-                                        contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
-                                        contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
-                                        contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
-                                        database.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
 
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                        // ak nastane chyba, tak si ju poznačim
-                                        error= true;
+                                           ////////// updatesLock.getAndSet(false);
+                                            // uložím najvyššie b_id  z bumps po uspešnej transakcii
+                                            SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+                                            SharedPreferences.Editor editor = sharedPref.edit();
+                                            editor.putInt("save", max_number);
+                                            loaded_index = max_number;
+                                            editor.commit();
+                                        }
+                                        else {
+                                            // rollbacknem databazu
+                                            database.endTransaction();
+                                            database.close();
+                                         //////////////   updatesLock.getAndSet(false);
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        // Make sure to unlock so that we don't cause a deadlock
+                                        updatesLock.unlock();
+                                        break;
+                                    }
+                                }
+                                else {
+
+                                    Log.d("getAllBumps", "getAllBumps thread lock ccccccccccc");
+                                    try {
+                                        Random ran = new Random();
+                                        int x = ran.nextInt(20) + 1;
+                                        Thread.sleep(x);
+                                    } catch (InterruptedException e) {
                                     }
                                 }
                             }
+
                             if (!error) {
-                                // ak nenastala chyba, transakci je uspešna
-                                database.setTransactionSuccessful();
-                                database.endTransaction();
-                                database.close();
-                                updatesLock.getAndSet(false);
+                                ////////// updatesLock.getAndSet(false);
                                 // uložím najvyššie b_id  z bumps po uspešnej transakcii
                                 SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPref.edit();
                                 editor.putInt("save", max_number);
                                 loaded_index = max_number;
                                 editor.commit();
-                            }
-                            else {
-                                // rollbacknem databazu
-                                database.endTransaction();
-                                database.close();
-                                updatesLock.getAndSet(false);
                             }
                             // načítam vytlky
                             if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
@@ -1089,56 +1149,71 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 Looper.prepare();
 
                 while (true) {
-                    if  (!updatesLock.get()) {
-                        updatesLock.getAndSet(true);
-                        break;
+                    if (updatesLock.tryLock())
+                    {
+                        // Got the lock
+                        try
+                        {
+                            SimpleDateFormat now,ago;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            now = new SimpleDateFormat("yyyy-MM-dd");
+                            String now_formated = now.format(cal.getTime());
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            String ago_formated = ago.format(cal.getTime());
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                            database.beginTransaction();
+                            // vytiahnem najvyššie b_id z bumps
+                            String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                                    + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                    + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
+                                    + " ORDER BY b_id_bumps DESC LIMIT 1 ";
+                            Cursor cursor = null;
+                            try {
+                                cursor = database.rawQuery(selectQuery, null);
+
+                                if (cursor.moveToFirst()) {
+                                    do {
+                                        b_id_database = cursor.getInt(0);
+                                        Log.d("TTRREEE","najvssie  b_id v bumps "+ b_id_database);
+                                    } while (cursor.moveToNext());
+
+                                }
+                            } finally {
+                                // this gets called even if there is an exception somewhere above
+                                if (cursor != null)
+                                    cursor.close();
+                            }
+
+
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
+
+
+                        }
+                        finally
+                        {
+                            // Make sure to unlock so that we don't cause a deadlock
+                            updatesLock.unlock();
+                            break;
+                        }
                     }
-                    Log.d("getAllBumps", "getAllBumps thread lock ddddddddd");
-                    try {
-                        Thread.sleep(20);
-                    } catch (InterruptedException e) {
+                    else {
+
+                        Log.d("getAllBumps", "getAllBumps thread lock ddddddddd");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
+                        }
                     }
                 }
 
-                SimpleDateFormat now,ago;
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(new Date());
-                now = new SimpleDateFormat("yyyy-MM-dd");
-                String now_formated = now.format(cal.getTime());
-                cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE)-280);
-                ago = new SimpleDateFormat("yyyy-MM-dd");
-                String ago_formated = ago.format(cal.getTime());
-                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                database.beginTransaction();
-                // vytiahnem najvyššie b_id z bumps
-                String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
-                        + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                        + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
-                        + " ORDER BY b_id_bumps DESC LIMIT 1 ";
-                Cursor cursor = null;
-                try {
-                    cursor = database.rawQuery(selectQuery, null);
 
-                    if (cursor.moveToFirst()) {
-                        do {
-                            b_id_database = cursor.getInt(0);
-                            Log.d("TTRREEE","najvssie  b_id v bumps "+ b_id_database);
-                        } while (cursor.moveToNext());
-
-                    }
-                } finally {
-                    // this gets called even if there is an exception somewhere above
-                    if (cursor != null)
-                        cursor.close();
-                }
-
-
-                database.setTransactionSuccessful();
-                database.endTransaction();
-                database.close();
-
-                updatesLock.getAndSet(false);
                 net =nets ;
                 lang_database =langtitude;
                 longt_database =longtitude;
@@ -1225,73 +1300,98 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             Boolean error = false ;
 
                             while (true) {
-                                if  (!updatesLock.get()) {
-                                    updatesLock.getAndSet(true);
-                                    break;
-                                }
-                                Log.d("getAllBumps", "getAllBumps thread lock eeeeeeeeeeeeeeeeeeeee");
-                                try {
-                                    Thread.sleep(20);
-                                } catch (InterruptedException e) {
-                                }
-                            }
-                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                if (updatesLock.tryLock())
+                                {
+                                    // Got the lock
+                                    try
+                                    {
+                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
 
-                            database.beginTransaction();
-                            for (int i = 0; i < bumps.length(); i++) {
-                                JSONObject c = null;
-                                try {
-                                    c = bumps.getJSONObject(i);
-                                } catch (JSONException e) {
-                                    error= true;
-                                    e.printStackTrace();
-                                }
-                                double latitude, longitude ;
-                                int count, b_id, rating, manual = 0;
-                                String last_modified;
+                                        database.beginTransaction();
+                                        for (int i = 0; i < bumps.length(); i++) {
+                                            JSONObject c = null;
+                                            try {
+                                                c = bumps.getJSONObject(i);
+                                            } catch (JSONException e) {
+                                                error= true;
+                                                e.printStackTrace();
+                                            }
+                                            double latitude, longitude ;
+                                            int count, b_id, rating, manual = 0;
+                                            String last_modified;
 
-                                if (c != null) {
+                                            if (c != null) {
+                                                try {
+                                                    latitude = c.getDouble("latitude");
+                                                    longitude = c.getDouble("longitude");
+                                                    Log.d("TTRREEE","latitude "+ latitude);
+                                                    Log.d("TTRREEE","longitude"+ longitude);
+
+                                                    count = c.getInt("count");
+                                                    b_id = c.getInt("b_id");
+                                                    Log.d("TTRREEE","b_id"+ b_id);
+                                                    max_number = b_id;
+                                                    rating = c.getInt("rating");
+                                                    last_modified = c.getString("last_modified");
+                                                    manual = c.getInt("manual");
+                                                    ContentValues contentValues = new ContentValues();
+                                                    contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
+                                                    contentValues.put(Provider.bumps_detect.COUNT, count);
+                                                    contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
+                                                    contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
+                                                    contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
+                                                    contentValues.put(Provider.bumps_detect.MANUAL, manual);
+                                                    contentValues.put(Provider.bumps_detect.RATING, rating);
+                                                    database.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
+                                                } catch (JSONException e) {
+                                                    error= true;
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                        if (!error) {
+                                            // insert prebehol v poriadku, ukonči transakciu
+                                            database.setTransactionSuccessful();
+                                            database.endTransaction();
+                                            database.close();
+                                           //////// updatesLock.getAndSet(false);
+
+                                        } else {
+                                            // nastala chyba, načitaj uložene vytlky
+                                            database.endTransaction();
+                                            database.close();
+
+
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        // Make sure to unlock so that we don't cause a deadlock
+                                        updatesLock.unlock();
+                                        break;
+                                    }
+                                }
+                                else {
+
+                                    Log.d("getAllBumps", "getAllBumps thread lock eeeeeeeeeeeeeeeeeeeee");
                                     try {
-                                        latitude = c.getDouble("latitude");
-                                        longitude = c.getDouble("longitude");
-                                        Log.d("TTRREEE","latitude "+ latitude);
-                                        Log.d("TTRREEE","longitude"+ longitude);
-
-                                        count = c.getInt("count");
-                                        b_id = c.getInt("b_id");
-                                        Log.d("TTRREEE","b_id"+ b_id);
-                                        max_number = b_id;
-                                        rating = c.getInt("rating");
-                                        last_modified = c.getString("last_modified");
-                                        manual = c.getInt("manual");
-                                        ContentValues contentValues = new ContentValues();
-                                        contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
-                                        contentValues.put(Provider.bumps_detect.COUNT, count);
-                                        contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
-                                        contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
-                                        contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
-                                        contentValues.put(Provider.bumps_detect.MANUAL, manual);
-                                        contentValues.put(Provider.bumps_detect.RATING, rating);
-                                        database.insert(Provider.bumps_detect.TABLE_NAME_BUMPS, null, contentValues);
-                                    } catch (JSONException e) {
-                                        error= true;
-                                        e.printStackTrace();
+                                        Random ran = new Random();
+                                        int x = ran.nextInt(20) + 1;
+                                        Thread.sleep(x);
+                                    } catch (InterruptedException e) {
                                     }
                                 }
                             }
+
                             if (!error) {
-                                // insert prebehol v poriadku, ukonči transakciu
-                                database.setTransactionSuccessful();
-                                database.endTransaction();
-                                database.close();
-                                updatesLock.getAndSet(false);
-                                get_max_collision(lang_database, longt_database, 0);
                                 Looper.loop();
+                                //////// updatesLock.getAndSet(false);
+                                get_max_collision(lang_database, longt_database, 0);
+
                             } else {
                                 // nastala chyba, načitaj uložene vytlky
-                                database.endTransaction();
-                                database.close();
+                                Looper.loop();
                                 if (gps!=null &&  gps.getCurrentLatLng()!=null ) {
                                     getActivity().runOnUiThread(new Runnable() {
                                         @Override
@@ -1302,10 +1402,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         }
                                     });
                                 }
-                                updatesLock.getAndSet(false);
-                                Looper.loop();
+                                //////////// updatesLock.getAndSet(false);
+
 
                             }
+
                         }
                     };
                     t.start();
@@ -1325,30 +1426,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
-                        if ( regularUpdatesLock){
-                            Thread t = new Thread() {
-                                public void run() {
-                                    Looper.prepare();
-                                    while (true) {
-                                        if  (!updatesLock.get()) {
-                                            updatesLock.getAndSet(true);
-                                            break;
-                                        }
-                                        Log.d("getAllBumps", "getAllBumps thread lock xxxxxxxxxxxxxxxxx");
-                                        try {
-                                            Thread.sleep(20);
-                                        } catch (InterruptedException e) {
-                                        }
-                                    }
-
-
-
-                                    Looper.loop();
-                                    Log.d("TTRREEE","konci  sa   sa Thread");
-
-                                }
-                            };
-                            t.start();
+                        if ( regularUpdatesLock) {
                             lockHandler=false;
                             Log.d("TTRREEE", "regularUpdatesLock == 1 v getupdate");
                             ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
@@ -1545,7 +1623,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     gps = mLocnServGPS;
                     if (gps != null) {
                         LatLng convert_location = gps.getCurrentLatLng();
-                        if (convert_location != null && !updatesLock.get() && !dbEnd) {
+                        if (convert_location != null && !dbEnd) {
                             Log.d("TTRREEE","break sa Thread");
                             break;
 
@@ -1594,62 +1672,85 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
     private boolean dbEnd= true;
     public void loadSaveDB(){
-        if (updatesLock.get()) {
-            dbEnd=false;
-            return;
-        }
+
         Log.d("TTRREEE","pustilo sa loadSaveDB");
         Thread t = new Thread() {
             public void run() {
 
                 Looper.prepare();
 
-                updatesLock.getAndSet(true);
-                String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
-                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                Cursor cursor
-                        = database.rawQuery(selectQuery, null);
-                ArrayList<HashMap<Location, Float>> hashToArray = new  ArrayList <HashMap<Location, Float>>();
-                ArrayList <Integer> listA = new ArrayList <Integer>();
+                while (true) {
+                    if (updatesLock.tryLock()) {
+                        // Got the lock
+                        try {
+                            String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                            Cursor cursor
+                                    = database.rawQuery(selectQuery, null);
+                            ArrayList<HashMap<Location, Float>> hashToArray = new ArrayList<HashMap<Location, Float>>();
+                            ArrayList<Integer> listA = new ArrayList<Integer>();
 
-                long date = new Date().getTime();
-                int i=0;
+                            long date = new Date().getTime();
+                            int i = 0;
 
-                if (cursor!= null && cursor.moveToFirst()) {
-                    database.beginTransaction();
-                    do {
-                        if(!cursor.isNull(0) && !cursor.isNull(1) & !cursor.isNull(2) && !cursor.isNull(3)){
-                            Location location = new Location("new");
-                            location.setLatitude(cursor.getDouble(0));
-                            location.setLongitude(cursor.getDouble(1));
-                            location.setTime(date);
-                            HashMap<Location, Float> hashToArraya = new HashMap();
-                            hashToArraya.put(location, (float) cursor.getDouble(2));
-                            hashToArray.add(hashToArraya);
-                            listA.add(cursor.getInt(3));
-                            Log.d("loadSaveDB", "latitude " + cursor.getDouble(0));
-                            Log.d("loadSaveDB", "longitude "+ cursor.getDouble(1));
-                            Log.d("loadSaveDB", "intensity "+ cursor.getDouble(2));
+                            if (cursor != null && cursor.moveToFirst()) {
+                                database.beginTransaction();
+                                do {
+                                    if (!cursor.isNull(0) && !cursor.isNull(1) & !cursor.isNull(2) && !cursor.isNull(3)) {
+                                        Location location = new Location("new");
+                                        location.setLatitude(cursor.getDouble(0));
+                                        location.setLongitude(cursor.getDouble(1));
+                                        location.setTime(date);
+                                        HashMap<Location, Float> hashToArraya = new HashMap();
+                                        hashToArraya.put(location, (float) cursor.getDouble(2));
+                                        hashToArray.add(hashToArraya);
+                                        listA.add(cursor.getInt(3));
+                                        Log.d("loadSaveDB", "latitude " + cursor.getDouble(0));
+                                        Log.d("loadSaveDB", "longitude " + cursor.getDouble(1));
+                                        Log.d("loadSaveDB", "intensity " + cursor.getDouble(2));
+                                    }
+
+                                } while (cursor.moveToNext());
+                                if (cursor != null) {
+                                    accelerometer = mLocnServAcc;
+                                    if (mLocnServAcc != null) {
+                                        mLocnServAcc.getPossibleBumps().addAll(hashToArray);
+                                        mLocnServAcc.getBumpsManual().addAll(listA);
+                                    } else
+                                        Log.d("loadSaveDB", "NULL ACCELEROMETER");
+
+                                    database.setTransactionSuccessful();
+                                    database.endTransaction();
+                                    database.close();
+                                }
+                            }
+                        } finally {
+                            // Make sure to unlock so that we don't cause a deadlock
+                            updatesLock.unlock();
+                            break;
                         }
+                    }
 
-                    } while (cursor.moveToNext());
-                    if (cursor!= null) {
-                        accelerometer = mLocnServAcc;
-                        if (mLocnServAcc!= null) {
-                            mLocnServAcc.getPossibleBumps().addAll(hashToArray);
-                            mLocnServAcc.getBumpsManual().addAll(listA);
-                        }else
-                            Log.d("loadSaveDB","NULL ACCELEROMETER");
-                        updatesLock.getAndSet(false);
-                        database.setTransactionSuccessful();
-                        database.endTransaction();
-                        database.close();
+                        else
+                        {
+                            Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                            try {
+                                Random ran = new Random();
+                                int x = ran.nextInt(20) + 1;
+                                Thread.sleep(x);
+                            } catch (InterruptedException e) {
+                            }
+                        }
                     }
 
 
-                } else
-                    updatesLock.getAndSet(false);;
+
+
+
+
+
+
 
 
                 dbEnd=false;
@@ -1675,7 +1776,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
 
-    static AtomicBoolean updatesLock = new AtomicBoolean(false);
+
 
     private boolean regularUpdatesLock = false;
     private boolean lockHandler =false;
@@ -1699,33 +1800,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
 
                                 if (!list.isEmpty()) {
-                                    Thread t = new Thread() {
-                                        public void run() {
-                                            Looper.prepare();
-                                            while (true) {
-                                                if  (!updatesLock.get()) {
-                                                    updatesLock.getAndSet(true);
-                                                    break;
-                                                }
-                                                Log.d("getAllBumps", "getAllBumps thread lock fffffffffffffffffffffff");
-                                                try {
-                                                    Thread.sleep(20);
-                                                } catch (InterruptedException e) {
-                                                }
-                                            }
-
-
-
-                                            Looper.loop();
-                                            Log.d("TTRREEE","konci  sa   sa Thread");
-
-                                        }
-                                    };
-                                    t.start();
-
-
-
-
 
 
                                         regularUpdatesLock = false;
@@ -1782,20 +1856,45 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 public void callback(String results) {
                                     if (results.equals("success")) {
                                         int num =poradie;
-                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                        // ak mi prišlo potvrdenie o odoslaní, mažem z db
-                                        database.beginTransaction();
-                                        database.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)= ROUND("+loc.getLongitude()+",7)"
-                                                + " and  ROUND(intensity,6)==ROUND("+data+",6) and manual="+bumpsManualHelp.get(num)+"");
-                                        Log.d("TEST", "mazem");
-                                        Log.d("mazem",    listHelp.get(num).toString());
-                                        Log.d("mazem",    bumpsManualHelp.get(num).toString());
-                                        listHelp.remove(num);
-                                        bumpsManualHelp.remove(num);
-                                        database.setTransactionSuccessful();
-                                        database.endTransaction();
-                                        database.close();
+                                        while (true) {
+                                            if (updatesLock.tryLock())
+                                            {
+                                                // Got the lock
+                                                try
+                                                {
+                                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                                                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                                    // ak mi prišlo potvrdenie o odoslaní, mažem z db
+                                                    database.beginTransaction();
+                                                    database.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)= ROUND("+loc.getLongitude()+",7)"
+                                                            + " and  ROUND(intensity,6)==ROUND("+data+",6) and manual="+bumpsManualHelp.get(num)+"");
+                                                    Log.d("TEST", "mazem");
+                                                    Log.d("mazem",    listHelp.get(num).toString());
+                                                    Log.d("mazem",    bumpsManualHelp.get(num).toString());
+                                                    listHelp.remove(num);
+                                                    bumpsManualHelp.remove(num);
+                                                    database.setTransactionSuccessful();
+                                                    database.endTransaction();
+                                                    database.close();
+                                                }
+                                                finally
+                                                {
+                                                    // Make sure to unlock so that we don't cause a deadlock
+                                                    updatesLock.unlock();
+                                                    break;
+                                                }
+                                            } else {
+                                                Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                                                try {
+                                                    Random ran = new Random();
+                                                    int x = ran.nextInt(20) + 1;
+                                                    Thread.sleep(x);
+                                                } catch (InterruptedException e) {
+                                                }
+                                            }
+
+                                        }
+
                                         lock = true;
                                     } else {
                                         // nastala chyba, nemažem
@@ -1817,53 +1916,73 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 while (true) {
 
                     if (lockAdd.tryLock()) {
-                        // Got the lock
-                        try {
-                            if (listHelp.size()>0 && accelerometer.getPossibleBumps().size()>0) {
-                                int i=0;
-                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                                SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                for (HashMap<Location, Float> oldList : listHelp) {
-                                    Iterator oldListIteam = oldList.entrySet().iterator();
-                                    while (oldListIteam.hasNext()) {
-                                        HashMap.Entry oldData = (HashMap.Entry) oldListIteam.next();
-                                        Location oldLocation = (Location) oldData.getKey();
-                                        i=0;
-                                        for (HashMap<Location, Float> newList : accelerometer.getPossibleBumps()) {
 
-                                            Iterator newListIteam = newList.entrySet().iterator();
-                                            while (newListIteam.hasNext()) {
-                                                HashMap.Entry newData = (HashMap.Entry) newListIteam.next();
-                                                Location newLocation = (Location) newData.getKey();
-                                                // ak sa zhoduju location, tak updatujem hodnoty
-                                                if ((oldLocation.getLatitude() == newLocation.getLatitude()) &&
-                                                        (oldLocation.getLongitude() == newLocation.getLongitude()) ) {
-                                                    // staršia hodnota je väčšia, tak prepíšem na väčšiu hodnotu
-                                                    if ( (Float) oldData.getValue() >(Float) newData.getValue()  )
-                                                        accelerometer.getPossibleBumps().get(0).put(newLocation,(Float) oldData.getValue());
-                                                    // ak je stará hodnota menšia, updatujem databazu kde je uložená menšia
-                                                    if ( (Float) oldData.getValue() <(Float) newData.getValue())
-                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) newData.getValue()+",6) WHERE latitude=" + oldLocation.getLatitude() + " and  longitude=" + oldLocation.getLongitude()
-                                                                + " and  ROUND(intensity,6)==ROUND("+(Float) oldData.getValue()+",6)");
-                                                    // mažem s pomocného zoznamu updatnuté hodnoty
-                                                    listHelp.remove(i);
-                                                    bumpsManualHelp.remove(i);
+
+                            try {
+                                while (true) {
+                                    if (updatesLock.tryLock()) {
+                                        // Got the lock
+                                        try {
+                                            if (listHelp.size()>0 && accelerometer.getPossibleBumps().size()>0) {
+                                                int i=0;
+                                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                                                SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                                for (HashMap<Location, Float> oldList : listHelp) {
+                                                    Iterator oldListIteam = oldList.entrySet().iterator();
+                                                    while (oldListIteam.hasNext()) {
+                                                        HashMap.Entry oldData = (HashMap.Entry) oldListIteam.next();
+                                                        Location oldLocation = (Location) oldData.getKey();
+                                                        i=0;
+                                                        for (HashMap<Location, Float> newList : accelerometer.getPossibleBumps()) {
+
+                                                            Iterator newListIteam = newList.entrySet().iterator();
+                                                            while (newListIteam.hasNext()) {
+                                                                HashMap.Entry newData = (HashMap.Entry) newListIteam.next();
+                                                                Location newLocation = (Location) newData.getKey();
+                                                                // ak sa zhoduju location, tak updatujem hodnoty
+                                                                if ((oldLocation.getLatitude() == newLocation.getLatitude()) &&
+                                                                        (oldLocation.getLongitude() == newLocation.getLongitude()) ) {
+                                                                    // staršia hodnota je väčšia, tak prepíšem na väčšiu hodnotu
+                                                                    if ( (Float) oldData.getValue() >(Float) newData.getValue()  )
+                                                                        accelerometer.getPossibleBumps().get(0).put(newLocation,(Float) oldData.getValue());
+                                                                    // ak je stará hodnota menšia, updatujem databazu kde je uložená menšia
+                                                                    if ( (Float) oldData.getValue() <(Float) newData.getValue())
+                                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) newData.getValue()+",6) WHERE latitude=" + oldLocation.getLatitude() + " and  longitude=" + oldLocation.getLongitude()
+                                                                                + " and  ROUND(intensity,6)==ROUND("+(Float) oldData.getValue()+",6)");
+                                                                    // mažem s pomocného zoznamu updatnuté hodnoty
+                                                                    listHelp.remove(i);
+                                                                    bumpsManualHelp.remove(i);
+                                                                }
+                                                            }
+                                                            i++;
+                                                        }
+                                                    }
                                                 }
+                                                database.close();
+                                                // doplnim do zoznamu povodné, ktoré sa nezmenili
+                                                accelerometer.getPossibleBumps().addAll(listHelp);
+                                                accelerometer.getBumpsManual().addAll(bumpsManualHelp);
                                             }
-                                            i++;
+                                            else if (listHelp.size()>0) {
+                                                // nepribudli nové hodnoty, tak tam vrátim pôvodné
+                                                accelerometer.getPossibleBumps().addAll(listHelp);
+                                                accelerometer.getBumpsManual().addAll(bumpsManualHelp);
+                                            }
+
+                                        } finally {
+                                            // Make sure to unlock so that we don't cause a deadlock
+                                            updatesLock.unlock();
+                                            break;
+                                        }
+                                    } else {
+                                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                                        try {
+                                            Thread.sleep(5);
+                                        } catch (InterruptedException e) {
                                         }
                                     }
                                 }
-                                database.close();
-                                // doplnim do zoznamu povodné, ktoré sa nezmenili
-                                accelerometer.getPossibleBumps().addAll(listHelp);
-                                accelerometer.getBumpsManual().addAll(bumpsManualHelp);
-                            }
-                            else if (listHelp.size()>0) {
-                                // nepribudli nové hodnoty, tak tam vrátim pôvodné
-                                accelerometer.getPossibleBumps().addAll(listHelp);
-                                accelerometer.getBumpsManual().addAll(bumpsManualHelp);
-                            }
+
 
                         } finally {
                             // Make sure to unlock so that we don't cause a deadlock
@@ -1872,7 +1991,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
                     } else {
                         try {
-                            Thread.sleep(20);
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
                         } catch (InterruptedException e) {}
                     }
                 }
@@ -1885,7 +2006,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 listHelp=null;
                 bumpsManualHelp=null;
-                updatesLock.getAndSet(false);
+
 
                 if(regularUpdatesLock) {
                     Log.d("TTRREEE", "updates == 1 v save");

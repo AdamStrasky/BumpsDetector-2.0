@@ -15,6 +15,7 @@
         android:required="true" />
 
     <application
+        android:allowClearUserData="true"
         android:hardwareAccelerated="true"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
