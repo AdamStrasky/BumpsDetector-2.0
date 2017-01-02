@@ -15,6 +15,8 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
@@ -50,6 +52,15 @@ import com.mapbox.mapboxsdk.offline.OfflineRegion;
 import com.mapbox.mapboxsdk.offline.OfflineRegionError;
 import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
+import com.mapbox.mapboxsdk.style.layers.NoSuchLayerException;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.mapboxsdk.style.sources.NoSuchSourceException;
+import com.mapbox.mapboxsdk.style.sources.Source;
+import com.mapbox.services.commons.geojson.Feature;
+import com.mapbox.services.commons.geojson.FeatureCollection;
+import com.mapbox.services.commons.geojson.Point;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -605,6 +616,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
+
+    Source geoJsonSource = null;
+    Source geoJsonSource1 = null;
+    SymbolLayer markers =null;
+    SymbolLayer markers1 =null;
+    Source selectedMarkerSource =null;
+    Source selectedMarkerSource1 =null;
+    SymbolLayer selectedMarker =null;
+    SymbolLayer selectedMarker1 =null;
     public void getAllBumps(final Double latitude, final Double longitude) {
 
         if (latitude==null || longitude==null) {
@@ -617,6 +637,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         Thread t = new Thread() {
             public void run() {
                 Looper.prepare();
+                List<Feature> markerCoordinates = new ArrayList<>();
+                List<Feature> markerCoordinates1 = new ArrayList<>();
 
                 while (true) {
                     if (updatesLock.tryLock())
@@ -640,6 +662,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             // ziskam sučasnu poziciu
                             LatLng convert_location = gps.getCurrentLatLng();
 
+                            int i0=0,i1=0;
+
+
                             // seleknutie vytlk z oblasti a starych 280 dni
                             String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >=" + level + " AND " +
                                     " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
@@ -647,12 +672,31 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
                             database.beginTransaction();
+
                             Cursor cursor = null;
                             try {
                                 cursor = database.rawQuery(selectQuery, null);
 
                                 if (cursor.moveToFirst()) {
                                     do {
+                                        if (cursor.getInt(3)==0) {
+                                            markerCoordinates.add(Feature.fromGeometry(
+                                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0)))) // Boston Common Park
+
+                                            );
+                                            Feature feature = markerCoordinates.get(i0);
+                                            feature.addStringProperty("aaaaaa","Počet výtlkov "+cursor.getInt(2));
+                                            i0++;
+                                        }
+                                        else {
+                                            markerCoordinates1.add(Feature.fromGeometry(
+                                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0)))) // Boston Common Park
+                                            );
+                                            Feature featurea = markerCoordinates1.get(i1);
+                                            featurea.addStringProperty("aaaaaa","Počet výtlkov "+cursor.getInt(2));
+                                            i1++;
+                                        }
+
                                         // pridavanie do mapy
                                       //  gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
                                         try {
@@ -671,6 +715,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             database.endTransaction();
                             database.close();
 
+
                         }
                         finally
                         {
@@ -687,7 +732,120 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         } catch (InterruptedException e) {
                         }
                     }
+
                 }
+
+                FeatureCollection featureCollection = FeatureCollection.fromFeatures(markerCoordinates);
+
+                if (geoJsonSource!=null)
+                    try {
+                        mapbox.removeSource(geoJsonSource);
+                    } catch (NoSuchSourceException e) {
+                        e.printStackTrace();
+                    }
+                geoJsonSource = new GeoJsonSource("marker-source", featureCollection);
+                mapbox.addSource(geoJsonSource);
+
+                FeatureCollection featureCollection1 = FeatureCollection.fromFeatures(markerCoordinates1);
+
+                if (geoJsonSource1!=null)
+                    try {
+                        mapbox.removeSource(geoJsonSource1);
+                    } catch (NoSuchSourceException e) {
+                        e.printStackTrace();
+                    }
+
+
+                 geoJsonSource1 = new GeoJsonSource("marker-source1", featureCollection1);
+                mapbox.addSource(geoJsonSource1);
+
+
+
+                Bitmap icon = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_icon);
+
+                Bitmap icon1 = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.red_icon);
+
+///////////////////////////////////////////////
+
+                // Add the marker image to map
+                mapbox.addImage("my-marker-image", icon);
+
+                if (markers!=null)
+                    try {
+                        mapbox.removeLayer(markers);
+                    } catch (NoSuchLayerException e) {
+                        e.printStackTrace();
+                    }
+
+
+                markers = new SymbolLayer("marker-layer", "marker-source")
+                        .withProperties(PropertyFactory.iconImage("my-marker-image"));
+                mapbox.addLayer(markers);
+
+                mapbox.addImage("my-marker-image1", icon1);
+
+                if (markers1!=null)
+                    try {
+                        mapbox.removeLayer(markers1);
+                    } catch (NoSuchLayerException e) {
+                        e.printStackTrace();
+                    }
+
+                 markers1 = new SymbolLayer("marker-layer1", "marker-source1")
+                        .withProperties(PropertyFactory.iconImage("my-marker-image1"));
+                mapbox.addLayer(markers1);
+
+
+
+///////////////////////////////////////////////////////////////
+                // Add the selected marker source and layer
+                if (selectedMarkerSource!=null)
+                    try {
+                        mapbox.removeSource(selectedMarkerSource);
+                    } catch (NoSuchSourceException e) {
+                        e.printStackTrace();
+                    }
+
+                FeatureCollection emptySource = FeatureCollection.fromFeatures(new Feature[]{});
+                 selectedMarkerSource = new GeoJsonSource("selected-marker", emptySource);
+                mapbox.addSource(selectedMarkerSource);
+
+                if (selectedMarkerSource1!=null)
+                    try {
+                        mapbox.removeSource(selectedMarkerSource1);
+                    } catch (NoSuchSourceException e) {
+                        e.printStackTrace();
+                    }
+
+                FeatureCollection emptySource1 = FeatureCollection.fromFeatures(new Feature[]{});
+                 selectedMarkerSource1 = new GeoJsonSource("selected-marker1", emptySource1);
+                mapbox.addSource(selectedMarkerSource1);
+                /////////////////////////////////////////////////////////////////
+                if (selectedMarker!=null)
+
+                    try {
+                        mapbox.removeLayer(selectedMarker);
+                    } catch (NoSuchLayerException e) {
+                        e.printStackTrace();
+                    }
+
+
+                selectedMarker = new SymbolLayer("selected-marker-layer", "selected-marker")
+                        .withProperties(PropertyFactory.iconImage("my-marker-image"));
+                mapbox.addLayer(selectedMarker);
+
+                if (selectedMarker1!=null)
+
+                    try {
+                        mapbox.removeLayer(selectedMarker1);
+                    } catch (NoSuchLayerException e) {
+                        e.printStackTrace();
+                    }
+
+
+                 selectedMarker1 = new SymbolLayer("selected-marker-layer1", "selected-marker1")
+                        .withProperties(PropertyFactory.iconImage("my-marker-image1"));
+                mapbox.addLayer(selectedMarker1);
 
 
 

@@ -1,5 +1,6 @@
 package navigationapp.main_application;
 
+import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
@@ -11,6 +12,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.PointF;
 import android.location.Address;
 import android.location.Location;
 import android.net.ConnectivityManager;
@@ -18,6 +22,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -37,6 +42,14 @@ import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.mapboxsdk.style.sources.Source;
+import com.mapbox.services.commons.geojson.Feature;
+import com.mapbox.services.commons.geojson.FeatureCollection;
+import com.mapbox.services.commons.geojson.Point;
+import com.mapbox.services.commons.models.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -44,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -75,6 +89,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public static Button navig_on,add_button;
     public static MapboxMap mapbox;
     public static MapboxAccountManager manager;
+    private boolean markerSelected = false;
+    private boolean markerSelected1 = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,6 +105,84 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
                 if (setOnPosition)
                     mapbox.setMyLocationEnabled(true);
+
+
+                mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
+                    @Override
+                    public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
+                        final SymbolLayer marker = (SymbolLayer) mapbox.getLayer("selected-marker-layer");
+                        final SymbolLayer marker1 = (SymbolLayer) mapbox.getLayer("selected-marker-layer1");
+
+                        final PointF pixel = mapbox.getProjection().toScreenLocation(point);
+                        List<Feature> features = mapbox.queryRenderedFeatures(pixel, "marker-layer");
+                        List<Feature> selectedFeature = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer");
+                        List<Feature> features1 = mapbox.queryRenderedFeatures(pixel, "marker-layer1");
+                        List<Feature> selectedFeature1 = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer1");
+
+                        if (selectedFeature.size() > 0 && markerSelected) {
+                            return;
+                        }
+                        if (selectedFeature1.size() > 0 && markerSelected1) {
+                            return;
+                        }
+
+                        if (features.isEmpty() || features1.isEmpty()) {
+                            if (markerSelected) {
+                                deselectMarker(marker, 0);
+                                return;
+                            }
+                            if (markerSelected1) {
+                                deselectMarker(marker1, 1);
+
+                            }
+
+
+                        }
+
+
+                        if (features.size() > 0) {
+                            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                                    new Feature[]{Feature.fromGeometry(features.get(0).getGeometry())});
+                            GeoJsonSource source = mapbox.getSourceAs("selected-marker");
+                            if (source != null) {
+                                source.setGeoJson(featureCollection);
+                            }
+                        }
+                        if (features1.size() > 0) {
+                            FeatureCollection featureCollection1 = FeatureCollection.fromFeatures(
+                                    new Feature[]{Feature.fromGeometry(features1.get(0).getGeometry())});
+                            GeoJsonSource source1 = mapbox.getSourceAs("selected-marker1");
+                            if (source1 != null) {
+                                source1.setGeoJson(featureCollection1);
+                            }
+
+                        }
+                        if (markerSelected) {
+                            deselectMarker(marker, 0);
+                        }
+                        if (markerSelected1) {
+                            deselectMarker(marker1, 1);
+                        }
+                        if (features.size() > 0) {
+                            Toast.makeText(getApplication(), "aaaaaaaaa", Toast.LENGTH_LONG).show();
+                            if (features.get(0).getStringProperty("aaaaaa")!=null)
+                            Toast.makeText(getApplication(), features.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
+
+                            selectMarker(marker, 0);
+                        }
+                        if (features1.size() > 0) {
+                             Toast.makeText(getApplication(), "bbbbbbb", Toast.LENGTH_LONG).show();
+                           if (features1.get(0).getStringProperty("aaaaaa")!=null)
+                            Toast.makeText(getApplication(), features1.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
+
+                            selectMarker(marker1, 1);
+                        }
+
+                    }
+                });
+
+
+
             }
         });
 
@@ -117,6 +211,9 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         isEneableScreen();
 
 
+
+
+
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -139,6 +236,47 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
+    }
+
+    private void selectMarker(final SymbolLayer marker, int i) {
+        ValueAnimator markerAnimator = new ValueAnimator();
+        markerAnimator.setObjectValues(1f, 2f);
+        markerAnimator.setDuration(300);
+        markerAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                marker.setProperties(
+                        PropertyFactory.iconSize((float) animator.getAnimatedValue())
+
+                );
+            }
+        });
+        markerAnimator.start();
+        if (i==0)
+            markerSelected = true;
+        else
+            markerSelected1 = true;
+    }
+
+    private void deselectMarker(final SymbolLayer marker, int i) {
+        ValueAnimator markerAnimator = new ValueAnimator();
+        markerAnimator.setObjectValues(2f, 1f);
+        markerAnimator.setDuration(300);
+        markerAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                marker.setProperties(
+                        PropertyFactory.iconSize((float) animator.getAnimatedValue())
+                );
+            }
+        });
+        markerAnimator.start();
+        if (i== 0)
+            markerSelected = false;
+        else
+            markerSelected1 = false;
     }
 
     public void isEneableScreen() {
@@ -833,4 +971,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         long tmp = Math.round(value);
         return (double) tmp / factor;
     }
+
+
+
 }
