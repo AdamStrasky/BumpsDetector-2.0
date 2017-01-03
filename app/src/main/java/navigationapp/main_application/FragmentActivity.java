@@ -683,7 +683,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 artty();
 
                             }
-                            adee= true;
+
                             SimpleDateFormat now, ago;
                             Calendar cal = Calendar.getInstance();
                             cal.setTime(new Date());
@@ -746,7 +746,19 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
-                            aaaa();
+
+                            try {
+
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                            }
+
+
+                           // if (!adee) {
+                                aaaa();
+
+                          //  }
+                            adee= true;
 
                         }
                         finally
@@ -829,7 +841,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     synchronized public void artty() {
 
-        mapbox.animateCamera(CameraUpdateFactory.zoomTo(7), new DefaultCallback() {
+        mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
             @Override
             public void onFinish() {
                  Log.d("map", "artty start");
@@ -916,7 +928,96 @@ mapbox.removeImage("my-marker-image");
         Log.d("map", "artty finish");
 
             }
+
+            @Override
+            public void onCancel() {
+                Log.d("map", "artty start");
+
+                try {
+
+                    mapbox.removeSource(geoJsonSource);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+                try {
+
+                    mapbox.removeSource(geoJsonSource1);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+                try {
+
+                    mapbox.removeLayer(markers);
+                } catch (NoSuchLayerException e) {
+                    e.getMessage();
+                }
+
+
+
+
+                try {
+
+                    mapbox.removeLayer(markers1);
+                } catch (NoSuchLayerException e) {
+                    e.getMessage();
+                }
+
+
+
+
+                try {
+
+                    mapbox.removeSource(selectedMarkerSource);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+                try {
+
+                    mapbox.removeSource(selectedMarkerSource1);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+
+
+
+
+                try {
+
+                    mapbox.removeLayer(selectedMarker);
+                } catch (NoSuchLayerException e) {
+                    e.getMessage();
+                }
+
+
+
+
+                try {
+
+                    mapbox.removeLayer(selectedMarker1);
+                } catch (NoSuchLayerException e) {
+                    e.getMessage();
+                }
+
+
+                mapbox.removeImage("my-marker-image");
+                mapbox.removeImage("my-marker-image1");
+
+
+
+                Log.d("map", "artty finish");
+
+            }
         });
+
+
 
     }
 
@@ -938,7 +1039,7 @@ mapbox.removeImage("my-marker-image");
 
    synchronized public void  aaaa () {
 
-       mapbox.animateCamera(CameraUpdateFactory.zoomTo(7), new DefaultCallback() {
+       mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
            @Override
            public void onFinish() {
 
@@ -996,6 +1097,72 @@ mapbox.removeImage("my-marker-image");
                mapbox.addLayer(selectedMarker);
 
                 selectedMarker1 = new SymbolLayer("selected-marker-layer1", "selected-marker1")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image1"));
+               mapbox.addLayer(selectedMarker1);
+
+
+               Log.d("map", "aaaa finish");
+
+           }
+
+
+           @Override
+           public void onCancel() {
+
+               Log.d("map", "aaaa start");
+
+               FeatureCollection featureCollection = FeatureCollection.fromFeatures(markerCoordinates);
+               geoJsonSource = new GeoJsonSource("marker-source", featureCollection);
+               //  geoJsonSource.setGeoJson("marker-source");
+               mapbox.addSource(geoJsonSource);
+
+               FeatureCollection featureCollection1 = FeatureCollection.fromFeatures(markerCoordinates1);
+               geoJsonSource1 = new GeoJsonSource("marker-source1", featureCollection1);
+               //  geoJsonSource1.setGeoJson("marker-source1");
+               mapbox.addSource(geoJsonSource1);
+
+               Bitmap icon = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+
+               Bitmap icon1 = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+
+///////////////////////////////////////////////
+               mapbox.addImage("my-marker-image", icon);
+
+               markers = new SymbolLayer("marker-layer", "marker-source")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image"));
+               //   markers.setSourceLayer("marker-layer");
+               mapbox.addLayer(markers);
+
+
+               Log.d("map", "marker-layer  " + String.valueOf(mapbox.getLayer("marker-layer")));
+               Log.d("map", "marker-layer  " + String.valueOf(   mapbox.getLayer("marker-layer").getId()));
+
+               mapbox.addImage("my-marker-image1", icon1);
+
+               markers1 = new SymbolLayer("marker-layer1", "marker-source1")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image1"));
+               //    markers1.setSourceLayer("marker-layer1");
+               mapbox.addLayer(markers1);
+
+
+               Log.d("map", "marker-layer1  " + String.valueOf(mapbox.getLayer("marker-layer1")));
+               Log.d("map", "marker-layer1  " + String.valueOf(   mapbox.getLayer("marker-layer1").getId()));
+
+               FeatureCollection emptySource = FeatureCollection.fromFeatures(new Feature[]{});
+               selectedMarkerSource = new GeoJsonSource("selected-marker", emptySource);
+               mapbox.addSource(selectedMarkerSource);
+
+
+               FeatureCollection emptySource1 = FeatureCollection.fromFeatures(new Feature[]{});
+               selectedMarkerSource1 = new GeoJsonSource("selected-marker1", emptySource1);
+               mapbox.addSource(selectedMarkerSource1);
+               /////////////////////////////////////////////////////////////////
+
+               selectedMarker = new SymbolLayer("selected-marker-layer", "selected-marker")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image"));
+               mapbox.addLayer(selectedMarker);
+
+               selectedMarker1 = new SymbolLayer("selected-marker-layer1", "selected-marker1")
                        .withProperties(PropertyFactory.iconImage("my-marker-image1"));
                mapbox.addLayer(selectedMarker1);
 
