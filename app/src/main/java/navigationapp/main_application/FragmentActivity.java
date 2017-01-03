@@ -17,6 +17,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
@@ -28,6 +30,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -44,14 +47,18 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.mapbox.mapboxsdk.annotations.Icon;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.offline.OfflineManager;
 import com.mapbox.mapboxsdk.offline.OfflineRegion;
 import com.mapbox.mapboxsdk.offline.OfflineRegionError;
 import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
+import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.layers.NoSuchLayerException;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
@@ -80,6 +87,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
 import static navigationapp.main_application.Bump.isBetween;
 import static navigationapp.main_application.MainActivity.add_button;
 import static navigationapp.main_application.MainActivity.mapConfirm;
@@ -141,11 +149,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
         offlineManager = OfflineManager.getInstance(getActivity());
         get_loaded_index();
         // ak sa pripojím na internet požiam o update
         regular_update = true ;
 
+       // myView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
 
         if (!isNetworkAvailable()){
@@ -609,6 +619,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
+    boolean mapReady = false;
+    List<Feature> markerCoordinates = null;
+    List<Feature> markerCoordinates1 = null;
+
+
+
     private class Regular_upgrade extends TimerTask {
         @Override
         public void run() {
@@ -617,14 +633,27 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
 
-    Source geoJsonSource = null;
-    Source geoJsonSource1 = null;
+    GeoJsonSource geoJsonSource = null;
+    GeoJsonSource geoJsonSource1 = null;
     SymbolLayer markers =null;
     SymbolLayer markers1 =null;
     Source selectedMarkerSource =null;
     Source selectedMarkerSource1 =null;
     SymbolLayer selectedMarker =null;
     SymbolLayer selectedMarker1 =null;
+
+
+
+
+    public boolean ismapReady() {
+        return mapReady;
+    }
+
+    public void setmapReady(boolean mapReady) {
+        this.mapReady = mapReady;
+    }
+
+    boolean adee = false;
     public void getAllBumps(final Double latitude, final Double longitude) {
 
         if (latitude==null || longitude==null) {
@@ -637,8 +666,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         Thread t = new Thread() {
             public void run() {
                 Looper.prepare();
-                List<Feature> markerCoordinates = new ArrayList<>();
-                List<Feature> markerCoordinates1 = new ArrayList<>();
+                Log.d("getAllBumps", " thread name "+ this.getId());
+
+
+
 
                 while (true) {
                     if (updatesLock.tryLock())
@@ -646,10 +677,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         // Got the lock
                         try
                         {
-                            if (isClear() && mapbox != null)
-                                mapbox.deselectMarkers();
+                           // if (isClear() && mapbox != null)
+                           //     mapbox.deselectMarkers();
+                            if (adee) {
+                                artty();
 
-
+                            }
+                            adee= true;
                             SimpleDateFormat now, ago;
                             Calendar cal = Calendar.getInstance();
                             cal.setTime(new Date());
@@ -663,7 +697,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             LatLng convert_location = gps.getCurrentLatLng();
 
                             int i0=0,i1=0;
-
+                            markerCoordinates = new ArrayList<>();
+                            markerCoordinates1 = new ArrayList<>();
 
                             // seleknutie vytlk z oblasti a starych 280 dni
                             String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >=" + level + " AND " +
@@ -699,11 +734,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                                         // pridavanie do mapy
                                       //  gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(cursor.getDouble(0), cursor.getDouble(1)), cursor.getInt(2), cursor.getInt(3));
-                                        try {
-                                            Thread.sleep(50);
-                                        } catch (InterruptedException e) {
-                                            Log.e("error", e.toString());
-                                        }
+
                                     }
                                     while (cursor.moveToNext());
                                 }
@@ -711,10 +742,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 if (cursor != null)
                                     cursor.close();
                             }
+
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
-
+                            aaaa();
 
                         }
                         finally
@@ -724,7 +756,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             break;
                         }
                     } else {
-                        Log.d("getAllBumps", "getAllBumps thread lockAAAAAA ");
+                        Log.d("getAllBumps", "getAllBumps thread lockAAAAAA "+ this.getId());
                         try {
                             Random ran = new Random();
                             int x = ran.nextInt(20) + 1;
@@ -734,118 +766,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     }
 
                 }
-
-                FeatureCollection featureCollection = FeatureCollection.fromFeatures(markerCoordinates);
-
-                if (geoJsonSource!=null)
-                    try {
-                        mapbox.removeSource(geoJsonSource);
-                    } catch (NoSuchSourceException e) {
-                        e.printStackTrace();
-                    }
-                geoJsonSource = new GeoJsonSource("marker-source", featureCollection);
-                mapbox.addSource(geoJsonSource);
-
-                FeatureCollection featureCollection1 = FeatureCollection.fromFeatures(markerCoordinates1);
-
-                if (geoJsonSource1!=null)
-                    try {
-                        mapbox.removeSource(geoJsonSource1);
-                    } catch (NoSuchSourceException e) {
-                        e.printStackTrace();
-                    }
-
-
-                 geoJsonSource1 = new GeoJsonSource("marker-source1", featureCollection1);
-                mapbox.addSource(geoJsonSource1);
-
-
-
-                Bitmap icon = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_icon);
-
-                Bitmap icon1 = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.red_icon);
-
-///////////////////////////////////////////////
-
-                // Add the marker image to map
-                mapbox.addImage("my-marker-image", icon);
-
-                if (markers!=null)
-                    try {
-                        mapbox.removeLayer(markers);
-                    } catch (NoSuchLayerException e) {
-                        e.printStackTrace();
-                    }
-
-
-                markers = new SymbolLayer("marker-layer", "marker-source")
-                        .withProperties(PropertyFactory.iconImage("my-marker-image"));
-                mapbox.addLayer(markers);
-
-                mapbox.addImage("my-marker-image1", icon1);
-
-                if (markers1!=null)
-                    try {
-                        mapbox.removeLayer(markers1);
-                    } catch (NoSuchLayerException e) {
-                        e.printStackTrace();
-                    }
-
-                 markers1 = new SymbolLayer("marker-layer1", "marker-source1")
-                        .withProperties(PropertyFactory.iconImage("my-marker-image1"));
-                mapbox.addLayer(markers1);
-
-
-
-///////////////////////////////////////////////////////////////
-                // Add the selected marker source and layer
-                if (selectedMarkerSource!=null)
-                    try {
-                        mapbox.removeSource(selectedMarkerSource);
-                    } catch (NoSuchSourceException e) {
-                        e.printStackTrace();
-                    }
-
-                FeatureCollection emptySource = FeatureCollection.fromFeatures(new Feature[]{});
-                 selectedMarkerSource = new GeoJsonSource("selected-marker", emptySource);
-                mapbox.addSource(selectedMarkerSource);
-
-                if (selectedMarkerSource1!=null)
-                    try {
-                        mapbox.removeSource(selectedMarkerSource1);
-                    } catch (NoSuchSourceException e) {
-                        e.printStackTrace();
-                    }
-
-                FeatureCollection emptySource1 = FeatureCollection.fromFeatures(new Feature[]{});
-                 selectedMarkerSource1 = new GeoJsonSource("selected-marker1", emptySource1);
-                mapbox.addSource(selectedMarkerSource1);
-                /////////////////////////////////////////////////////////////////
-                if (selectedMarker!=null)
-
-                    try {
-                        mapbox.removeLayer(selectedMarker);
-                    } catch (NoSuchLayerException e) {
-                        e.printStackTrace();
-                    }
-
-
-                selectedMarker = new SymbolLayer("selected-marker-layer", "selected-marker")
-                        .withProperties(PropertyFactory.iconImage("my-marker-image"));
-                mapbox.addLayer(selectedMarker);
-
-                if (selectedMarker1!=null)
-
-                    try {
-                        mapbox.removeLayer(selectedMarker1);
-                    } catch (NoSuchLayerException e) {
-                        e.printStackTrace();
-                    }
-
-
-                 selectedMarker1 = new SymbolLayer("selected-marker-layer1", "selected-marker1")
-                        .withProperties(PropertyFactory.iconImage("my-marker-image1"));
-                mapbox.addLayer(selectedMarker1);
 
 
 
@@ -905,6 +825,193 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         t.start();
     }
 
+
+
+    synchronized public void artty() {
+
+        mapbox.animateCamera(CameraUpdateFactory.zoomTo(7), new DefaultCallback() {
+            @Override
+            public void onFinish() {
+                 Log.d("map", "artty start");
+
+                try {
+
+                        mapbox.removeSource(geoJsonSource);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+                try {
+
+                        mapbox.removeSource(geoJsonSource1);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+            try {
+
+                mapbox.removeLayer(markers);
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
+
+
+
+
+        try {
+
+                mapbox.removeLayer(markers1);
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
+
+
+
+
+                try {
+
+                        mapbox.removeSource(selectedMarkerSource);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+                try {
+
+                        mapbox.removeSource(selectedMarkerSource1);
+                } catch (NoSuchSourceException e) {
+                    e.printStackTrace();
+                    e.getMessage();
+                }
+
+
+
+
+
+                try {
+
+                        mapbox.removeLayer(selectedMarker);
+                } catch (NoSuchLayerException e) {
+                    e.getMessage();
+                }
+
+
+
+
+                try {
+
+                        mapbox.removeLayer(selectedMarker1);
+                } catch (NoSuchLayerException e) {
+                    e.getMessage();
+                }
+
+
+mapbox.removeImage("my-marker-image");
+                mapbox.removeImage("my-marker-image1");
+
+
+
+        Log.d("map", "artty finish");
+
+            }
+        });
+
+    }
+
+
+
+
+    private static class DefaultCallback implements MapboxMap.CancelableCallback {
+
+        @Override
+        public void onCancel() {
+            Log.d("map", "aaaa onCancel");
+        }
+
+        @Override
+        public void onFinish() {
+            Log.d("map", "aaaa onFinish");
+        }
+    }
+
+   synchronized public void  aaaa () {
+
+       mapbox.animateCamera(CameraUpdateFactory.zoomTo(7), new DefaultCallback() {
+           @Override
+           public void onFinish() {
+
+               Log.d("map", "aaaa start");
+
+               FeatureCollection featureCollection = FeatureCollection.fromFeatures(markerCoordinates);
+               geoJsonSource = new GeoJsonSource("marker-source", featureCollection);
+               //  geoJsonSource.setGeoJson("marker-source");
+               mapbox.addSource(geoJsonSource);
+
+               FeatureCollection featureCollection1 = FeatureCollection.fromFeatures(markerCoordinates1);
+               geoJsonSource1 = new GeoJsonSource("marker-source1", featureCollection1);
+               //  geoJsonSource1.setGeoJson("marker-source1");
+               mapbox.addSource(geoJsonSource1);
+
+               Bitmap icon = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+
+               Bitmap icon1 = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+
+///////////////////////////////////////////////
+               mapbox.addImage("my-marker-image", icon);
+
+               markers = new SymbolLayer("marker-layer", "marker-source")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image"));
+           //   markers.setSourceLayer("marker-layer");
+               mapbox.addLayer(markers);
+
+
+               Log.d("map", "marker-layer  " + String.valueOf(mapbox.getLayer("marker-layer")));
+               Log.d("map", "marker-layer  " + String.valueOf(   mapbox.getLayer("marker-layer").getId()));
+
+               mapbox.addImage("my-marker-image1", icon1);
+
+               markers1 = new SymbolLayer("marker-layer1", "marker-source1")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image1"));
+           //    markers1.setSourceLayer("marker-layer1");
+               mapbox.addLayer(markers1);
+
+
+               Log.d("map", "marker-layer1  " + String.valueOf(mapbox.getLayer("marker-layer1")));
+               Log.d("map", "marker-layer1  " + String.valueOf(   mapbox.getLayer("marker-layer1").getId()));
+
+               FeatureCollection emptySource = FeatureCollection.fromFeatures(new Feature[]{});
+                selectedMarkerSource = new GeoJsonSource("selected-marker", emptySource);
+               mapbox.addSource(selectedMarkerSource);
+
+
+               FeatureCollection emptySource1 = FeatureCollection.fromFeatures(new Feature[]{});
+                selectedMarkerSource1 = new GeoJsonSource("selected-marker1", emptySource1);
+               mapbox.addSource(selectedMarkerSource1);
+               /////////////////////////////////////////////////////////////////
+
+                selectedMarker = new SymbolLayer("selected-marker-layer", "selected-marker")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image"));
+               mapbox.addLayer(selectedMarker);
+
+                selectedMarker1 = new SymbolLayer("selected-marker-layer1", "selected-marker1")
+                       .withProperties(PropertyFactory.iconImage("my-marker-image1"));
+               mapbox.addLayer(selectedMarker1);
+
+
+               Log.d("map", "aaaa finish");
+
+           }
+       });
+
+
+
+
+
+    }
+
+
     public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
         /// updatesLock=false;      toto tu nema čo robiť podľa mna !!!!!!!!!!!!!!!!!!!!!!!!!
         int rating;
@@ -933,6 +1040,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 }
             }
         }
+
     }
 
     private double lang_database,longt_database;
@@ -1678,9 +1786,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         alert.setPositiveButton("Go to settings",
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
-                        Intent callGPSSettingIntent = new Intent(
-                                android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(callGPSSettingIntent);
+                      startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     }
                 });
         alert.setNegativeButton("Cancel",
@@ -2297,4 +2403,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public boolean checkGPSEnable(){
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
+
+
 }

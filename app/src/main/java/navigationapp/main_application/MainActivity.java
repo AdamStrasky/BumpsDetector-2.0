@@ -50,6 +50,7 @@ import com.mapbox.services.commons.geojson.Feature;
 import com.mapbox.services.commons.geojson.FeatureCollection;
 import com.mapbox.services.commons.geojson.Point;
 import com.mapbox.services.commons.models.*;
+import com.mapbox.services.commons.models.Position;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -58,6 +59,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -77,7 +79,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
     public static int ZOOM_LEVEL = 16;
-    private FragmentActivity fragmentActivity;
+    private FragmentActivity fragmentActivity =null;
     public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
@@ -105,6 +107,9 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
                 if (setOnPosition)
                     mapbox.setMyLocationEnabled(true);
+
+
+
 
 
                 mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
@@ -168,7 +173,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                             if (features.get(0).getStringProperty("aaaaaa")!=null)
                             Toast.makeText(getApplication(), features.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
 
-                            selectMarker(marker, 0);
+                            selectMarker(marker,  0);
                         }
                         if (features1.size() > 0) {
                              Toast.makeText(getApplication(), "bbbbbbb", Toast.LENGTH_LONG).show();
@@ -905,7 +910,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         super.onDestroy();
         mapView.onDestroy();
         finish();
-        android.os.Process.killProcess(android.os.Process.myPid());
+      //  android.os.Process.killProcess(android.os.Process.myPid());
 
     }
 
