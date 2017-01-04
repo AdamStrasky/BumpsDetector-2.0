@@ -587,7 +587,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
             mBuilder.setContentTitle("Map download")
                     .setContentText("Download in progress")
-                    .setSmallIcon(R.drawable.green_icon);
+                    .setSmallIcon(R.drawable.download);
         }
         else {
             if (flagDownload) {

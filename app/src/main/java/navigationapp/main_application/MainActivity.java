@@ -483,7 +483,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     location.setLatitude(round(convert_location.getLatitude(),7));
                     location.setLongitude(round(convert_location.getLongitude(),7));
                     location.setTime(new Date().getTime());
-
+                    convert_location  =null;
                     new Thread() {
                         public void run() {
                             Looper.prepare();
@@ -598,6 +598,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 // disable listener na klik
                 allow_click=false;
                 save(false);
+                convert_location  =null;
                 fragmentActivity.setClear(true);
                 break;
             case R.id.backMap_btn:
@@ -737,15 +738,23 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                             @Override
                             public void onClick(DialogInterface dialog, int select) {
                                 switch (select) {
+
+
                                     case 0:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
+                                        LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        fragmentActivity.getAllBumps(lightBumps.latitude,lightBumps.longitude);
                                         break;
 
                                     case 1:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
+                                        LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        fragmentActivity.getAllBumps(satelliteBumps.latitude,satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
+                                        LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        fragmentActivity.getAllBumps(outdoorsBumps.latitude ,outdoorsBumps.longitude);
                                         break;
                                 }
                             }
@@ -825,8 +834,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 if(confirm.isShown()){
                     Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
                 }else {
-                    if (mapbox!=null)
-                        mapbox.clear();
+                    if (mapbox!=null && fragmentActivity!=null)
+                        fragmentActivity.deleteOldMarker();
                 }
                 return true;
 
@@ -915,38 +924,57 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                             // Got the lock
                             try
                             {
-                                ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
-                                ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
-                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                                SQLiteDatabase sb = databaseHelper.getWritableDatabase();
-                                sb.beginTransaction();
-                                int i = 0;
-                                for (HashMap<Location, Float> bump : list) {
-                                    Iterator it = bump.entrySet().iterator();
-                                    while (it.hasNext()) {
-                                        HashMap.Entry pair = (HashMap.Entry) it.next();
-                                        Location loc = (Location) pair.getKey();
-                                        float data = (float) pair.getValue();
-                                        String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + loc.getLongitude() + ",7) "
-                                                + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and manual=" + bumpsManual.get(i);
 
-                                        BigDecimal bd = new BigDecimal(Float.toString(data));
-                                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                                        Cursor cursor = sb.rawQuery(sql, null);
-                                        if (cursor.getCount() == 0) {
-                                            Log.d("MainActivity", "vkladam ");
-                                            ContentValues contentValues = new ContentValues();
-                                            contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
-                                            contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
-                                            contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
-                                            contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                                            sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                while (true) {
+                                    if (lockZoznam.tryLock()) {
+                                        // Got the lock
+                                        try {
+
+                                            ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
+                                            ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
+                                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                                            SQLiteDatabase sb = databaseHelper.getWritableDatabase();
+                                            sb.beginTransaction();
+                                            int i = 0;
+                                            for (HashMap<Location, Float> bump : list) {
+                                                Iterator it = bump.entrySet().iterator();
+                                                while (it.hasNext()) {
+                                                    HashMap.Entry pair = (HashMap.Entry) it.next();
+                                                    Location loc = (Location) pair.getKey();
+                                                    float data = (float) pair.getValue();
+                                                    String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + loc.getLongitude() + ",7) "
+                                                            + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and manual=" + bumpsManual.get(i);
+
+                                                    BigDecimal bd = new BigDecimal(Float.toString(data));
+                                                    bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                                    Cursor cursor = sb.rawQuery(sql, null);
+                                                    if (cursor.getCount() == 0) {
+                                                        Log.d("MainActivity", "vkladam ");
+                                                        ContentValues contentValues = new ContentValues();
+                                                        contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
+                                                        contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
+                                                        contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
+                                                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                                        sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                                    }
+                                                }
+                                                i++;
+                                            }
+                                            sb.setTransactionSuccessful();
+                                            sb.endTransaction();
+                                        } finally {
+                                            lockZoznam.unlock();
+                                            break;
+                                        }
+                                    } else {
+                                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                                        try {
+                                            Thread.sleep(20);
+                                        } catch (InterruptedException e) {
                                         }
                                     }
-                                    i++;
                                 }
-                                sb.setTransactionSuccessful();
-                                sb.endTransaction();
+
 
                             }
                             finally
@@ -963,12 +991,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                             }
                         }
 
-
-                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
-                        try {
-                            Thread.sleep(20);
-                        } catch (InterruptedException e) {
-                        }
                     }
 
                     fragmentActivity.stop_servise();
@@ -990,7 +1012,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         super.onDestroy();
         mapView.onDestroy();
         finish();
-      //  android.os.Process.killProcess(android.os.Process.myPid());
+        android.os.Process.killProcess(android.os.Process.myPid());
 
     }
 
