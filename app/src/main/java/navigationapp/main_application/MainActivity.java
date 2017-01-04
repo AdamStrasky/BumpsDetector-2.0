@@ -17,6 +17,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
 import android.net.ConnectivityManager;
@@ -25,6 +26,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -41,6 +43,7 @@ import android.widget.Toast;
 import com.example.monikas.navigationapp.R;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -132,12 +135,20 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                 markerAnimator.setDuration(2000);
                                 markerAnimator.start();
                                 convert_location = point;
+                                Log.d("TREEEE"," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
                            else {
+
+                                IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
+                                Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.green_icon);
+                                com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
                                 featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
                                         .position(point)
                                         .title("Properties:")
+                                        .icon(icons)
                                 );
+                                convert_location = point;
+                                Log.d("TREEEE"," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
 
 
@@ -576,6 +587,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                         }
                     }.start();
                 }
+                else
+                    Log.d("TREEEE","null locatoin asfadsfdsds");
                 break;
             case R.id.delete_btn:
 

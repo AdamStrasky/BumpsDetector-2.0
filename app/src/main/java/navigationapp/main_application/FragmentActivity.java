@@ -628,29 +628,34 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
     boolean deleteMap = false;
-    public void getAllBumps(final Double latitude, final Double longitude) {
+   synchronized public void getAllBumps(final Double latitude, final Double longitude) {
 
         if (latitude==null || longitude==null) {
             Toast.makeText(getActivity(), "No GPS signal", Toast.LENGTH_LONG).show();
             return;
         }
 
+
         Thread t = new Thread() {
             public void run() {
                 Looper.prepare();
                 Log.d("getAllBumps", " thread name "+ this.getId());
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                }
+                int autoBumpSequence=0,manualBumpSequence=0;
+                autoMarkerCoordinates = new ArrayList<>();
+                manualMarkerCoordinates = new ArrayList<>();
 
                 while (true) {
                     if (updatesLock.tryLock())  {
                         try  {
+
+
+
                             if (deleteMap) {
                                 deleteOldMarker();
                             }
+
+
 
                             SimpleDateFormat now, ago;
                             Calendar cal = Calendar.getInstance();
@@ -661,9 +666,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             String ago_formated = ago.format(cal.getTime());
-                            int autoBumpSequence=0,manualBumpSequence=0;
-                            autoMarkerCoordinates = new ArrayList<>();
-                            manualMarkerCoordinates = new ArrayList<>();
+
 
                             // seleknutie vytlk z oblasti a starych 280 dni
                             String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE rating/count >=" + level + " AND " +
@@ -708,13 +711,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             database.endTransaction();
                             database.close();
 
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                            }
-                            showNewMarker();
-                            deleteMap = true;
-
                         }
                         finally {
                           updatesLock.unlock();
@@ -732,7 +728,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 }
 
-                ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
+               ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
                 ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
                 while (true) {
                     if (lockAdd.tryLock()) {
@@ -777,7 +773,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
                     }
                 }
-                notSendBumps(bumpList, bumpsManual);
+
+                 notSendBumps(bumpList, bumpsManual,autoBumpSequence,manualBumpSequence);
+
+                showNewMarker();
+                deleteMap = true;
 
 
 
@@ -832,6 +832,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     synchronized public void deleteMarkers() {
         Log.d("map", "deleteOldMarker start");
 
+         mapbox.clear();
         try {
             if(mapbox.getSource("marker-source-auto")!=null)
                 mapbox.removeSource("marker-source-auto");
@@ -945,31 +946,41 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
 
-    public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual){
+    public void notSendBumps( ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual,int a, int b) {
         /// updatesLock=false;      toto tu nema čo robiť podľa mna !!!!!!!!!!!!!!!!!!!!!!!!!
-        int rating;
+        float rating;
         int i=0;
         if (bumps.size()> 0) {
             for (HashMap<Location, Float> bump : bumps) {
-                if (bump==null)
-                    break;
+
                 Iterator it = bump.entrySet().iterator();
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
                     Location loc = (Location) pair.getKey();
                     float data = (float) pair.getValue();
-                    rating = 1;
+                    rating = 1;                             // 1 ,1,5 2,5
                     if (isBetween(data, 0, 6)) rating = 1;
-                    if (isBetween(data, 6, 10)) rating = 2;
-                    if (isBetween(data, 10, 10000)) rating = 3;
-                    if (rating == level)
-                     //   gps.addBumpToMap(new com.mapbox.mapboxsdk.geometry.LatLng(loc.getLatitude(), loc.getLongitude()),1,bumpsManual.get(i));
-                    i++;
-                }
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
+                    if (isBetween(data, 6, 10)) rating =  1.5f;
+                    if (isBetween(data, 10, 10000)) rating = 2.5f;
+                    if (rating >= level) {
+                        if (bumpsManual.get(i) == 0) {
+                            autoMarkerCoordinates.add(Feature.fromGeometry(
+                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
 
+                            );
+                            Feature feature = autoMarkerCoordinates.get(a);
+                            feature.addStringProperty("aaaaaa", "Počet výtlkov 1 fffffffff");
+                            a++;
+                        } else {
+                            manualMarkerCoordinates.add(Feature.fromGeometry(
+                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
+                            );
+                            Feature featurea = manualMarkerCoordinates.get(b);
+                            featurea.addStringProperty("aaaaaa", "Počet výtlkov 1 ddddddddd");
+                            b++;
+                        }
+                  }
+                  i++;
                 }
             }
         }
