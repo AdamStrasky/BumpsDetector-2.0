@@ -155,14 +155,14 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
 
                         ////////////////////////////////////////////////////////////////
-                        final SymbolLayer marker = (SymbolLayer) mapbox.getLayer("selected-marker-layer");
-                        final SymbolLayer marker1 = (SymbolLayer) mapbox.getLayer("selected-marker-layer1");
+                        final SymbolLayer marker = (SymbolLayer) mapbox.getLayer("selected-marker-layer-auto");
+                        final SymbolLayer marker1 = (SymbolLayer) mapbox.getLayer("selected-marker-layer-manual");
 
                         final PointF pixel = mapbox.getProjection().toScreenLocation(point);
-                        List<Feature> features = mapbox.queryRenderedFeatures(pixel, "marker-layer");
-                        List<Feature> selectedFeature = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer");
-                        List<Feature> features1 = mapbox.queryRenderedFeatures(pixel, "marker-layer1");
-                        List<Feature> selectedFeature1 = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer1");
+                        List<Feature> features = mapbox.queryRenderedFeatures(pixel, "marker-layer-auto");
+                        List<Feature> selectedFeature = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-auto");
+                        List<Feature> features1 = mapbox.queryRenderedFeatures(pixel, "marker-layer-manual");
+                        List<Feature> selectedFeature1 = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-manual");
 
                         if (selectedFeature.size() > 0 && markerSelected) {
                             return;
@@ -188,7 +188,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                         if (features.size() > 0) {
                             FeatureCollection featureCollection = FeatureCollection.fromFeatures(
                                     new Feature[]{Feature.fromGeometry(features.get(0).getGeometry())});
-                            GeoJsonSource source = mapbox.getSourceAs("selected-marker");
+                            GeoJsonSource source = mapbox.getSourceAs("selected-marker-auto");
                             if (source != null) {
                                 source.setGeoJson(featureCollection);
                             }
@@ -196,7 +196,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                         if (features1.size() > 0) {
                             FeatureCollection featureCollection1 = FeatureCollection.fromFeatures(
                                     new Feature[]{Feature.fromGeometry(features1.get(0).getGeometry())});
-                            GeoJsonSource source1 = mapbox.getSourceAs("selected-marker1");
+                            GeoJsonSource source1 = mapbox.getSourceAs("selected-marker-manual");
                             if (source1 != null) {
                                 source1.setGeoJson(featureCollection1);
                             }
@@ -360,13 +360,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
 
     public void save(boolean save_click) {
-        if (save_click) {
-            featureMarker=null;
-        }else
+        if (!save_click && featureMarker!=null )
             featureMarker.remove();
-        featureMarker=null;
-
-    }
+         featureMarker=null;
+     }
 
     private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
         @Override
