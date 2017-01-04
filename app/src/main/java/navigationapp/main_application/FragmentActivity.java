@@ -469,6 +469,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         .setPositiveButton("Navigate to", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
+
+
+
                                 if (!checkGPSEnable()) {
                                     Toast.makeText(getActivity(), "Turn on your GPS", Toast.LENGTH_LONG).show();
                                 } else {
@@ -479,18 +482,36 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getBounds();
                                     double regionZoom = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getMinZoom();
 
-                                    // Create new camera position
-                                    CameraPosition cameraPosition = new CameraPosition.Builder()
-                                            .target(bounds.getCenter())
-                                            .zoom(regionZoom)
-                                            .build();
+                                    CameraPosition position = new CameraPosition.Builder()
+                                            .target(bounds.getCenter()) // Sets the new camera position
+                                            .zoom(regionZoom) // Sets the zoom
+                                            .build(); // Creates a CameraPosition from the builder
+
+                                    mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
+                                            new MapboxMap.CancelableCallback() {
+                                                @Override
+                                                public void onCancel() {
+
+                                                }
+
+                                                @Override
+                                                public void onFinish() {
+
+                                                }
+                                            });
+
+
+
 
                                     // Move camera to new position
                                     add_button.setVisibility(View.INVISIBLE);
                                     navig_on.setVisibility(View.VISIBLE);
-                                    mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
 
                                 }
+
+
+
                             }
                         })
                         .setNeutralButton("Delete", new DialogInterface.OnClickListener() {
@@ -911,7 +932,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
       Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
       mapbox.addSource(geoJsonSourceManual);
 
-      Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+      Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.red_icon);
       mapbox.addImage("my-marker-image-auto", iconAuto);
 
       SymbolLayer markerAuto = new SymbolLayer("marker-layer-auto", "marker-source-auto")

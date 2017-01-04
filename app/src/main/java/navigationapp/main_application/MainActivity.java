@@ -155,16 +155,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                       }
 
 
-
-
-
-
-
-
-
-
-
-
                         ////////////////////////////////////////////////////////////////
                         final SymbolLayer marker = (SymbolLayer) mapbox.getLayer("selected-marker-layer-auto");
                         final SymbolLayer marker1 = (SymbolLayer) mapbox.getLayer("selected-marker-layer-manual");
@@ -274,10 +264,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (v.getId() == searchBar.getId()) {
+              //  if (v.getId() == searchBar.getId()) {
                     searchBar.setCursorVisible(true);
                     searchBar.setText("");
-                }
+              //  }
             }
         });
         context = this;
@@ -477,7 +467,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 //vytvorenie markera
                 //fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
-
+                    Toast.makeText(this, "Bump was added", Toast.LENGTH_LONG).show();
                     final double ll = intensity;
                     final Location location = new Location("new");
                     location.setLatitude(round(convert_location.getLatitude(),7));
@@ -703,6 +693,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 }
                 if (fragmentActivity.gps!=null)
                     fragmentActivity.gps.getOnPosition();
+                else
+                    Toast.makeText(this, "Not found position", Toast.LENGTH_LONG).show();
                 return true;
 
             case R.id.layer:

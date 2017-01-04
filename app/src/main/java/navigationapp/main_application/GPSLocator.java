@@ -25,6 +25,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 
 import java.util.List;
@@ -167,12 +168,31 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public void SetZoom() {
         ZoomInit = false;
         if (mapbox!=null  && getmCurrentLocation()!=null) {
-            com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
-            if (mapbox != null && yourLatLng != null)
-                mapbox.setCameraPosition(new CameraPosition.Builder()
-                        .target(yourLatLng)
-                        .zoom(ZOOM_LEVEL)
-                        .build());
+         final   com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
+            if (mapbox != null && yourLatLng != null) {
+                CameraPosition position = new CameraPosition.Builder()
+                        .target(yourLatLng) // Sets the new camera position
+                        .zoom(ZOOM_LEVEL) // Sets the zoom
+                        .build(); // Creates a CameraPosition from the builder
+
+                mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
+                        new MapboxMap.CancelableCallback() {
+                            @Override
+                            public void onCancel() {
+
+                            }
+
+                            @Override
+                            public void onFinish() {
+
+                            }
+                        });
+
+
+            }
+
+
+
         }
     }
     public void getOnPosition() {
