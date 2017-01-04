@@ -1,5 +1,7 @@
 package navigationapp.main_application;
 
+import android.animation.ObjectAnimator;
+import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
@@ -39,6 +41,8 @@ import android.widget.Toast;
 import com.example.monikas.navigationapp.R;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -93,6 +97,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public static MapboxAccountManager manager;
     private boolean markerSelected = false;
     private boolean markerSelected1 = false;
+    private Marker featureMarker;
+    boolean allow_click= false;
+    com.mapbox.mapboxsdk.geometry.LatLng  convert_location  =null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,6 +123,38 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
                     @Override
                     public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
+
+
+                        if (allow_click) {
+                            if (featureMarker != null) {
+                                ValueAnimator markerAnimator = ObjectAnimator.ofObject(featureMarker, "position",
+                                        new LatLngEvaluator(), featureMarker.getPosition(), point);
+                                markerAnimator.setDuration(2000);
+                                markerAnimator.start();
+                                convert_location = point;
+                            }
+                           else {
+                                featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
+                                        .position(point)
+                                        .title("Properties:")
+                                );
+                            }
+
+
+                      }
+
+
+
+
+
+
+
+
+
+
+
+
+                        ////////////////////////////////////////////////////////////////
                         final SymbolLayer marker = (SymbolLayer) mapbox.getLayer("selected-marker-layer");
                         final SymbolLayer marker1 = (SymbolLayer) mapbox.getLayer("selected-marker-layer1");
 
@@ -191,6 +231,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
             }
         });
 
+
         final EditText searchBar = (EditText) findViewById(R.id.location);
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);
@@ -242,6 +283,22 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     .commit();
         }
     }
+
+    private  class LatLngEvaluator implements TypeEvaluator<com.mapbox.mapboxsdk.geometry.LatLng> {
+        // Method is used to interpolate the marker animation.
+        private com.mapbox.mapboxsdk.geometry.LatLng  psoition = new com.mapbox.mapboxsdk.geometry.LatLng();
+
+        @Override
+        public com.mapbox.mapboxsdk.geometry.LatLng evaluate(float fraction, com.mapbox.mapboxsdk.geometry.LatLng startValue, com.mapbox.mapboxsdk.geometry.LatLng endValue) {
+            psoition.setLatitude(startValue.getLatitude()
+                    + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
+            psoition.setLongitude(startValue.getLongitude()
+                    + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
+            return psoition;
+        }
+    }
+
+
 
     private void selectMarker(final SymbolLayer marker, int i) {
         ValueAnimator markerAnimator = new ValueAnimator();
@@ -301,6 +358,15 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         }
     }
 
+
+    public void save(boolean save_click) {
+        if (save_click) {
+            featureMarker=null;
+        }else
+            featureMarker.remove();
+        featureMarker=null;
+
+    }
 
     private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
         @Override
@@ -381,7 +447,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                 else
                                     intensity =0.f;
                                 // spustenie listenera na mapu
-                                fragmentActivity.gps.setUpMap(true);
+                                allow_click=true;
                                 confirm.setVisibility(View.VISIBLE);
                                 fragmentActivity.setClear(false);
                                 add_button.setVisibility(View.INVISIBLE);
@@ -397,9 +463,11 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.setClear(true);
                 // vrati polohu  kde som stlačil na mape
-                com.mapbox.mapboxsdk.geometry.LatLng convert_location =  fragmentActivity.gps.setUpMap(false);
+                allow_click=false;
+                save(true);
+
                 //vytvorenie markera
-                fragmentActivity.gps.addBumpToMap (convert_location,1,1);
+                //fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
 
                     final double ll = intensity;
@@ -518,7 +586,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 confirm.setVisibility(View.INVISIBLE);
 
                 // disable listener na klik
-                fragmentActivity.gps.setUpMap(false);
+                allow_click=false;
+                save(false);
                 fragmentActivity.setClear(true);
                 break;
             case R.id.backMap_btn:
@@ -795,7 +864,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
                     return true;
                 }
-                fragmentActivity.gps.setUpMap(false);
+                save(false);
+               // fragmentActivity.gps.setUpMap(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.setClear(true);
@@ -808,8 +878,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return true;
 
             case R.id.list:
-                if ( fragmentActivity.gps!=null  && mapbox!=null)
-                    fragmentActivity.gps.setUpMap(false);
+                save(false);
+
                 if ( mapbox==null) {
                     Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
                     return true;

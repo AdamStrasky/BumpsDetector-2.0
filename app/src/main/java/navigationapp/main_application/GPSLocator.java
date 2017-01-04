@@ -54,62 +54,6 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         startLocationUpdates();
     }
 
-    public com.mapbox.mapboxsdk.geometry.LatLng setUpMap(boolean value) {
-
-        if (!value) {
-            mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
-                @Override
-                public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
-
-                }
-                });
-
-             if (marker != null) {
-                 marker.remove();
-             }
-         return  latLng;
-        }
-        else {
-             latLng = null;
-             marker=null;
-             mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
-                @Override
-                public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
-                    latLng = point;
-
-                    if (marker != null) {
-                        ValueAnimator markerAnimator = ObjectAnimator.ofObject(marker, "position",
-                                new LatLngEvaluator(), marker.getPosition(), point);
-                        markerAnimator.setDuration(2000);
-                        markerAnimator.start();
-                    } else {
-                        IconFactory iconFactory = IconFactory.getInstance(GPSLocator.this);
-                        Drawable iconDrawable = ContextCompat.getDrawable(GPSLocator.this, R.drawable.green_icon);
-                        com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
-                        marker = mapbox.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions().title("Selected point")
-                                .position(point)
-                                .icon(icons));
-                    }
-                }
-            });
-        return null;
-        }
-     }
-
-    private  class LatLngEvaluator implements TypeEvaluator<com.mapbox.mapboxsdk.geometry.LatLng> {
-        // Method is used to interpolate the marker animation.
-    private com.mapbox.mapboxsdk.geometry.LatLng  psoition = new com.mapbox.mapboxsdk.geometry.LatLng();
-
-        @Override
-        public com.mapbox.mapboxsdk.geometry.LatLng evaluate(float fraction, com.mapbox.mapboxsdk.geometry.LatLng startValue, com.mapbox.mapboxsdk.geometry.LatLng endValue) {
-            psoition.setLatitude(startValue.getLatitude()
-                    + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
-            psoition.setLongitude(startValue.getLongitude()
-                    + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
-            return psoition;
-        }
-    }
-
     public void setLevel(float level) {
         this.level = level;
     }
