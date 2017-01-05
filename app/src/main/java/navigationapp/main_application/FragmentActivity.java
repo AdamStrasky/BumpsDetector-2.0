@@ -13,18 +13,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
@@ -36,14 +28,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -55,7 +44,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -80,7 +68,6 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -89,14 +76,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
 import static navigationapp.main_application.Bump.isBetween;
 import static navigationapp.main_application.MainActivity.add_button;
 import static navigationapp.main_application.MainActivity.mapConfirm;
@@ -703,7 +688,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
 
-                            if (deleteMap) {
+                            if (deleteMap && mapbox!=null) {
                                 deleteOldMarker();
                             }
 
@@ -900,11 +885,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
     synchronized public void deleteMarkers() {
         Log.d("map", "deleteOldMarker start");
-        List<Marker> markers =  mapbox.getMarkers();
-        for (int i = 0; i < markers.size(); i++) {
-            mapbox.removeMarker(markers.get(i));
-        }
 
+        if (isClear() && mapbox!=null) {
+            List<Marker> markers = mapbox.getMarkers();
+            for (int i = 0; i < markers.size(); i++) {
+                mapbox.removeMarker(markers.get(i));
+            }
+        }
 
 
         try {

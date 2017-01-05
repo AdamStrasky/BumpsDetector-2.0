@@ -398,20 +398,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     case 0:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        save(true);
+                                        if (featureMarker!=null)
+                                        fragmentActivity.setClear(false);
                                         fragmentActivity.getAllBumps(lightBumps.latitude, lightBumps.longitude);
                                         break;
 
                                     case 1:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                                         LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        save(true);
+                                        if (featureMarker!=null)
+                                        fragmentActivity.setClear(false);
                                         fragmentActivity.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
                                         LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        save(true);
+                                        if (featureMarker!=null)
+                                        fragmentActivity.setClear(false);;
                                         fragmentActivity.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
 
                                         break;
@@ -455,7 +458,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             public void run() {
                                                 fragmentActivity.level = ALL_BUMPS;
                                                 LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
-                                                save(true);
+                                                if (featureMarker!=null)
+                                                    fragmentActivity.setClear(false);;
                                                 fragmentActivity.getAllBumps(allBumps.latitude, allBumps.longitude);
                                             }
                                         }.start();
@@ -466,7 +470,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             public void run() {
                                                 fragmentActivity.level = MEDIUM_BUMPS;
                                                 LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
-                                                save(true);
+                                                if (featureMarker!=null)
+                                                    fragmentActivity.setClear(false);;
                                                 fragmentActivity.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
 
                                             }
@@ -477,7 +482,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             public void run() {
                                                 fragmentActivity.level = LARGE_BUMPS;
                                                 LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
-                                                save(true);
+                                                if (featureMarker!=null)
+                                                    fragmentActivity.setClear(false);;
                                                 fragmentActivity.getAllBumps(largeBumps.latitude, largeBumps.longitude);
                                             }
                                         }.start();
@@ -521,13 +527,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.clear_map:
                 close();
-                if(confirm.isShown()){
-                    Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
-                }else {
-                    if (mapbox!=null && fragmentActivity!=null) {
-                        mapbox.clear();
+                if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
+                    if (featureMarker!=null)
+                        fragmentActivity.setClear(false);;
+                        fragmentActivity.gps.remove_draw_road();
                         fragmentActivity.deleteOldMarker();
-                    }
+
                 }
                 return true;
 
@@ -769,7 +774,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void save(boolean save_click) {
         if (!save_click && featureMarker!=null )
             featureMarker.remove();
-         featureMarker=null;
+        featureMarker=null;
+        allow_click=false;
      }
 
     private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
@@ -867,7 +873,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.setClear(true);
                 // vrati polohu  kde som stlačil na mape
-                allow_click=false;
+
                 save(true);
 
                 //vytvorenie markera

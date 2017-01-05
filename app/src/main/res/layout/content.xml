@@ -113,22 +113,6 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/add_button"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:background="@drawable/circle_button"
-        android:text="+"
-        android:textColor="#fff"
-        android:textSize="36sp"
-        android:textAllCaps="false"
-        android:layout_alignBottom="@+id/mapConfirm"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="17dp"
-        android:layout_marginEnd="17dp"
-        android:layout_marginBottom="36dp" />
-
-    <Button
         android:id="@+id/navig_on"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
@@ -164,4 +148,20 @@
         android:layout_alignBottom="@+id/location"
         android:layout_alignRight="@+id/location"
         android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"/>
+
+    <Button
+        android:id="@+id/add_button"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="@drawable/circle_button"
+        android:text="+"
+        android:textColor="#fff"
+        android:textSize="36sp"
+        android:textAllCaps="false"
+        android:layout_marginRight="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="13dp"
+        android:layout_alignBottom="@+id/mapConfirm"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>
