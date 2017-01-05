@@ -153,7 +153,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     static Lock lockZoznam = new ReentrantLock();
     static Lock lockZoznamDB = new ReentrantLock();
     static Lock lockAdd = new ReentrantLock();
-   static Lock updatesLock = new ReentrantLock();
+    static Lock updatesLock = new ReentrantLock();
     navigationapp.main_application.Location detection = null;
 
     @Override
@@ -166,7 +166,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         // ak sa pripojím na internet požiam o update
         regular_update = true ;
 
-       // myView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        // myView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
 
         if (!isNetworkAvailable()){
@@ -667,7 +667,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
     boolean deleteMap = false;
-   synchronized public void getAllBumps(final Double latitude, final Double longitude) {
+    synchronized public void getAllBumps(final Double latitude, final Double longitude) {
 
         if (latitude==null || longitude==null) {
             Toast.makeText(getActivity(), "No GPS signal", Toast.LENGTH_LONG).show();
@@ -741,8 +741,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             );
                                             Feature feature = autoMarkerCoordinates.get(autoBumpSequence);
                                             feature.addStringProperty("aaaaaa","" +"    Automaticky výtlk \n"+
-                                                                                   "      Počet výtlkov: "+cursor.getInt(2)+"\n" +
-                                                                                   "Modifikácia: "+ds2);
+                                                    "      Počet výtlkov: "+cursor.getInt(2)+"\n" +
+                                                    "Modifikácia: "+ds2);
                                             autoBumpSequence++;
                                         }
                                         else {
@@ -755,7 +755,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                                     "Modifikácia: "+ds2);
                                             manualBumpSequence++;
                                         }
-                                     }
+                                    }
                                     while (cursor.moveToNext());
                                 }
                             } finally {
@@ -769,7 +769,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                         }
                         finally {
-                          updatesLock.unlock();
+                            updatesLock.unlock();
                             break;
                         }
                     } else {
@@ -779,12 +779,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             int x = ran.nextInt(20) + 1;
                             Thread.sleep(x);
                         } catch (InterruptedException e) {
-                          }
+                        }
                     }
 
                 }
 
-               ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
+                ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
                 ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
                 while (true) {
                     if (lockAdd.tryLock()) {
@@ -792,27 +792,27 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         try {
 
                             while (true) {
-                            if (lockZoznam.tryLock()) {
-                                // Got the lock
-                                try {
-                                    if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
+                                if (lockZoznam.tryLock()) {
+                                    // Got the lock
+                                    try {
+                                        if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
 
 
-                                        bumpList.addAll(accelerometer.getPossibleBumps());
-                                        bumpsManual.addAll(accelerometer.getBumpsManual());
+                                            bumpList.addAll(accelerometer.getPossibleBumps());
+                                            bumpsManual.addAll(accelerometer.getBumpsManual());
 
+                                        }
+                                    } finally {
+                                        lockZoznam.unlock();
+                                        break;
                                     }
-                                } finally {
-                                    lockZoznam.unlock();
-                                    break;
-                                }
-                            }else {try {
-                                Random ran = new Random();
-                                int x = ran.nextInt(20) + 1;
-                                Thread.sleep(x);
+                                }else {try {
+                                    Random ran = new Random();
+                                    int x = ran.nextInt(20) + 1;
+                                    Thread.sleep(x);
 
-                            } catch (InterruptedException e) {
-                            }}
+                                } catch (InterruptedException e) {
+                                }}
 
                             }
                         } finally {
@@ -830,7 +830,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     }
                 }
 
-                 notSendBumps(bumpList, bumpsManual,autoBumpSequence,manualBumpSequence);
+                notSendBumps(bumpList, bumpsManual,autoBumpSequence,manualBumpSequence);
 
                 showNewMarker();
                 deleteMap = true;
@@ -872,25 +872,25 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
-   synchronized public void showNewMarker() {
+    synchronized public void showNewMarker() {
 
-       mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
-           @Override
-           public void onFinish() {
+        mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
+            @Override
+            public void onFinish() {
                 showMarkers();
             }
-             @Override
-           public void onCancel() {
+            @Override
+            public void onCancel() {
                 showMarkers();
             }
-       });
-   }
+        });
+    }
     synchronized public void deleteMarkers() {
         Log.d("map", "deleteOldMarker start");
-            List<Marker> markers =  mapbox.getMarkers();
-            for (int i = 0; i < markers.size(); i++) {
-                mapbox.removeMarker(markers.get(i));
-            }
+        List<Marker> markers =  mapbox.getMarkers();
+        for (int i = 0; i < markers.size(); i++) {
+            mapbox.removeMarker(markers.get(i));
+        }
 
 
 
@@ -904,7 +904,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
         try {
             if(mapbox.getSource("marker-source-manual")!=null)
-             mapbox.removeSource("marker-source-manual");
+                mapbox.removeSource("marker-source-manual");
         } catch (NoSuchSourceException e) {
             e.printStackTrace();
             e.getMessage();
@@ -960,51 +960,51 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
 
-  synchronized public void showMarkers() {
+    synchronized public void showMarkers() {
 
-      Log.d("map", "showNewMarker start");
+        Log.d("map", "showNewMarker start");
 
-      FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(autoMarkerCoordinates);
-      Source geoJsonSourceAuto = new GeoJsonSource("marker-source-auto", featureCollectionAuto);
-      mapbox.addSource(geoJsonSourceAuto);
+        FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(autoMarkerCoordinates);
+        Source geoJsonSourceAuto = new GeoJsonSource("marker-source-auto", featureCollectionAuto);
+        mapbox.addSource(geoJsonSourceAuto);
 
-      FeatureCollection featureCollectionManual = FeatureCollection.fromFeatures(manualMarkerCoordinates);
-      Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
-      mapbox.addSource(geoJsonSourceManual);
+        FeatureCollection featureCollectionManual = FeatureCollection.fromFeatures(manualMarkerCoordinates);
+        Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
+        mapbox.addSource(geoJsonSourceManual);
 
 
 
-      Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
-      mapbox.addImage("my-marker-image-auto", iconAuto);
+        Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+        mapbox.addImage("my-marker-image-auto", iconAuto);
 
-      SymbolLayer markerAuto = new SymbolLayer("marker-layer-auto", "marker-source-auto")
-              .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
-      mapbox.addLayer(markerAuto);
+        SymbolLayer markerAuto = new SymbolLayer("marker-layer-auto", "marker-source-auto")
+                .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
+        mapbox.addLayer(markerAuto);
 
-      Bitmap iconManual = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_marker);
-      mapbox.addImage("my-marker-image-manual", iconManual);
+        Bitmap iconManual = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_marker);
+        mapbox.addImage("my-marker-image-manual", iconManual);
 
-      SymbolLayer markersManual = new SymbolLayer("marker-layer-manual", "marker-source-manual")
-              .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
-      mapbox.addLayer(markersManual);
+        SymbolLayer markersManual = new SymbolLayer("marker-layer-manual", "marker-source-manual")
+                .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
+        mapbox.addLayer(markersManual);
 
-      FeatureCollection emptySourceAuto = FeatureCollection.fromFeatures(new Feature[]{});
-      Source selectedMarkerSourceAuto = new GeoJsonSource("selected-marker-auto", emptySourceAuto);
-      mapbox.addSource(selectedMarkerSourceAuto);
+        FeatureCollection emptySourceAuto = FeatureCollection.fromFeatures(new Feature[]{});
+        Source selectedMarkerSourceAuto = new GeoJsonSource("selected-marker-auto", emptySourceAuto);
+        mapbox.addSource(selectedMarkerSourceAuto);
 
-      FeatureCollection emptySourceManual = FeatureCollection.fromFeatures(new Feature[]{});
-      Source selectedMarkerSourceManual = new GeoJsonSource("selected-marker-manual", emptySourceManual);
-      mapbox.addSource(selectedMarkerSourceManual);
+        FeatureCollection emptySourceManual = FeatureCollection.fromFeatures(new Feature[]{});
+        Source selectedMarkerSourceManual = new GeoJsonSource("selected-marker-manual", emptySourceManual);
+        mapbox.addSource(selectedMarkerSourceManual);
 
-      SymbolLayer selectedMarkerAuto = new SymbolLayer("selected-marker-layer-auto", "selected-marker-auto")
-              .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
-      mapbox.addLayer(selectedMarkerAuto);
+        SymbolLayer selectedMarkerAuto = new SymbolLayer("selected-marker-layer-auto", "selected-marker-auto")
+                .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
+        mapbox.addLayer(selectedMarkerAuto);
 
-      SymbolLayer selectedMarkerManual = new SymbolLayer("selected-marker-layer-manual", "selected-marker-manual")
-              .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
-      mapbox.addLayer(selectedMarkerManual);
+        SymbolLayer selectedMarkerManual = new SymbolLayer("selected-marker-layer-manual", "selected-marker-manual")
+                .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
+        mapbox.addLayer(selectedMarkerManual);
 
-      Log.d("map", "showNewMarker finish");
+        Log.d("map", "showNewMarker finish");
 
     }
 
@@ -1052,8 +1052,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     "Modifikácia: "+now_formated);
                             b++;
                         }
-                  }
-                  i++;
+                    }
+                    i++;
                 }
             }
         }
@@ -1353,7 +1353,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             database.close();
 
 
-                                           ////////// updatesLock.getAndSet(false);
+                                            ////////// updatesLock.getAndSet(false);
                                             // uložím najvyššie b_id  z bumps po uspešnej transakcii
                                             SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
                                             SharedPreferences.Editor editor = sharedPref.edit();
@@ -1365,7 +1365,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             // rollbacknem databazu
                                             database.endTransaction();
                                             database.close();
-                                         //////////////   updatesLock.getAndSet(false);
+                                            //////////////   updatesLock.getAndSet(false);
                                         }
                                     }
                                     finally
@@ -1638,7 +1638,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             database.setTransactionSuccessful();
                                             database.endTransaction();
                                             database.close();
-                                           //////// updatesLock.getAndSet(false);
+                                            //////// updatesLock.getAndSet(false);
 
                                         } else {
                                             // nastala chyba, načitaj uložene vytlky
@@ -1805,7 +1805,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         alert.setPositiveButton("Go to settings",
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
-                      startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     }
                 });
         alert.setNegativeButton("Cancel",
@@ -2015,17 +2015,17 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
                     }
 
-                        else
-                        {
-                            Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
-                            try {
-                                Random ran = new Random();
-                                int x = ran.nextInt(20) + 1;
-                                Thread.sleep(x);
-                            } catch (InterruptedException e) {
-                            }
+                    else
+                    {
+                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
                         }
                     }
+                }
 
 
 
@@ -2085,15 +2085,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 if (!list.isEmpty()) {
 
 
-                                        regularUpdatesLock = false;
-                                        ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
-                                        lista.addAll(accelerometer.getPossibleBumps());
-                                        ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
-                                        bumpsManual.addAll(accelerometer.getBumpsManual());
-                                        accelerometer.getPossibleBumps().clear();
-                                        accelerometer.getBumpsManual().clear();
-                                        Log.d("TTRREEE", "saveBump spustam");
-                                        saveBump(lista, bumpsManual, 0);
+                                    regularUpdatesLock = false;
+                                    ArrayList<HashMap<Location, Float>> lista = new ArrayList<HashMap<Location, Float>>();
+                                    lista.addAll(accelerometer.getPossibleBumps());
+                                    ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
+                                    bumpsManual.addAll(accelerometer.getBumpsManual());
+                                    accelerometer.getPossibleBumps().clear();
+                                    accelerometer.getBumpsManual().clear();
+                                    Log.d("TTRREEE", "saveBump spustam");
+                                    saveBump(lista, bumpsManual, 0);
                                 }else{
                                     Log.d("TTRREEE", "isEmpty  SyncDb");
                                     getBumpsWithLevel();
@@ -2201,70 +2201,70 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     if (lockAdd.tryLock()) {
 
 
-                            try {
-                                while (true) {
-                                    if (updatesLock.tryLock()) {
-                                        // Got the lock
-                                        try {
-                                            if (listHelp.size()>0 && accelerometer.getPossibleBumps().size()>0) {
-                                                int i=0;
-                                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                                                SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                                for (HashMap<Location, Float> oldList : listHelp) {
-                                                    Iterator oldListIteam = oldList.entrySet().iterator();
-                                                    while (oldListIteam.hasNext()) {
-                                                        HashMap.Entry oldData = (HashMap.Entry) oldListIteam.next();
-                                                        Location oldLocation = (Location) oldData.getKey();
-                                                        i=0;
-                                                        for (HashMap<Location, Float> newList : accelerometer.getPossibleBumps()) {
+                        try {
+                            while (true) {
+                                if (updatesLock.tryLock()) {
+                                    // Got the lock
+                                    try {
+                                        if (listHelp.size()>0 && accelerometer.getPossibleBumps().size()>0) {
+                                            int i=0;
+                                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
+                                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                            for (HashMap<Location, Float> oldList : listHelp) {
+                                                Iterator oldListIteam = oldList.entrySet().iterator();
+                                                while (oldListIteam.hasNext()) {
+                                                    HashMap.Entry oldData = (HashMap.Entry) oldListIteam.next();
+                                                    Location oldLocation = (Location) oldData.getKey();
+                                                    i=0;
+                                                    for (HashMap<Location, Float> newList : accelerometer.getPossibleBumps()) {
 
-                                                            Iterator newListIteam = newList.entrySet().iterator();
-                                                            while (newListIteam.hasNext()) {
-                                                                HashMap.Entry newData = (HashMap.Entry) newListIteam.next();
-                                                                Location newLocation = (Location) newData.getKey();
-                                                                // ak sa zhoduju location, tak updatujem hodnoty
-                                                                if ((oldLocation.getLatitude() == newLocation.getLatitude()) &&
-                                                                        (oldLocation.getLongitude() == newLocation.getLongitude()) ) {
-                                                                    // staršia hodnota je väčšia, tak prepíšem na väčšiu hodnotu
-                                                                    if ( (Float) oldData.getValue() >(Float) newData.getValue()  )
-                                                                        accelerometer.getPossibleBumps().get(0).put(newLocation,(Float) oldData.getValue());
-                                                                    // ak je stará hodnota menšia, updatujem databazu kde je uložená menšia
-                                                                    if ( (Float) oldData.getValue() <(Float) newData.getValue())
-                                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) newData.getValue()+",6) WHERE latitude=" + oldLocation.getLatitude() + " and  longitude=" + oldLocation.getLongitude()
-                                                                                + " and  ROUND(intensity,6)==ROUND("+(Float) oldData.getValue()+",6)");
-                                                                    // mažem s pomocného zoznamu updatnuté hodnoty
-                                                                    listHelp.remove(i);
-                                                                    bumpsManualHelp.remove(i);
-                                                                }
+                                                        Iterator newListIteam = newList.entrySet().iterator();
+                                                        while (newListIteam.hasNext()) {
+                                                            HashMap.Entry newData = (HashMap.Entry) newListIteam.next();
+                                                            Location newLocation = (Location) newData.getKey();
+                                                            // ak sa zhoduju location, tak updatujem hodnoty
+                                                            if ((oldLocation.getLatitude() == newLocation.getLatitude()) &&
+                                                                    (oldLocation.getLongitude() == newLocation.getLongitude()) ) {
+                                                                // staršia hodnota je väčšia, tak prepíšem na väčšiu hodnotu
+                                                                if ( (Float) oldData.getValue() >(Float) newData.getValue()  )
+                                                                    accelerometer.getPossibleBumps().get(0).put(newLocation,(Float) oldData.getValue());
+                                                                // ak je stará hodnota menšia, updatujem databazu kde je uložená menšia
+                                                                if ( (Float) oldData.getValue() <(Float) newData.getValue())
+                                                                    database.execSQL("UPDATE new_bumps  SET intensity=ROUND("+(Float) newData.getValue()+",6) WHERE latitude=" + oldLocation.getLatitude() + " and  longitude=" + oldLocation.getLongitude()
+                                                                            + " and  ROUND(intensity,6)==ROUND("+(Float) oldData.getValue()+",6)");
+                                                                // mažem s pomocného zoznamu updatnuté hodnoty
+                                                                listHelp.remove(i);
+                                                                bumpsManualHelp.remove(i);
                                                             }
-                                                            i++;
                                                         }
+                                                        i++;
                                                     }
                                                 }
-                                                database.close();
-                                                // doplnim do zoznamu povodné, ktoré sa nezmenili
-                                                accelerometer.getPossibleBumps().addAll(listHelp);
-                                                accelerometer.getBumpsManual().addAll(bumpsManualHelp);
                                             }
-                                            else if (listHelp.size()>0) {
-                                                // nepribudli nové hodnoty, tak tam vrátim pôvodné
-                                                accelerometer.getPossibleBumps().addAll(listHelp);
-                                                accelerometer.getBumpsManual().addAll(bumpsManualHelp);
-                                            }
+                                            database.close();
+                                            // doplnim do zoznamu povodné, ktoré sa nezmenili
+                                            accelerometer.getPossibleBumps().addAll(listHelp);
+                                            accelerometer.getBumpsManual().addAll(bumpsManualHelp);
+                                        }
+                                        else if (listHelp.size()>0) {
+                                            // nepribudli nové hodnoty, tak tam vrátim pôvodné
+                                            accelerometer.getPossibleBumps().addAll(listHelp);
+                                            accelerometer.getBumpsManual().addAll(bumpsManualHelp);
+                                        }
 
-                                        } finally {
-                                            // Make sure to unlock so that we don't cause a deadlock
-                                            updatesLock.unlock();
-                                            break;
-                                        }
-                                    } else {
-                                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
-                                        try {
-                                            Thread.sleep(5);
-                                        } catch (InterruptedException e) {
-                                        }
+                                    } finally {
+                                        // Make sure to unlock so that we don't cause a deadlock
+                                        updatesLock.unlock();
+                                        break;
+                                    }
+                                } else {
+                                    Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                                    try {
+                                        Thread.sleep(5);
+                                    } catch (InterruptedException e) {
                                     }
                                 }
+                            }
 
 
                         } finally {

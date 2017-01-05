@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -26,8 +27,16 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -79,7 +88,7 @@ import static navigationapp.main_application.FragmentActivity.setOnPosition;
 import static navigationapp.main_application.FragmentActivity.selectedName;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 
-public class MainActivity extends ActionBarActivity  implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener {
     private Context context;
     private AtomicBoolean threadLock = new AtomicBoolean(false);
     private final float ALL_BUMPS = 1.0f;
@@ -103,6 +112,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     private Marker featureMarker;
     boolean allow_click= false;
     com.mapbox.mapboxsdk.geometry.LatLng  convert_location  =null;
+    private ActionBarDrawerToggle drawerToggle;
+    private DrawerLayout drawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -283,6 +294,414 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+
+         drawerToggle = new ActionBarDrawerToggle(this,
+                drawerLayout,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close
+        );
+
+        drawerLayout.setDrawerListener(drawerToggle);
+
+
+
+
+
+
+        drawerToggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        drawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
+
+
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.activity_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+
+        if(drawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+
+        switch (item.getItemId()) {
+
+
+            case R.id.position:
+                if (!fragmentActivity.checkGPSEnable()) {
+                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                if (fragmentActivity.gps != null)
+                    fragmentActivity.gps.getOnPosition();
+                else
+                    Toast.makeText(this, "Not found position", Toast.LENGTH_LONG).show();
+                return true;
+
+            case R.id.layer:
+                if (!fragmentActivity.isNetworkAvailable() || mapbox == null) {
+                    Toast.makeText(this, "Please connect to internet to change map", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
+
+                AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
+                builderSingle.setTitle("Maps");
+                final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                        MainActivity.this, android.R.layout.select_dialog_singlechoice);
+                arrayAdapter.add("Street");
+                arrayAdapter.add("Satellite");
+                arrayAdapter.add("Outdoors");
+
+
+                builderSingle.setNegativeButton(
+                        "Cancel",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                builderSingle.setAdapter(
+                        arrayAdapter,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int select) {
+                                switch (select) {
+
+
+                                    case 0:
+                                        mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
+                                        LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        save(true);
+                                        fragmentActivity.getAllBumps(lightBumps.latitude, lightBumps.longitude);
+                                        break;
+
+                                    case 1:
+                                        mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
+                                        LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        save(true);
+                                        fragmentActivity.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
+                                        break;
+                                    case 2:
+                                        mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
+                                        LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        save(true);
+                                        fragmentActivity.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
+
+                                        break;
+                                }
+                            }
+                        });
+                builderSingle.show();
+                return true;
+
+            case R.id.filter:
+                if (!fragmentActivity.checkGPSEnable()) {
+                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                AlertDialog.Builder builderSingles = new AlertDialog.Builder(MainActivity.this);
+                builderSingles.setTitle("Show bumps");
+                final ArrayAdapter<String> arrayAdapters = new ArrayAdapter<String>(
+                        MainActivity.this, android.R.layout.select_dialog_singlechoice);
+                arrayAdapters.add("All bumps");
+                arrayAdapters.add("Medium & large bumps");
+                arrayAdapters.add("Large bumps");
+
+
+                builderSingles.setNegativeButton(
+                        "Cancel",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                builderSingles.setAdapter(
+                        arrayAdapters,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int select) {
+                                switch (select) {
+                                    case 0:
+                                        new Thread() {
+                                            public void run() {
+                                                fragmentActivity.level = ALL_BUMPS;
+                                                LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                save(true);
+                                                fragmentActivity.getAllBumps(allBumps.latitude, allBumps.longitude);
+                                            }
+                                        }.start();
+                                        break;
+
+                                    case 1:
+                                        new Thread() {
+                                            public void run() {
+                                                fragmentActivity.level = MEDIUM_BUMPS;
+                                                LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                save(true);
+                                                fragmentActivity.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
+
+                                            }
+                                        }.start();
+                                        break;
+                                    case 2:
+                                        new Thread() {
+                                            public void run() {
+                                                fragmentActivity.level = LARGE_BUMPS;
+                                                LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                save(true);
+                                                fragmentActivity.getAllBumps(largeBumps.latitude, largeBumps.longitude);
+                                            }
+                                        }.start();
+                                        break;
+                                }
+                            }
+                        });
+                builderSingles.show();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+
+        }
+
+
+    }
+
+    public void close () {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+     }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.int id = item.getItemId();
+
+        switch (item.getItemId()) {
+
+            case R.id.calibrate:
+                close();
+                if ( fragmentActivity.accelerometer!=null) {
+                    fragmentActivity.accelerometer.calibrate();
+                    if (isEneableShowText())
+                        Toast.makeText(context, "Your phone was calibrated.", Toast.LENGTH_SHORT).show();
+                }else {
+                    Toast.makeText(context, "Turn on your GPS before calibrate", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+
+            case R.id.clear_map:
+                close();
+                if(confirm.isShown()){
+                    Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
+                }else {
+                    if (mapbox!=null && fragmentActivity!=null) {
+                        mapbox.clear();
+                        fragmentActivity.deleteOldMarker();
+                    }
+                }
+                return true;
+
+            case R.id.navigation:
+                close();
+                EditText text = (EditText) findViewById(R.id.location);
+                text.setText("Navigate to...");
+                if ( fragmentActivity.gps!=null) {
+                    new Thread() {
+                        public void run() {
+                            fragmentActivity.gps.remove_draw_road();
+                            fragmentActivity.detection.setRoad(false);
+                            fragmentActivity.detection.stop_collison_navigate();
+
+                        }
+                    }.start();
+                }
+
+                return true;
+
+
+            case R.id.action_settings:
+                close();
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+
+            case R.id.download:
+                close();
+                if (!fragmentActivity.checkGPSEnable()) {
+                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                if ( mapbox==null) {
+                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                save(false);
+                // fragmentActivity.gps.setUpMap(false);
+                setOnPosition =true;
+                confirm.setVisibility(View.INVISIBLE);
+                fragmentActivity.setClear(true);
+                add_button.setVisibility(View.VISIBLE);
+                navig_on.setVisibility(View.INVISIBLE);
+                if ( flagDownload)
+                    Toast.makeText(this, "Momentálne sťahujete,nemožte 2 naraz", Toast.LENGTH_LONG).show();
+                else
+                    fragmentActivity.downloadRegionDialog();
+                return true;
+
+            case R.id.list:
+                close();
+                save(false);
+
+                if ( mapbox==null) {
+                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
+                add_button.setVisibility(View.VISIBLE);
+                mapConfirm.setVisibility(View.INVISIBLE);
+                confirm.setVisibility(View.INVISIBLE);
+                fragmentActivity.setClear(true);
+                navig_on.setVisibility(View.INVISIBLE);
+                if (flagDownload)
+                    Toast.makeText(this, "Momentálne sťahujete,nemožte pristupiť k stiahnutým mapám", Toast.LENGTH_LONG).show();
+                else
+                    fragmentActivity.downloadedRegionList();
+                return true;
+
+            case R.id.exit:
+                close();
+                if (fragmentActivity.accelerometer!=null) {
+                    while (true) {
+                        if (updatesLock.tryLock())
+                        {
+                            // Got the lock
+                            try
+                            {
+
+                                while (true) {
+                                    if (lockZoznam.tryLock()) {
+                                        // Got the lock
+                                        try {
+
+                                            ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
+                                            ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
+                                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                                            SQLiteDatabase sb = databaseHelper.getWritableDatabase();
+                                            sb.beginTransaction();
+                                            int i = 0;
+                                            for (HashMap<Location, Float> bump : list) {
+                                                Iterator it = bump.entrySet().iterator();
+                                                while (it.hasNext()) {
+                                                    HashMap.Entry pair = (HashMap.Entry) it.next();
+                                                    Location loc = (Location) pair.getKey();
+                                                    float data = (float) pair.getValue();
+                                                    String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + loc.getLongitude() + ",7) "
+                                                            + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and manual=" + bumpsManual.get(i);
+
+                                                    BigDecimal bd = new BigDecimal(Float.toString(data));
+                                                    bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                                    Cursor cursor = sb.rawQuery(sql, null);
+                                                    if (cursor.getCount() == 0) {
+                                                        Log.d("MainActivity", "vkladam ");
+                                                        ContentValues contentValues = new ContentValues();
+                                                        contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
+                                                        contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
+                                                        contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
+                                                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                                        sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                                    }
+                                                }
+                                                i++;
+                                            }
+                                            sb.setTransactionSuccessful();
+                                            sb.endTransaction();
+                                        } finally {
+                                            lockZoznam.unlock();
+                                            break;
+                                        }
+                                    } else {
+                                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                                        try {
+                                            Thread.sleep(20);
+                                        } catch (InterruptedException e) {
+                                        }
+                                    }
+                                }
+
+
+                            }
+                            finally
+                            {
+                                // Make sure to unlock so that we don't cause a deadlock
+                                updatesLock.unlock();
+                                break;
+                            }
+                        } else {
+                            Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                            try {
+                                Thread.sleep(20);
+                            } catch (InterruptedException e) {
+                            }
+                        }
+
+                    }
+
+                    fragmentActivity.stop_servise();
+                }
+                onDestroy();
+                return true;
+
+            default:
+                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+                drawer.closeDrawer(GravityCompat.START);
+                return true;
+
+        }
+
+
+
     }
 
     private  class LatLngEvaluator implements TypeEvaluator<com.mapbox.mapboxsdk.geometry.LatLng> {
@@ -674,7 +1093,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
-
+/*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_main, menu);
@@ -998,7 +1417,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 return super.onOptionsItemSelected(item);
         }
     }
-
+*/
 
 
 

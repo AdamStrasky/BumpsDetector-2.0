@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/calibrate" android:title="Calibrate"></item>
+    </group>
+
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/clear_map" android:title="Clear Map"></item>
+        <item android:id="@+id/navigation" android:title="End navigation"></item>
+    </group>
+
+
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/download" android:title="Download region"></item>
+        <item android:id="@+id/list" android:title="List of regions"></item>
+    </group>
+
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/action_settings" android:title="@string/action_settings" />
+    </group>
+
+
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/exit" android:title="Exit app"></item>
+    </group>
+
+
+
+</menu>
+
