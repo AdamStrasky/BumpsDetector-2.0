@@ -310,14 +310,27 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             mAlertDialog.cancel();
 
                             selectedName = regionName;
-                            LatLng position = new LatLng(address.getLatitude(), address.getLongitude());
-                            CameraPosition cameraPosition = new CameraPosition.Builder()
-                                    .target(new com.mapbox.mapboxsdk.geometry.LatLng(position.latitude, position.longitude))
-                                    .zoom(15)
-                                    .build();
+                            CameraPosition position = new CameraPosition.Builder()
+                                    .target(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude(),address.getLongitude())) // Sets the new camera position
+                                    .zoom(15) // Sets the zoom
+                                    .build(); // Creates a CameraPosition from the builder
 
-                            //  posun kamery na novu poziciu
-                            mapbox.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                            mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
+                                    new MapboxMap.CancelableCallback() {
+                                        @Override
+                                        public void onCancel() {
+
+                                        }
+
+                                        @Override
+                                        public void onFinish() {
+
+                                        }
+                                    });
+
+
+
+
                             // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
                             mapConfirm.setVisibility(View.VISIBLE);
                             add_button.setVisibility(View.INVISIBLE);

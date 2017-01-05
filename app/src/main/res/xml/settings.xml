@@ -10,8 +10,6 @@
             android:dialogTitle="Your name"
             />
     </PreferenceCategory>
-
-
     <CheckBoxPreference android:key="alarm"
         android:title="Alarm"
         android:defaultValue="true"/>
@@ -30,5 +28,4 @@
     <CheckBoxPreference android:key="voice"
         android:title="Voice alarm"
         android:defaultValue="true"/>
-
 </PreferenceScreen>
