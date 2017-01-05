@@ -140,11 +140,11 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                            else {
 
                                 IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
-                                Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.green_icon);
+                                Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.green_marker);
                                 com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
                                 featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
                                         .position(point)
-                                        .title("Properties:")
+                                        .title("Pridaný výtlk")
                                         .icon(icons)
                                 );
                                 convert_location = point;
@@ -210,18 +210,18 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                             deselectMarker(marker1, 1);
                         }
                         if (features.size() > 0) {
-                            Toast.makeText(getApplication(), "aaaaaaaaa", Toast.LENGTH_LONG).show();
                             if (features.get(0).getStringProperty("aaaaaa")!=null)
                             Toast.makeText(getApplication(), features.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
 
                             selectMarker(marker,  0);
+                            return;
                         }
                         if (features1.size() > 0) {
-                             Toast.makeText(getApplication(), "bbbbbbb", Toast.LENGTH_LONG).show();
                            if (features1.get(0).getStringProperty("aaaaaa")!=null)
                             Toast.makeText(getApplication(), features1.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
 
                             selectMarker(marker1, 1);
+                            return;
                         }
 
                     }

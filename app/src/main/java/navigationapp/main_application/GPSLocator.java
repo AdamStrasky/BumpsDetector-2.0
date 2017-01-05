@@ -95,34 +95,6 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
        }
     }
 
-    public void addBumpToMap (com.mapbox.mapboxsdk.geometry.LatLng  position, int count, int manual ) {
-        if (mapbox==null)
-            return;
-
-        if (position == null) {
-            return;
-        }
-        IconFactory iconFactory = IconFactory.getInstance(GPSLocator.this);
-        if (manual == 0 ) {
-
-            Drawable iconDrawable = ContextCompat.getDrawable(GPSLocator.this, R.drawable.red_icon);
-            com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
-            mapbox.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions()
-                    .position(new com.mapbox.mapboxsdk.geometry.LatLng(position.getLatitude(), position.getLongitude()))
-                    .title("Number of detections: " + count )
-                    .icon(icons));
-        }
-        else {
-            Drawable iconDrawable = ContextCompat.getDrawable(GPSLocator.this, R.drawable.green_icon);
-            com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
-            mapbox.addMarker(new com.mapbox.mapboxsdk.annotations.MarkerOptions()
-                    .position(new com.mapbox.mapboxsdk.geometry.LatLng(position.getLatitude(), position.getLongitude()))
-                    .title("Manually added " +
-                            "Number of detections:" + count )
-                    .icon(icons));
-        }
-    }
-
     public Location getmCurrentLocation() {
         return mCurrentLocation;
     }
