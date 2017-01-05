@@ -140,7 +140,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                            else {
 
                                 IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
-                                Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.green_marker);
+                                Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.purple_marker);
                                 com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
                                 featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
                                         .position(point)
@@ -735,18 +735,22 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                     case 0:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        save(true);
                                         fragmentActivity.getAllBumps(lightBumps.latitude,lightBumps.longitude);
                                         break;
 
                                     case 1:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                                         LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        save(true);
                                         fragmentActivity.getAllBumps(satelliteBumps.latitude,satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
                                         LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        save(true);
                                         fragmentActivity.getAllBumps(outdoorsBumps.latitude ,outdoorsBumps.longitude);
+
                                         break;
                                 }
                             }
@@ -790,8 +794,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                             public void run() {
                                                 fragmentActivity.level = ALL_BUMPS;
                                                 LatLng allBumps =  fragmentActivity.gps.getCurrentLatLng();
+                                                save(true);
                                                 fragmentActivity.getAllBumps(allBumps.latitude,allBumps.longitude);
-
                                             }
                                         }.start();
                                         break;
@@ -801,6 +805,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                             public void run() {
                                                 fragmentActivity.level = MEDIUM_BUMPS;
                                                 LatLng mediumBumps =  fragmentActivity.gps.getCurrentLatLng();
+                                                save(true);
                                                 fragmentActivity.getAllBumps(mediumBumps.latitude,mediumBumps.longitude);
 
                                             }
@@ -811,6 +816,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                                             public void run() {
                                                 fragmentActivity.level = LARGE_BUMPS;
                                                 LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                save(true);
                                                 fragmentActivity.getAllBumps(largeBumps.latitude, largeBumps.longitude);
                                             }
                                         }.start();
@@ -826,8 +832,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 if(confirm.isShown()){
                     Toast.makeText(context,"Vyber najskôr výtlk",Toast.LENGTH_SHORT).show();
                 }else {
-                    if (mapbox!=null && fragmentActivity!=null)
+                    if (mapbox!=null && fragmentActivity!=null) {
+                        mapbox.clear();
                         fragmentActivity.deleteOldMarker();
+                    }
                 }
                 return true;
 
@@ -848,10 +856,6 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                     new Thread() {
                         public void run() {
                             fragmentActivity.gps.remove_draw_road();
-                            if (fragmentActivity.gps.getCurrentLatLng() != null) {
-                                LatLng bumps = fragmentActivity.gps.getCurrentLatLng();
-                                fragmentActivity.getAllBumps(bumps.latitude, bumps.longitude);
-                            }
                             fragmentActivity.detection.setRoad(false);
                             fragmentActivity.detection.stop_collison_navigate();
 

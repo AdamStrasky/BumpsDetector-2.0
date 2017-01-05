@@ -23,6 +23,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
 
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -89,7 +90,11 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public void remove_draw_road () {
        if (draw_road!=null) {
            if(mapbox!=null) {
-             mapbox.clear();
+               List<Polyline> markers =  mapbox.getPolylines();
+               for (int i = 0; i < markers.size(); i++) {
+                   mapbox.removePolyline(markers.get(i));
+               }
+
              draw_road=null;
            }
        }

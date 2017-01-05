@@ -632,11 +632,6 @@ public class Location {
             return null;
         else {
             activity.gps.remove_draw_road();
-            if ( activity.gps.getCurrentLatLng()!=null ) {
-                LatLng bumps = activity.gps.getCurrentLatLng();
-                activity.getAllBumps(bumps.latitude, bumps.longitude);
-            }
-
             activity.gps.showDirection(directionPoint);
 
             return directionPoint;

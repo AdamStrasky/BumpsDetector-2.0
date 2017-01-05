@@ -56,6 +56,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -79,6 +80,8 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -86,6 +89,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -717,17 +721,28 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                                 if (cursor.moveToFirst()) {
                                     do {
-                                     //   SimpleDateFormat format = new SimpleDateFormat("MMM dd,yyyy");
-                                     //   String date = format.format(Date.parse(cursor.getString(4)));
+                                        String ds1 = "2007-06-30";
+                                        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
+                                        SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy");
+                                        String ds2 = null;
+
+
+                                        try {
+                                            ds2 = sdf2.format(sdf1.parse(cursor.getString(4).substring(0,10)));
+                                        } catch (ParseException e) {
+                                            e.printStackTrace();
+                                        }
+
+
                                         if (cursor.getInt(3)==0) {
                                             autoMarkerCoordinates.add(Feature.fromGeometry(
                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0)))) // Boston Common Park
 
                                             );
                                             Feature feature = autoMarkerCoordinates.get(autoBumpSequence);
-                                            feature.addStringProperty("aaaaaa","" +"Automaticky výtlk \n"+
-                                                                                "Počet výtlkov: "+cursor.getInt(2)+"\n" +
-                                                                                "Modifikácia : ");
+                                            feature.addStringProperty("aaaaaa","" +"    Automaticky výtlk \n"+
+                                                                                   "      Počet výtlkov: "+cursor.getInt(2)+"\n" +
+                                                                                   "Modifikácia: "+ds2);
                                             autoBumpSequence++;
                                         }
                                         else {
@@ -735,9 +750,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0)))) // Boston Common Park
                                             );
                                             Feature featurea = manualMarkerCoordinates.get(manualBumpSequence);
-                                            featurea.addStringProperty("aaaaaa","" +"Manuálny výtlk \n"+
-                                                    "Počet výtlkov: "+cursor.getInt(2)+"\n" +
-                                                    "Modifikácia : ");
+                                            featurea.addStringProperty("aaaaaa","" +"    Automaticky výtlk \n"+
+                                                    "      Počet výtlkov: "+cursor.getInt(2)+"\n" +
+                                                    "Modifikácia: "+ds2);
                                             manualBumpSequence++;
                                         }
                                      }
@@ -872,8 +887,13 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
    }
     synchronized public void deleteMarkers() {
         Log.d("map", "deleteOldMarker start");
+            List<Marker> markers =  mapbox.getMarkers();
+            for (int i = 0; i < markers.size(); i++) {
+                mapbox.removeMarker(markers.get(i));
+            }
 
-         mapbox.clear();
+
+
         try {
             if(mapbox.getSource("marker-source-auto")!=null)
                 mapbox.removeSource("marker-source-auto");
@@ -954,14 +974,14 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
 
-      Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_marker);
+      Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
       mapbox.addImage("my-marker-image-auto", iconAuto);
 
       SymbolLayer markerAuto = new SymbolLayer("marker-layer-auto", "marker-source-auto")
               .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
       mapbox.addLayer(markerAuto);
 
-      Bitmap iconManual = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+      Bitmap iconManual = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_marker);
       mapbox.addImage("my-marker-image-manual", iconManual);
 
       SymbolLayer markersManual = new SymbolLayer("marker-layer-manual", "marker-source-manual")
@@ -998,7 +1018,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             SimpleDateFormat now;
             Calendar cal = Calendar.getInstance();
             cal.setTime(new Date());
-            now = new SimpleDateFormat("dd-MM-yyyy");
+            now = new SimpleDateFormat("dd/MM/yyyy");
             String now_formated = now.format(cal.getTime());
             for (HashMap<Location, Float> bump : bumps) {
 
@@ -1018,8 +1038,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                             );
                             Feature feature = autoMarkerCoordinates.get(a);
-                            feature.addStringProperty("aaaaaa","" +"Automaticky výtlk \n"+
-                                    "Počet výtlkov: 1 \n" +
+                            feature.addStringProperty("aaaaaa","" +"    Automaticky výtlk \n"+
+                                    "      Počet výtlkov: 1\n" +
                                     "Modifikácia: "+now_formated);
                             a++;
                         } else {
@@ -1027,8 +1047,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                             );
                             Feature featurea = manualMarkerCoordinates.get(b);
-                            featurea.addStringProperty("aaaaaa","" +"Manuálny výtlk \n"+
-                                    "Počet výtlkov: 1 \n" +
+                            featurea.addStringProperty("aaaaaa","" +"    Manuálny výtlk \n"+
+                                    "      Počet výtlkov: 1\n" +
                                     "Modifikácia: "+now_formated);
                             b++;
                         }
