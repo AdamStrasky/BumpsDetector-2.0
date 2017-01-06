@@ -156,7 +156,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
         if (!isNetworkAvailable()){
             if (isEneableShowText())
-                Toast.makeText(getActivity(), "Network is disabled.You are in offline mode.", Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.offline_mode), Toast.LENGTH_SHORT).show();
         }
         // reaguje na zapnutie/ vypnutie GPS
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
@@ -178,22 +179,23 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     /*******************************************************************************************************/
     public void downloadRegionDialog() {
         if (!isNetworkAvailable()) {
-            Toast.makeText(getActivity(), "You must to be connected to internet if you want download map", Toast.LENGTH_SHORT).show();
+
+            Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.not_net_download), Toast.LENGTH_SHORT).show();
             return;
         }
         selectedName = null;
         AlertDialog.Builder builderSingle = new AlertDialog.Builder( getActivity());
         builderSingle.setIcon(R.drawable.ic_launcher);
-        builderSingle.setTitle("Select map for download");
+        builderSingle.setTitle(getActivity().getResources().getString(R.string.map_download));
 
         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                 getActivity(),
                 android.R.layout.select_dialog_singlechoice);
-        arrayAdapter.add("Download current map     ");
-        arrayAdapter.add("Select region to download");
+        arrayAdapter.add( getActivity().getResources().getString(R.string.current_map));
+        arrayAdapter.add(getActivity().getResources().getString(R.string.select_map));
 
         builderSingle.setNegativeButton(
-                "cancel",
+                getActivity().getResources().getString(R.string.cancel),
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -214,24 +216,24 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
     public void alertSelectRegion(String region , int which) {
-        String strName = "Map for download";
+        String strName = getActivity().getResources().getString(R.string.map_for_download);
         // ktorá možnosť bola zvolená - currnet/ select
         final int  click=which;
         final EditText regionNameEdit = new EditText(getActivity());
         if (which==0 )
-            regionNameEdit.setHint("Write name of region");
+            regionNameEdit.setHint(getActivity().getResources().getString(R.string.name_region));
         else
-            regionNameEdit.setHint("Write name of region for download");
+            regionNameEdit.setHint(getActivity().getResources().getString(R.string.name_region_download));
         // ak bolo znovuotvorene, nech zostane uložený nazov regionu
         if (region!=null)
             regionNameEdit.setText(region);
 
         AlertDialog.Builder windowAlert = new AlertDialog.Builder(getActivity());
-        windowAlert.setPositiveButton("Download", null);
-        windowAlert.setNegativeButton("Cancel", null);
+        windowAlert.setPositiveButton(getActivity().getResources().getString(R.string.download), null);
+        windowAlert.setNegativeButton(getActivity().getResources().getString(R.string.cancel), null);
         // ak volím select, dať možnosť aj zobraziť mapu
         if (which !=0)
-            windowAlert.setNeutralButton("Navige to", null);
+            windowAlert.setNeutralButton(getActivity().getResources().getString(R.string.navige_to), null);
         windowAlert.setView(regionNameEdit);
         windowAlert.setTitle(strName);
         final AlertDialog mAlertDialog = windowAlert.create();
@@ -245,7 +247,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     public void onClick(View view) {
                         String regionName = regionNameEdit.getText().toString();
                         if (regionName.length() == 0) {
-                            Toast.makeText(getActivity(), "Region name cannot be empty.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.region_empty), Toast.LENGTH_SHORT).show();
                         } else {
                             // zvolené zadanie regionu
                             if (click == 1) {
@@ -257,7 +259,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 }
 
                                 if (address == null) {
-                                    Toast.makeText(getActivity(), "Region not exist", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.region_not_exist), Toast.LENGTH_SHORT).show();
                                 }
                                 else {
                                     mAlertDialog.cancel();
@@ -287,7 +289,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
 
                         if (address == null) {
-                            Toast.makeText(getActivity(), "Region not exist", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity(),  getActivity().getResources().getString(R.string.region_not_exist), Toast.LENGTH_LONG).show();
 
                         } else {
                             setOnPosition = false;
@@ -347,8 +349,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             }
 
             if (address == null) {
-                endProgress("Unable to find location, wrong name!");
-                Toast.makeText(getActivity(), "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
+                endProgress( getActivity().getResources().getString(R.string.unable_find));
+                Toast.makeText(getActivity(),  getActivity().getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
                 return;
             }else {
                 bounds = new LatLngBounds.Builder()
@@ -420,7 +422,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 if (status.isComplete()) {
                     // Download complete
-                    endProgress("Region downloaded successfully.");
+                    endProgress(getActivity().getResources().getString(R.string.download_success));
                     return;
                 }
                 // Log what is being currently downloaded
@@ -461,7 +463,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 // Check result. If no regions have been
                 // downloaded yet, notify user and return
                 if (offlineRegions == null || offlineRegions.length == 0) {
-                    Toast.makeText(getActivity(), "You have no regions yet.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.no_regions), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -474,7 +476,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 // Build a dialog containing the list of regions
                 AlertDialog dialog = new AlertDialog.Builder(getActivity())
-                        .setTitle("List")
+                        .setTitle(getActivity().getResources().getString(R.string.list))
                         .setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -482,14 +484,14 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 regionSelected = which;
                             }
                         })
-                        .setPositiveButton("Navigate to", new DialogInterface.OnClickListener() {
+                        .setPositiveButton(getActivity().getResources().getString(R.string.navige_to), new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
 
 
 
                                 if (!checkGPSEnable()) {
-                                    Toast.makeText(getActivity(), "Turn on your GPS", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                                 } else {
                                     setOnPosition = false;
                                     Toast.makeText(getActivity(), items[regionSelected], Toast.LENGTH_LONG).show();
@@ -530,7 +532,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                             }
                         })
-                        .setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+                        .setNeutralButton(getActivity().getResources().getString(R.string.delete), new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
                                 // Make progressBar indeterminate and
@@ -545,7 +547,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         // Once the region is deleted, remove the
                                         // progressBar and display a toast
 
-                                        Toast.makeText(getActivity(), "Region deleted", Toast.LENGTH_LONG).show();
+                                        Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.region_delete), Toast.LENGTH_LONG).show();
                                     }
 
                                     @Override
@@ -556,7 +558,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 });
                             }
                         })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        .setNegativeButton(getActivity().getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
                                 // When the user cancels, don't do anything.
@@ -592,7 +594,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     // Progress bar methods
     private void startProgress() {
-        Toast.makeText(getActivity(), "Download start", Toast.LENGTH_LONG).show();
+        Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.download_start), Toast.LENGTH_LONG).show();
         downloadNotification(true);
         flagDownload=true;
         isEndNotified = false;
@@ -601,7 +603,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private void endProgress(final String message) {
         // Don't notify more than once
         if (isEndNotified) return;
-        mBuilder.setContentText("Download complete")
+        mBuilder.setContentText(getActivity().getResources().getString(R.string.download_complete))
                 // Removes the progress bar
                 .setProgress(0,0,false);
         mNotifyManager.notify(0, mBuilder.build());
@@ -622,14 +624,14 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         if (progress) {
             mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
             mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
-            mBuilder.setContentTitle("Map download")
-                    .setContentText("Download in progress")
+            mBuilder.setContentTitle( getActivity().getResources().getString(R.string.notif_map_download))
+                    .setContentText( getActivity().getResources().getString(R.string.notif_map_progress))
                     .setSmallIcon(R.drawable.download);
         }
         else {
             if (flagDownload) {
-                mBuilder.setContentTitle("Download error")
-                        .setContentText("Download was interrupted")
+                mBuilder.setContentTitle( getActivity().getResources().getString(R.string.notif_map_error))
+                        .setContentText( getActivity().getResources().getString(R.string.notif_map_interrupted))
                         .setProgress(0, 0, false);
                 mNotifyManager.notify(0, mBuilder.build());
             }
@@ -666,9 +668,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     boolean deleteMap = false;
     synchronized public void getAllBumps(final Double latitude, final Double longitude) {
-
         if (latitude==null || longitude==null) {
-            Toast.makeText(getActivity(), "No GPS signal", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(),  getActivity().getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -738,9 +739,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                                             );
                                             Feature feature = autoMarkerCoordinates.get(autoBumpSequence);
-                                            feature.addStringProperty("aaaaaa","" +"    Automaticky výtlk \n"+
-                                                    "      Počet výtlkov: "+cursor.getInt(2)+"\n" +
-                                                    "Modifikácia: "+ds2);
+                                            feature.addStringProperty("aaaaaa",getActivity().getResources().getString(R.string.auto_bump)+"\n"+
+                                                    getActivity().getResources().getString(R.string.number_bump)+" "+cursor.getInt(2)+"\n" +
+                                                    getActivity().getResources().getString(R.string.modif)+" "+ds2);
                                             autoBumpSequence++;
                                         }
                                         else {
@@ -748,9 +749,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0)))) // Boston Common Park
                                             );
                                             Feature featurea = manualMarkerCoordinates.get(manualBumpSequence);
-                                            featurea.addStringProperty("aaaaaa","" +"    Automaticky výtlk \n"+
-                                                    "      Počet výtlkov: "+cursor.getInt(2)+"\n" +
-                                                    "Modifikácia: "+ds2);
+                                            featurea.addStringProperty("aaaaaa",getActivity().getResources().getString(R.string.manual_bump)+"\n"+
+                                                    getActivity().getResources().getString(R.string.number_bump)+" "+cursor.getInt(2)+"\n" +
+                                                    getActivity().getResources().getString(R.string.modif)+" "+ds2);
                                             manualBumpSequence++;
                                         }
                                     }
@@ -829,7 +830,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 }
 
                 notSendBumps(bumpList, bumpsManual,autoBumpSequence,manualBumpSequence);
-
+                if (mapbox!=null)
                 showNewMarker();
                 deleteMap = true;
 
@@ -1037,19 +1038,20 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
 
                             );
+
                             Feature feature = autoMarkerCoordinates.get(a);
-                            feature.addStringProperty("aaaaaa","" +"    Automaticky výtlk \n"+
-                                    "      Počet výtlkov: 1\n" +
-                                    "Modifikácia: "+now_formated);
+                            feature.addStringProperty("aaaaaa",getActivity().getResources().getString(R.string.auto_bump) +"\n"+
+                                    getActivity().getResources().getString(R.string.number_bump)+ "1\n" +
+                                    getActivity().getResources().getString(R.string.modif)+" "+now_formated);
                             a++;
                         } else {
                             manualMarkerCoordinates.add(Feature.fromGeometry(
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                             );
                             Feature featurea = manualMarkerCoordinates.get(b);
-                            featurea.addStringProperty("aaaaaa","" +"    Manuálny výtlk \n"+
-                                    "      Počet výtlkov: 1\n" +
-                                    "Modifikácia: "+now_formated);
+                            featurea.addStringProperty("aaaaaa",getActivity().getResources().getString(R.string.manual_bump) +"\n"+
+                                    getActivity().getResources().getString(R.string.number_bump)+ "1\n" +
+                                    getActivity().getResources().getString(R.string.modif)+" "+now_formated);
                             b++;
                         }
                     }
@@ -1705,9 +1707,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private void GetUpdateAction(){
         // ak nemám dovolené sťahovať dáta,  ale mám update
         AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-        alert.setMessage("Update for new data is ready. Would you like to download it?");
+        alert.setMessage(getActivity().getResources().getString(R.string.update));
         alert.setCancelable(false);
-        alert.setPositiveButton("YES ",
+        alert.setPositiveButton(getActivity().getResources().getString(R.string.yes),
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
@@ -1732,7 +1734,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
                     }
                 });
-        alert.setNegativeButton("NO ",
+        alert.setNegativeButton(getActivity().getResources().getString(R.string.nope),
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
@@ -1800,15 +1802,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     private void showGPSDisabledAlertToUser(){
         AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-        alert.setMessage("GPS is disabled. Would you like to enable it?");
+        alert.setMessage(getActivity().getResources().getString(R.string.enable_gps));
         alert.setCancelable(false);
-        alert.setPositiveButton("Go to settings",
+        alert.setPositiveButton(getActivity().getResources().getString(R.string.change_gps),
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     }
                 });
-        alert.setNegativeButton("Cancel",
+        alert.setNegativeButton(getActivity().getResources().getString(R.string.cancel),
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         dialog.cancel();
@@ -1819,14 +1821,14 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     private void showCalibrationAlert() {
         AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-        alert.setMessage("Please, calibrate your phone before start using this application.");
+        alert.setMessage(getActivity().getResources().getString(R.string.offer_calibrate));
         alert.setCancelable(false);
-        alert.setPositiveButton("Calibrate",
+        alert.setPositiveButton(getActivity().getResources().getString(R.string.menu_calibrate),
                 new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         mLocnServAcc.calibrate();
                         if (isEneableShowText())
-                            Toast.makeText(getActivity(),"Your phone was calibrated.",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(),getActivity().getResources().getString(R.string.calibrate),Toast.LENGTH_SHORT).show();
                     }
                 });
         alert.show();
@@ -1913,7 +1915,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         }
                     }
 
-                    Toast.makeText(getActivity(), "Finding your location....", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.fnd_location), Toast.LENGTH_SHORT).show();
                     try {
                         Thread.sleep(1000); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
                     } catch (InterruptedException e) {
@@ -2080,7 +2082,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 ArrayList<HashMap<Location, Float>> list = accelerometer.getPossibleBumps();
                                 //pouzivatel je upozorneni na odosielanie vytlkov notifikaciou
                                 if (isEneableShowText())
-                                    Toast.makeText(getActivity(), "Saving bumps...(" + list.size() + ")", Toast.LENGTH_SHORT).show();
+
+                                    Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.save_bump)+"(" + list.size() + ")", Toast.LENGTH_SHORT).show();
 
                                 if (!list.isEmpty()) {
 
@@ -2319,7 +2322,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                 if (isEneableShowText())
                     // stiahnem najnovšie udaje a zobrazím mapu
-                    Toast.makeText(getActivity(), "Setting map", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.map_setting), Toast.LENGTH_SHORT).show();
                 regular_update =false;
                 mLocnServGPS.setLevel(level);
                 gps = mLocnServGPS;

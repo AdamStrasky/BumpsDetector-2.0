@@ -106,6 +106,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
+        Language.setLanguage(MainActivity.this,getLanguage());
+
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
         mapView.onCreate(savedInstanceState);
@@ -142,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
                                 featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
                                         .position(point)
-                                        .title("Pridaný výtlk")
+                                        .title(getApplication().getResources().getString(R.string.add_marker))
                                         .icon(icons)
                                 );
                                 convert_location = point;
@@ -232,6 +234,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         final EditText searchBar = (EditText) findViewById(R.id.location);
+        searchBar.setText(getApplication().getResources().getString(R.string.navig));
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);
         delete_button = (Button) findViewById(R.id.delete_btn);
@@ -353,33 +356,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.position:
                 if (!fragmentActivity.checkGPSEnable()) {
-                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 if (fragmentActivity.gps != null)
                     fragmentActivity.gps.getOnPosition();
                 else
-                    Toast.makeText(this, "Not found position", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, this.getResources().getString(R.string.not_position), Toast.LENGTH_LONG).show();
                 return true;
 
             case R.id.layer:
                 if (!fragmentActivity.isNetworkAvailable() || mapbox == null) {
-                    Toast.makeText(this, "Please connect to internet to change map", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this,this.getResources().getString(R.string.change_map_style), Toast.LENGTH_LONG).show();
                     return true;
                 }
 
-
                 AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
-                builderSingle.setTitle("Maps");
+                builderSingle.setTitle(this.getResources().getString(R.string.map));
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                         MainActivity.this, android.R.layout.select_dialog_singlechoice);
-                arrayAdapter.add("Street");
-                arrayAdapter.add("Satellite");
-                arrayAdapter.add("Outdoors");
+                arrayAdapter.add(this.getResources().getString(R.string.street));
+                arrayAdapter.add(this.getResources().getString(R.string.satellite));
+                arrayAdapter.add(this.getResources().getString(R.string.outdoors));
 
 
                 builderSingle.setNegativeButton(
-                        "Cancel",
+                        this.getResources().getString(R.string.cancel),
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -426,20 +428,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.filter:
                 if (!fragmentActivity.checkGPSEnable()) {
-                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 AlertDialog.Builder builderSingles = new AlertDialog.Builder(MainActivity.this);
-                builderSingles.setTitle("Show bumps");
+                builderSingles.setTitle(this.getResources().getString(R.string.sh_bumps));
+
                 final ArrayAdapter<String> arrayAdapters = new ArrayAdapter<String>(
                         MainActivity.this, android.R.layout.select_dialog_singlechoice);
-                arrayAdapters.add("All bumps");
-                arrayAdapters.add("Medium & large bumps");
-                arrayAdapters.add("Large bumps");
+                arrayAdapters.add(this.getResources().getString(R.string.all_bumps));
+                arrayAdapters.add(this.getResources().getString(R.string.med_lar_bumps));
+                arrayAdapters.add(this.getResources().getString(R.string.lar_bumps));
 
 
                 builderSingles.setNegativeButton(
-                        "Cancel",
+                        this.getResources().getString(R.string.cancel),
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -519,9 +522,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if ( fragmentActivity.accelerometer!=null) {
                     fragmentActivity.accelerometer.calibrate();
                     if (isEneableShowText())
-                        Toast.makeText(context, "Your phone was calibrated.", Toast.LENGTH_SHORT).show();
+
+                        Toast.makeText(context, this.getResources().getString(R.string.calibrate), Toast.LENGTH_SHORT).show();
                 }else {
-                    Toast.makeText(context, "Turn on your GPS before calibrate", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, this.getResources().getString(R.string.gps_calibrate), Toast.LENGTH_SHORT).show();
                 }
                 return true;
 
@@ -539,7 +543,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.navigation:
                 close();
                 EditText text = (EditText) findViewById(R.id.location);
-                text.setText("Navigate to...");
+
+                text.setText(this.getResources().getString(R.string.navig));
                 if ( fragmentActivity.gps!=null) {
                     new Thread() {
                         public void run() {
@@ -562,11 +567,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.download:
                 close();
                 if (!fragmentActivity.checkGPSEnable()) {
-                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this,this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 if ( mapbox==null) {
-                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 save(false);
@@ -577,7 +582,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 if ( flagDownload)
-                    Toast.makeText(this, "Momentálne sťahujete,nemožte 2 naraz", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, this.getResources().getString(R.string.download_run), Toast.LENGTH_LONG).show();
                 else
                     fragmentActivity.downloadRegionDialog();
                 return true;
@@ -587,7 +592,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 save(false);
 
                 if ( mapbox==null) {
-                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
                 }
 
@@ -597,7 +602,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 fragmentActivity.setClear(true);
                 navig_on.setVisibility(View.INVISIBLE);
                 if (flagDownload)
-                    Toast.makeText(this, "Momentálne sťahujete,nemožte pristupiť k stiahnutým mapám", Toast.LENGTH_LONG).show();
+
+                    Toast.makeText(this,this.getResources().getString(R.string.download_run_list) , Toast.LENGTH_LONG).show();
                 else
                     fragmentActivity.downloadedRegionList();
                 return true;
@@ -818,23 +824,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.add_button:
                 if (!fragmentActivity.checkGPSEnable()) {
-                    Toast.makeText(this, "Turn on your GPS", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     break;
                 }
                 if (mapbox==null) {
-                    Toast.makeText(this, "Map is not loaded", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     break;
                 }
                 AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
-                builderSingle.setTitle("Select type of bump");
+                builderSingle.setTitle(this.getResources().getString(R.string.type_bumps));
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                         MainActivity.this,android.R.layout.select_dialog_singlechoice);
-                arrayAdapter.add("Large");
-                arrayAdapter.add("Medium");
-                arrayAdapter.add("Normal");
+                arrayAdapter.add(this.getResources().getString(R.string.type_lage));
+                arrayAdapter.add(this.getResources().getString(R.string.type_medium));
+                arrayAdapter.add(this.getResources().getString(R.string.type_normal));
 
                 builderSingle.setNegativeButton(
-                        "Cancel",
+                        this.getResources().getString(R.string.cancel),
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -879,7 +885,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //vytvorenie markera
                 //fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
-                    Toast.makeText(this, "Bump was added", Toast.LENGTH_LONG).show();
+
+                    Toast.makeText(this, this.getResources().getString(R.string.bump_add), Toast.LENGTH_LONG).show();
                     final double ll = intensity;
                     final Location location = new Location("new");
                     location.setLatitude(round(convert_location.getLatitude(),7));
@@ -1048,7 +1055,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick_Search(View v) throws IOException {
         Address address = null;
         EditText text = (EditText) findViewById(R.id.location);
-        Toast.makeText(this, "Finding location...", Toast.LENGTH_LONG).show();
+
+        Toast.makeText(this, this.getResources().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
         text.setCursorVisible(false);
         hideKeyboard(v);
         String location = text.getText().toString();
@@ -1057,7 +1065,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 address = Route.findLocality(location, this);
                 if (address == null) {
                     if (isEneableShowText())
-                        Toast.makeText(this, "Unable to find location, wrong name!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, this.getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
                 }
                 else {
                     final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
@@ -1073,7 +1081,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             catch (Exception e) {
                 if (isEneableShowText())
-                    Toast.makeText(this, "Unable to find location!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this,  this.getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
             }
         }
         else {
@@ -1129,6 +1137,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d("rrrrrr","onResume run ");
         isEneableScreen();
         super.onResume();
+
+
+
+
         SetUpCamera();
         mapView.onResume();
         MainActivity.activityResumed();
@@ -1159,6 +1171,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         long tmp = Math.round(value);
         return (double) tmp / factor;
     }
+
+    public  String getLanguage() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String name = prefs.getString("lang", "");
+        return name;
+    }
+
 
 
 

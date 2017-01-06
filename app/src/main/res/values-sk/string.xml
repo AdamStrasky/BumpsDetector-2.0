@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    ///////// main activity
+    <string name="turn_gps">Povoľte GPS prosím</string>
+    <string name="not_position">Pozícia nenájdená</string>
+    <string name="change_map_style">Prosím, pripojte sa k internetu na zmenu máp </string>
+    <string name="street">Dopravné</string>
+    <string name="satellite">Satelitné</string>
+    <string name="outdoors">Terénne</string>
+    <string name="cancel">Zrušiť</string>
+    <string name="map">Mapy</string>
+    <string name="sh_bumps">Výtlky</string>
+    <string name="all_bumps">Všetky výtlky</string>
+    <string name="med_lar_bumps">Stredné a veľké</string>
+    <string name="lar_bumps">Veľké výtlky</string>
+    <string name="calibrate">Váš telefon bol kalibrovaný</string>
+    <string name="gps_calibrate">Poveľte GPS pred kalibráciou</string>
+    <string name="navig">Navigovať do ...</string>
+    <string name="map_not_load">Nenačítaná mapa</string>
+    <string name="download_run">Momentálne sťahujete, nemôžte sťahovať viacero súčasne</string>
+    <string name="download_run_list">Momentálne sťahujete, nemožte pristupiť k stiahnutým mapám</string>
+    <string name="type_bumps">Typ výtlku</string>
+    <string name="type_lage">Veľký</string>
+    <string name="type_medium">Stredný</string>
+    <string name="type_normal">Normálny</string>
+    <string name="bump_add">Výtlk pridaný</string>
+    <string name="fnd_location">Hľadám polohu ...</string>
+    <string name="unable_find">Pozícia nenájdená, zlý názov!</string>
+    <string name="unable_find_net">Pozícia nenájdená, zlý názov! Pripojte sa k internetu prosím</string>
+
+    /////// hamburger
+    <string name="menu_exit">Ukončiť</string>
+    <string name="menu_clear">Vyčistiť mapu</string>
+    <string name="menu_calibrate">Kalibrovať</string>
+    <string name="menu_settings">Nastavenia</string>
+    <string name="menu_download">Stiahnuť oblasť</string>
+    <string name="menu_list">Zoznam oblastí</string>
+    <string name="menu_navig">Ukončiť navigáciu</string>
+
+    ///// accelerometer
+    <string name="same_bump">rovnaký výtlk</string>
+    <string name="under_bump">pod 2 metre</string>
+    <string name="new_bump">nový výtlk</string>
+
+    ///////// fragment activity
+    <string name="offline_mode">Internet je vypnutý. Ste v off-line móde</string>
+    <string name="not_net_download">Musíte byť pripojený na internet ak chcete sťahovať</string>
+    <string name="map_download">Zvoľte mapu na stiahnutie</string>
+    <string name="select_map">Zvoliť oblasť </string>
+    <string name="current_map">Stiahnuť aktuálnu mapu   </string>
+
+    <string name="map_for_download">Mapa na stiahnutie</string>
+    <string name="name_region">Názov oblasti</string>
+    <string name="name_region_download">Napíšte názov oblasti na stiahnutie</string>
+    <string name="download">Stiahnuť</string>
+    <string name="navige_to">Presunúť do</string>
+
+    <string name="region_empty">Názov oblasti nemôže byť prázdne</string>
+    <string name="region_not_exist">Oblasť neexistuje</string>
+
+    <string name="download_success">Oblasť úspešne stiahnutá</string>
+    <string name="no_regions">Nemáte zatiaľ žiadne oblasti</string>
+    <string name="region_delete">Oblasť zmazaná</string>
+    <string name="delete">Zmazať</string>
+    <string name="download_start">Sťahovanie začalo</string>
+    <string name="download_complete">Sťahovanie dokončené</string>
+
+    <string name="notif_map_download">Sťahovanie mapy</string>
+    <string name="notif_map_progress">Prebieha sťahovanie</string>
+    <string name="notif_map_error">Chyba sťahovania</string>
+    <string name="notif_map_interrupted">Sťahovani bolo prerušené</string>
+
+    <string name="no_gps">Žiaden GPS signál</string>
+
+    <string name="auto_bump">Automatický výtlk</string>
+    <string name="manual_bump">Manuálny výtlk</string>
+    <string name="number_bump">Počet výtlkov: </string>
+    <string name="modif">Modifikácia:</string>
+
+
+    <string name="update">Aktualizácia dát je pripravená. Chceli by ste ju stiahnuť ?</string>
+    <string name="yes">Áno</string>
+    <string name="nope">Nie</string>
+
+    <string name="enable_gps">GPS nepovolená. Chceli by ste ju povoliť ?</string>
+    <string name="change_gps">Do nastavení</string>
+    <string name="offer_calibrate">Kalibrujte telefón pred použitím aplikácie prosím</string>
+
+
+    <string name="map_setting">Nastavujem mapu</string>
+    <string name="save_bump">Ukladám výtlky ...</string>
+
+    <string name="attention_bump">Pozor výtlk !!!</string>
+
+    <string name="warning">Upozornenie</string>
+    <string name="warning_msg">Na zmenu jazyka je potrebné reštartovať aplikáciu</string>
+
+    <string name="voice_turn_gps">Prosím, povoľte GPS na využívanie tejto funkcionality</string>
+    <string name="voice_language_not_supported">Jazyk nie je podporovaný, prosím stiahnite si jazykový balík britskéj angličtiny na hlasové využívanie</string>
+
+    //// settings activity
+    <string name="setting_name">Vaše meno</string>
+    <string name="setting_bumps_download">Sťahovať výtlky len na wifi</string>
+    <string name="setting_screen">Nevypínať displej</string>
+    <string name="setting_map">Sťahovať mapu len na wifi</string>
+    <string name="setting_language">Výber jazyka</string>
+    <string name="setting_alarm">Upozorňovať mimo aplikácie</string>
+    <string name="setting_voice">Hlasové upozor. na výtlk</string>
+    <string name="setting_voice_alarm">Hlas. upoz. na nový výtlk</string>
+    <string name="confirm">Potvrdiť</string>
+    <string name="slovak">Slovenský</string>
+    <string name="english">Anglický</string>
+
+    <string name="button_save">Uložiť</string>
+    <string name="button_back">Späť</string>
+    <string name="button_delete">Zmazať</string>
+    <string name="button_download">Stiahnuť</string>
+    <string name="button_back_on">Naspäť na aktuálnu polohu</string>
+
+    <string name="add_marker">Pridaný výtlk</string>
+    <string name="list">Zoznam</string>
+
+
+
+
+
+</resources>

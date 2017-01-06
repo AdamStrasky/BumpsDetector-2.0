@@ -1,31 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Settings"
-        android:textSize="@dimen/abc_action_bar_stacked_max_height" >
+<PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/menu_settings"
+        android:textSize="@dimen/abc_action_bar_stacked_max_height"
+        tools:ignore="PrivateResource">
         <EditTextPreference
-            android:defaultValue="Your name"
-            android:selectAllOnFocus="true"
+            android:defaultValue="@string/setting_name"
             android:key="name"
-            android:title="Your name"
-            android:dialogTitle="Your name"
-            />
+            android:title="@string/setting_name"
+            android:dialogTitle="@string/setting_name"
+            tools:defaultValue="@string/setting_name" />
     </PreferenceCategory>
     <CheckBoxPreference android:key="alarm"
-        android:title="Alarm"
+        android:title="@string/setting_alarm"
         android:defaultValue="true"/>
     <CheckBoxPreference android:key="net"
-        android:title="Download only wifi"
+        android:title="@string/setting_bumps_download"
         android:defaultValue="false"/>
-    <CheckBoxPreference android:key="voice"
-        android:title="Only text warning"
-        android:defaultValue="true"/>
     <CheckBoxPreference android:key="map"
-        android:title="Only wifi map"
-        android:defaultValue="false"/>
-    <CheckBoxPreference android:key="screen"
-        android:title="Always screen on"
+        android:title="@string/setting_map"
         android:defaultValue="false"/>
     <CheckBoxPreference android:key="voice"
-        android:title="Voice alarm"
+        android:title="@string/setting_voice"
+        android:defaultValue="false"/>
+    <CheckBoxPreference android:key="voice_alarm"
+        android:title="@string/setting_voice_alarm"
         android:defaultValue="true"/>
+    <CheckBoxPreference android:key="screen"
+        android:title="@string/setting_screen"
+        android:defaultValue="false"/>
+    <ListPreference
+        android:defaultValue="@string/english"
+        android:title="@string/setting_language"
+        android:entries="@array/language"
+        android:entryValues="@array/language"
+        android:key="lang" />
 </PreferenceScreen>

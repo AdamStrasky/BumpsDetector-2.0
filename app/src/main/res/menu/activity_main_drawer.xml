@@ -2,25 +2,25 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
-        <item android:id="@+id/calibrate" android:title="Calibrate"></item>
+        <item android:id="@+id/calibrate" android:title="@string/menu_calibrate"></item>
     </group>
 
     <group android:checkableBehavior="single">
-        <item android:id="@+id/clear_map" android:title="Clear Map"></item>
-        <item android:id="@+id/navigation" android:title="End navigation"></item>
+        <item android:id="@+id/clear_map" android:title="@string/menu_clear"></item>
+        <item android:id="@+id/navigation" android:title="@string/menu_navig"></item>
     </group>
 
     <group android:checkableBehavior="single">
-        <item android:id="@+id/download" android:title="Download region"></item>
-        <item android:id="@+id/list" android:title="List of regions"></item>
+        <item android:id="@+id/download" android:title="@string/menu_download"></item>
+        <item android:id="@+id/list" android:title="@string/menu_list"></item>
     </group>
 
     <group android:checkableBehavior="single">
-        <item android:id="@+id/action_settings" android:title="@string/action_settings" />
+        <item android:id="@+id/action_settings" android:title="@string/menu_settings" />
     </group>
 
     <group android:checkableBehavior="single">
-        <item android:id="@+id/exit" android:title="Exit app"></item>
+        <item android:id="@+id/exit" android:title="@string/menu_exit"></item>
     </group>
 
 </menu>

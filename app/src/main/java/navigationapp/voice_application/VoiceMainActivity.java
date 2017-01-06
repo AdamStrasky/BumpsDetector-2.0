@@ -11,6 +11,9 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 import android.speech.tts.TextToSpeech;
+
+import com.example.monikas.navigationapp.R;
+
 import navigationapp.main_application.Bump;
 import navigationapp.main_application.CallBackReturn;
 import navigationapp.main_application.DatabaseOpenHelper;
@@ -104,7 +107,7 @@ public class VoiceMainActivity extends Activity  {
                         if (status == TextToSpeech.SUCCESS) {
                             int result = talker.setLanguage(Locale.UK);
                             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                                Toast.makeText(getApplicationContext(), "Language not supported, please download UK language package to use voice ", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), getApplication().getResources().getString(R.string.voice_language_not_supported), Toast.LENGTH_LONG).show();
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
                                 talker.speak("Bump was added " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
@@ -117,7 +120,7 @@ public class VoiceMainActivity extends Activity  {
                 });
             }
             else
-                Toast.makeText(this,"Bump was added "  ,Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getApplication().getResources().getString(R.string.bump_add)  ,Toast.LENGTH_LONG).show();
 
 
         }else {
@@ -128,7 +131,7 @@ public class VoiceMainActivity extends Activity  {
                       if (status == TextToSpeech.SUCCESS) {
                           int result = talker.setLanguage(Locale.UK);
                             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                                Toast.makeText(getApplicationContext(), "Language not supported, please download UK language package to use voice ", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(),getApplication().getResources().getString(R.string.voice_language_not_supported), Toast.LENGTH_LONG).show();
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
                                 talker.speak("Please turn on your GPS for use this function" + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
@@ -141,7 +144,7 @@ public class VoiceMainActivity extends Activity  {
                 });
             }
             else
-                Toast.makeText(this,"Please turn on your GPS for use this function " ,Toast.LENGTH_LONG).show();
+                Toast.makeText(this,getApplication().getResources().getString(R.string.voice_turn_gps) ,Toast.LENGTH_LONG).show();
         }
          finish();
     }
@@ -155,7 +158,7 @@ public class VoiceMainActivity extends Activity  {
     public  String setting_name() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String name = prefs.getString("name", "");
-        if (name.equals("Your name"))
+        if (name.equals("Your name") || name.equals("Vaše meno"))
             return "";
         else
             return name;
@@ -163,6 +166,6 @@ public class VoiceMainActivity extends Activity  {
 
     public  boolean isEneableVoice() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        return prefs.getBoolean("voice", Boolean.parseBoolean(null));
+        return prefs.getBoolean("voice_alarm", Boolean.parseBoolean(null));
     }
 }

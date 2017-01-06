@@ -9,6 +9,7 @@ import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.monikas.navigationapp.R;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.w3c.dom.Document;
@@ -566,7 +567,7 @@ public class Location {
 
                                     fragment_context.runOnUiThread(new Runnable() {
                                         public void run() {
-                                            Toast.makeText(fragment_context, "Attention bump !!! ", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(fragment_context, fragment_context.getResources().getString(R.string.attention_bump), Toast.LENGTH_SHORT).show();
                                         }
                                     });
                                 }

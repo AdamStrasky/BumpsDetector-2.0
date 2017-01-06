@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    ////////////// main activity
+    <string name="turn_gps">Turn on your GPS</string>
+    <string name="not_position">Not found position</string>
+    <string name="change_map_style">Please connect to internet to change map style</string>
+    <string name="street">Street</string>
+    <string name="satellite">Satellite</string>
+    <string name="outdoors">Outdoors</string>
+    <string name="cancel">Cancel</string>
+    <string name="map">Maps</string>
+    <string name="sh_bumps">Bumps</string>
+    <string name="all_bumps">All bumps</string>
+    <string name="med_lar_bumps">Medium and large bumps</string>
+    <string name="lar_bumps">Large bumps</string>
+    <string name="calibrate">Your phone was calibrated.</string>
+    <string name="gps_calibrate">Turn on your GPS before calibrate</string>
+    <string name="navig">Navigate to ...</string>
+    <string name="map_not_load">Map is not loaded</string>
+    <string name="download_run">Now download, can be downloaded at once more</string>
+    <string name="download_run_list">Currently downloading, you can not access to download maps</string>
+    <string name="type_bumps">Select type of bump</string>
+    <string name="type_lage">Large</string>
+    <string name="type_medium">Medium</string>
+    <string name="type_normal">Normal</string>
+    <string name="bump_add">Bump was added</string>
+    <string name="fnd_location">Finding location ...</string>
+    <string name="unable_find">Unable to find location, wrong name!</string>
+    <string name="unable_find_net">Unable to find location! Please, connect to network.</string>
+
+
+    ////////////// hamburger
+    <string name="menu_exit">Exit app</string>
+    <string name="menu_clear">Clear map</string>
+    <string name="menu_calibrate">Calibrate</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_download">Download region</string>
+    <string name="menu_list">List of regions</string>
+    <string name="menu_navig">End navigate</string>
+
+    ////////////// accelerometer
+    <string name="same_bump">same bump</string>
+    <string name="under_bump">under 2 meters</string>
+    <string name="new_bump">new bump</string>
+
+    ///////// fragment activity
+    <string name="offline_mode">Network is disabled. You are in offline mode</string>
+    <string name="not_net_download">You must to be connected to internet if you want download map</string>
+    <string name="map_download">Select map for download</string>
+    <string name="select_map">Select region to download</string>
+    <string name="current_map">Download current map     </string>
+
+    <string name="map_for_download">Map for download</string>
+    <string name="name_region">Write name of region</string>
+    <string name="name_region_download">Write name of region for download</string>
+    <string name="download">Download</string>
+    <string name="navige_to">Navige to</string>
+
+    <string name="region_empty"> Region name cannot be empty</string>
+    <string name="region_not_exist">Region not exist</string>
+
+    <string name="download_success">Region downloaded successfully</string>
+    <string name="no_regions">You have no regions yet</string>
+    <string name="region_delete">Region deleted</string>
+    <string name="delete">Delete</string>
+    <string name="download_start">Download start</string>
+    <string name="download_complete">Download complete</string>
+
+    <string name="notif_map_download">Downloading map</string>
+    <string name="notif_map_progress">Download in progress</string>
+    <string name="notif_map_error">Download error</string>
+    <string name="notif_map_interrupted">Download was interrupted</string>
+
+    <string name="no_gps">No GPS signal</string>
+
+    <string name="auto_bump">Automatic bump</string>
+    <string name="manual_bump">Manual bump</string>
+    <string name="number_bump">Numbers of bump: </string>
+    <string name="modif">Modification:</string>
+
+
+    <string name="update">Update for new data is ready. Would you like to download it?</string>
+    <string name="yes">Yes</string>
+    <string name="nope">No</string>
+
+    <string name="enable_gps">GPS is disabled. Would you like to enable it?</string>
+    <string name="change_gps">Go to settings</string>
+    <string name="offer_calibrate">Please, calibrate your phone before start using this application.</string>
+
+
+    <string name="map_setting">Setting map</string>
+    <string name="save_bump">Saving bumps ...</string>
+
+    <string name="attention_bump">Attention bump !!!</string>
+
+    <string name="warning">Warning</string>
+    <string name="warning_msg">To change the language you must restart the application</string>
+
+    <string name="voice_turn_gps">Please turn on your GPS for use this function</string>
+    <string name="voice_language_not_supported">Language not supported, please download UK language package to use voice</string>
+
+    //// settings activity
+    <string name="setting_name">Your name</string>
+    <string name="setting_bumps_download">Download bumps only on wifi</string>
+    <string name="setting_screen">Always screen on</string>
+    <string name="setting_map">Download map only on wifi</string>
+    <string name="setting_language">Choice language</string>
+    <string name="setting_alarm">Notifie outside application</string>
+    <string name="setting_voice">Voice warning on bump</string>
+    <string name="setting_voice_alarm">Voice inf. about add bump</string>
+    <string name="confirm">Confirm</string>
+    <string name="slovak">Slovak</string>
+    <string name="english">English</string>
+
+    <string name="button_save">Save</string>
+    <string name="button_back">Back</string>
+    <string name="button_delete">Delete</string>
+    <string name="button_download">Download</string>
+    <string name="button_back_on">Back on my position</string>
+
+    <string name="add_marker">Add bump</string>
+    <string name="list">List</string>
+
+
+
+
+
+
+
+
+
+
+
+
+</resources>

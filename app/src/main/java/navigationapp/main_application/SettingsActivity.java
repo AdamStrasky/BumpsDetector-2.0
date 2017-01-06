@@ -1,6 +1,8 @@
 package navigationapp.main_application;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -11,20 +13,27 @@ import android.preference.PreferenceActivity;
 
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.example.monikas.navigationapp.R;
 
-public class SettingsActivity extends PreferenceActivity  implements SharedPreferences.OnSharedPreferenceChangeListener  {
+import static android.R.id.message;
+import static com.example.monikas.navigationapp.R.xml.settings;
+
+public class SettingsActivity extends PreferenceActivity  implements SharedPreferences.OnSharedPreferenceChangeListener {
+    public static final String PREF_FILE_NAME = "Settings";
+    String lang;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        addPreferencesFromResource(R.xml.settings);
+        addPreferencesFromResource(settings);
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         setName();
-
+        lang = getLanguage();
     }
 
     @Override
@@ -47,9 +56,34 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         setName();
 
+        if (!lang.equals(getLanguage())) {
+            new AlertDialog.Builder(this)
+                    .setTitle(getApplication().getResources().getString(R.string.warning))
+                    .setMessage(getApplication().getResources().getString(R.string.warning_msg))
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(this.getResources().getString(R.string.confirm), new DialogInterface.OnClickListener() {
+
+
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            Intent i = getBaseContext().getPackageManager()
+                                    .getLaunchIntentForPackage(getBaseContext().getPackageName());
+                            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(i);
+
+                        }
+                    })
+                    .setNegativeButton(getApplication().getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            setLanguage(lang);
+                        }
+
+
+                    }).show();
 
 
 
+
+        }
 
 
         // reaguje na zmenu nastavenia a sucasneho stavu internetu
@@ -72,7 +106,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
 
         isEneableScreen();
 
-     }
+    }
 
     public boolean isEneableOnlyWifiMap() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -80,30 +114,29 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         Log.d("xxxxx", String.valueOf(map));
         if ((map)) {
             return true;
-        }
-        else
+        } else
             return false;
     }
+
     public void isEneableScreen() {
-        Log.d("aasc","adasdasdasdasdasdasdasdsadsad");
+        Log.d("aasc", "adasdasdasdasdasdasdasdsadsad");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         Boolean imgSett = prefs.getBoolean("screen", Boolean.parseBoolean(null));
 
         Log.d("aasc", String.valueOf(imgSett));
         if (imgSett) {
-            Log.d("aasc","qqqqqqqqqqqqqqqqqqq");
+            Log.d("aasc", "qqqqqqqqqqqqqqqqqqq");
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        }
-        else {
-            Log.d("aasc","tttttttttttttttttttt");
+        } else {
+            Log.d("aasc", "tttttttttttttttttttt");
             getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
     public void setName() {
         final EditTextPreference pref = (EditTextPreference) findPreference("name");
-        pref.setTitle(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("name", "Default Title"));
+        pref.setTitle(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("name", ""));
         // Loads the title for the first time
         // Listens for change in value, and then changes the title if required.
         pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -114,5 +147,28 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
             }
         });
     }
+
+    public String getLanguage() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String name = prefs.getString("lang", "");
+        return name;
+    }
+
+    public void setLanguage(String lang) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
+        SharedPreferences.Editor prefEditor = sharedPref.edit(); // Get preference in editor mode
+        prefEditor.putString("lang",lang); // set your default value here (could be empty as well)
+        prefEditor.commit(); // finally save changes
+        getPreferenceScreen().removeAll();
+        addPreferencesFromResource(R.xml.settings);
+
+
+    }
+
+
+
+
+
+
 
 }

@@ -63,7 +63,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Download"
+            android:text="@string/button_download"
             android:textAllCaps="false"
             style="@style/Widget.AppCompat.Button.Colored" />
 
@@ -73,7 +73,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Back"
+            android:text="@string/button_back"
             android:textAllCaps="false"
             style="@style/Widget.AppCompat.Button.Colored" />
     </LinearLayout>
@@ -95,7 +95,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Save"
+            android:text="@string/button_save"
             android:textAllCaps="false"
             style="@style/Widget.AppCompat.Button.Colored" />
 
@@ -104,7 +104,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="Delete"
+            android:text="@string/button_delete"
             android:textAllCaps="false"
             style="@style/Widget.AppCompat.Button.Colored"
             android:elevation="0dp"
@@ -116,7 +116,7 @@
         android:id="@+id/navig_on"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
-        android:text="Back on my position"
+        android:text="@string/button_back_on"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:textAllCaps="false"

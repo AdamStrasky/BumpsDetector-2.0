@@ -25,6 +25,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.monikas.navigationapp.R;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -193,7 +195,8 @@ public class Accelerometer extends Service implements SensorEventListener {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getApplicationContext(), result , Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), result,Toast.LENGTH_SHORT).show();
+
                         }
                     });
 
@@ -283,7 +286,7 @@ public class Accelerometer extends Service implements SensorEventListener {
 
 
 
-                                        result = "same bump";
+                                        result =  fragment_context.getResources().getString(R.string.same_bump);
                                     }
                                     isToClose = true;
                                 }
@@ -330,7 +333,7 @@ public class Accelerometer extends Service implements SensorEventListener {
 
 
 
-                                            result = "under bump";
+                                            result = fragment_context.getResources().getString(R.string.under_bump);
                                         }
                                         isToClose = true;
                                     }
@@ -348,7 +351,7 @@ public class Accelerometer extends Service implements SensorEventListener {
 
                 if (!isToClose) {
                     Log.d("DETECT", "new dump");
-                    result = "new bump";
+                    result = fragment_context.getResources().getString(R.string.new_bump);
                     System.out.println("lat: "+ location.getLatitude() + ",lng: "+ location.getLongitude() + ",data: " + data);
                     HashMap<Location, Float> hashToArray = new HashMap();
                     location.setLatitude(round(location.getLatitude(),7));
