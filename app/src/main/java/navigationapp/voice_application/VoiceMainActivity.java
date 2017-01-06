@@ -158,7 +158,7 @@ public class VoiceMainActivity extends Activity  {
     public  String setting_name() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String name = prefs.getString("name", "");
-        if (name.equals("Your name") || name.equals("Vaše meno"))
+        if (name.equals("") )
             return "";
         else
             return name;

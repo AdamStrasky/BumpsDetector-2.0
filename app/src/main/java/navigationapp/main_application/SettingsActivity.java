@@ -32,8 +32,18 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(settings);
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        setName();
+        //setName();
+      //
+        initializeSummaries();
         lang = getLanguage();
+    }
+
+    private void initializeSummaries() {
+        SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
+        for (String key : sharedPreferences.getAll().keySet()) {
+            onSharedPreferenceChanged(sharedPreferences, key);
+        }
+
     }
 
     @Override
@@ -54,10 +64,15 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        setName();
+        if("name".equals(key)) {
+            findPreference(key).setSummary(sharedPreferences.getString(key, ""));
+        }
+        if("lang".equals(key)) {
+            findPreference(key).setSummary(sharedPreferences.getString(key, ""));
+        }
 
-        if (!lang.equals(getLanguage())) {
-            new AlertDialog.Builder(this)
+       if (lang!=null && !lang.equals(getLanguage())) {
+         new AlertDialog.Builder(this)
                     .setTitle(getApplication().getResources().getString(R.string.warning))
                     .setMessage(getApplication().getResources().getString(R.string.warning_msg))
                     .setIcon(android.R.drawable.ic_dialog_alert)
@@ -65,6 +80,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
 
 
                         public void onClick(DialogInterface dialog, int whichButton) {
+                           initializeSummaries();
                             Intent i = getBaseContext().getPackageManager()
                                     .getLaunchIntentForPackage(getBaseContext().getPackageName());
                             i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -75,6 +91,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
                     .setNegativeButton(getApplication().getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int whichButton) {
                             setLanguage(lang);
+                            initializeSummaries();
                         }
 
 
@@ -155,14 +172,11 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     }
 
     public void setLanguage(String lang) {
+
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
         SharedPreferences.Editor prefEditor = sharedPref.edit(); // Get preference in editor mode
         prefEditor.putString("lang",lang); // set your default value here (could be empty as well)
         prefEditor.commit(); // finally save changes
-        getPreferenceScreen().removeAll();
-        addPreferencesFromResource(R.xml.settings);
-
-
     }
 
 

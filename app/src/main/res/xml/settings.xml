@@ -4,12 +4,10 @@
     <PreferenceCategory android:title="@string/menu_settings"
         android:textSize="@dimen/abc_action_bar_stacked_max_height"
         tools:ignore="PrivateResource">
-        <EditTextPreference
-            android:defaultValue="@string/setting_name"
-            android:key="name"
-            android:title="@string/setting_name"
-            android:dialogTitle="@string/setting_name"
-            tools:defaultValue="@string/setting_name" />
+
+        <EditTextPreference android:key="name" android:title="@string/setting_name"
+            android:dialogTitle="@string/setting_name" />
+
     </PreferenceCategory>
     <CheckBoxPreference android:key="alarm"
         android:title="@string/setting_alarm"

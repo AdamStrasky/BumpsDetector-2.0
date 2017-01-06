@@ -34,6 +34,7 @@ public class Language extends Application {
 
 
     public static void setLocaleFa (Context context){
+        setLanguage("Slovenský",context);
         Locale locale = new Locale("sk");
         Locale.setDefault(locale);
         Configuration config = new Configuration();
@@ -42,10 +43,18 @@ public class Language extends Application {
     }
 
     public static void setLocaleEn (Context context){
+        setLanguage("English",context);
         Locale locale = new Locale("en_US");
         Locale.setDefault(locale);
         Configuration config = new Configuration();
         config.locale = locale;
         context.getApplicationContext().getResources().updateConfiguration(config, null);
+    }
+
+    public static void setLanguage(String lang, Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor prefEditor = sharedPref.edit(); // Get preference in editor mode
+        prefEditor.putString("lang",lang); // set your default value here (could be empty as well)
+        prefEditor.commit(); // finally save changes
     }
 }
