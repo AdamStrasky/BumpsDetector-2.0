@@ -2521,7 +2521,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         prefEditor.putBoolean("exceeded", value);
         prefEditor.commit();
 
-
     }
 
     public  boolean isMapTitleExceeded() {

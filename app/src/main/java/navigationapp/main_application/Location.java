@@ -27,6 +27,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static navigationapp.main_application.Accelerometer.getDistance;
+import static navigationapp.main_application.FragmentActivity.checkCloseDb;
+import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
 import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_gps;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
@@ -295,6 +297,7 @@ public class Location {
                                         // seleknutie vytlk z oblasti a starych 280 dni
                                         DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(fragment_context);
                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                        checkIntegrityDB(database);
                                         database.beginTransaction();
                                         String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE " +
                                                 " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
@@ -316,6 +319,7 @@ public class Location {
                                         database.setTransactionSuccessful();
                                         database.endTransaction();
                                         database.close();
+                                        checkCloseDb(database);
                                         Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
 
                                     }
