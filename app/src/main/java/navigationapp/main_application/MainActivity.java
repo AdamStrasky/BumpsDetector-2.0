@@ -49,9 +49,17 @@ import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
+import com.mapbox.mapboxsdk.constants.Style;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Projection;
+import com.mapbox.mapboxsdk.offline.OfflineManager;
+import com.mapbox.mapboxsdk.offline.OfflineRegion;
+import com.mapbox.mapboxsdk.offline.OfflineRegionError;
+import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
+import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
@@ -67,6 +75,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.mapbox.mapboxsdk.offline.OfflineManager.getInstance;
 import static navigationapp.main_application.FragmentActivity.flagDownload;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
@@ -89,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Float intensity = null;
     LinearLayout confirm;
     Button  save_button, delete_button,downloand_button,back_button;
-    public  MapView mapView = null;
+    public  static MapView mapView = null;
     public static LinearLayout mapConfirm;
     public static Button navig_on,add_button;
     public static MapboxMap mapbox;
@@ -530,6 +539,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
             case R.id.clear_map:
+
                 close();
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     if (featureMarker!=null)
@@ -1197,8 +1207,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String name = prefs.getString("lang", "");
         return name;
     }
-
-
 
 
 }
