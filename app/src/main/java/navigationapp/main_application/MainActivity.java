@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 convert_location = point;
                                 Log.d("TREEEE"," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
-                           else {
+                            else {
 
                                 IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
                                 Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.purple_marker);
@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             }
 
 
-                      }
+                        }
 
 
                         ////////////////////////////////////////////////////////////////
@@ -220,14 +220,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         if (features.size() > 0) {
                             if (features.get(0).getStringProperty("aaaaaa")!=null)
-                            Toast.makeText(getApplication(), features.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplication(), features.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
 
                             selectMarker(marker,  0);
                             return;
                         }
                         if (features1.size() > 0) {
-                           if (features1.get(0).getStringProperty("aaaaaa")!=null)
-                            Toast.makeText(getApplication(), features1.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
+                            if (features1.get(0).getStringProperty("aaaaaa")!=null)
+                                Toast.makeText(getApplication(), features1.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
 
                             selectMarker(marker1, 1);
                             return;
@@ -274,10 +274,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         searchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-              //  if (v.getId() == searchBar.getId()) {
-                    searchBar.setCursorVisible(true);
-                    searchBar.setText("");
-              //  }
+                //  if (v.getId() == searchBar.getId()) {
+                searchBar.setCursorVisible(true);
+                searchBar.setText("");
+                //  }
             }
         });
         context = this;
@@ -297,9 +297,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
-         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
-         drawerToggle = new ActionBarDrawerToggle(this,
+        drawerToggle = new ActionBarDrawerToggle(this,
                 drawerLayout,
                 R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close
@@ -410,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                        fragmentActivity.setClear(false);
+                                            fragmentActivity.setClear(false);
                                         fragmentActivity.getAllBumps(lightBumps.latitude, lightBumps.longitude);
                                         break;
 
@@ -418,14 +418,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                                         LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                        fragmentActivity.setClear(false);
+                                            fragmentActivity.setClear(false);
                                         fragmentActivity.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
                                         LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                        fragmentActivity.setClear(false);;
+                                            fragmentActivity.setClear(false);;
                                         fragmentActivity.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
 
                                         break;
@@ -517,7 +517,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void close () {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
-     }
+    }
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -544,8 +544,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     if (featureMarker!=null)
                         fragmentActivity.setClear(false);;
-                        fragmentActivity.gps.remove_draw_road();
-                        fragmentActivity.deleteOldMarker();
+                    fragmentActivity.gps.remove_draw_road();
+                    fragmentActivity.deleteOldMarker();
 
                 }
                 return true;
@@ -744,6 +744,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     private void selectMarker(final SymbolLayer marker, int i) {
+        if (marker==null)
+            return;
         ValueAnimator markerAnimator = new ValueAnimator();
         markerAnimator.setObjectValues(1f, 2f);
         markerAnimator.setDuration(300);
@@ -765,6 +767,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void deselectMarker(final SymbolLayer marker, int i) {
+        if (marker==null)
+            return;
         ValueAnimator markerAnimator = new ValueAnimator();
         markerAnimator.setObjectValues(2f, 1f);
         markerAnimator.setDuration(300);
@@ -807,7 +811,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             featureMarker.remove();
         featureMarker=null;
         allow_click=false;
-     }
+    }
 
     private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
         @Override

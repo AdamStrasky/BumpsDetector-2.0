@@ -77,6 +77,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -350,81 +351,81 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     @Override
                     public void onMapReady(MapboxMap mapboxMap) {
 
-                LatLngBounds bounds = null;
-                // ak bola zvolená sučasna obrazovka, vezme mapu zobrazenu na displeji
-                if (select == 0) {
-                    bounds = mapbox.getProjection().getVisibleRegion().latLngBounds;
-                }
+                        LatLngBounds bounds = null;
+                        // ak bola zvolená sučasna obrazovka, vezme mapu zobrazenu na displeji
+                        if (select == 0) {
+                            bounds = mapbox.getProjection().getVisibleRegion().latLngBounds;
+                        }
 
-                startProgress();
-                if (select == 1) {
-                    Address address = null;
+                        startProgress();
+                        if (select == 1) {
+                            Address address = null;
 
-                    try {
-                        address = Route.findLocality(regionName, getActivity());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                            try {
+                                address = Route.findLocality(regionName, getActivity());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-                    if (address == null) {
-                        endProgress(getActivity().getResources().getString(R.string.unable_find));
-                        Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
-                        return;
-                    } else {
-                        bounds = new LatLngBounds.Builder()
-                                .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() + 0.2, address.getLongitude() + 0.2)) // Northeast
-                                .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() - 0.2, address.getLongitude() - .2)) // Southwest
-                                .build();
-                    }
-                }
+                            if (address == null) {
+                                endProgress(getActivity().getResources().getString(R.string.unable_find));
+                                Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
+                                return;
+                            } else {
+                                bounds = new LatLngBounds.Builder()
+                                        .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() + 0.2, address.getLongitude() + 0.2)) // Northeast
+                                        .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() - 0.2, address.getLongitude() - .2)) // Southwest
+                                        .build();
+                            }
+                        }
 
-                String styleURL = mapbox.getStyleUrl();
-                double minZoom = minZoomDownloadMap;
-                double maxZoom = maxZoomDownloadMap;
-                float pixelRatio = getActivity().getResources().getDisplayMetrics().density;
-                OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
-                        styleURL, bounds, minZoom, maxZoom, pixelRatio);
+                        String styleURL = mapbox.getStyleUrl();
+                        double minZoom = minZoomDownloadMap;
+                        double maxZoom = maxZoomDownloadMap;
+                        float pixelRatio = getActivity().getResources().getDisplayMetrics().density;
+                        OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
+                                styleURL, bounds, minZoom, maxZoom, pixelRatio);
 
-                // Build a JSONObject using the user-defined offline region title,
-                // convert it into string, and use it to create a metadata variable.
-                // The metadata varaible will later be passed to createOfflineRegion()
-                byte[] metadata;
-                try {
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put(JSON_FIELD_REGION_NAME, regionName);
-                    String json = jsonObject.toString();
-                    metadata = json.getBytes(JSON_CHARSET);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to encode metadata: " + e.getMessage());
-                    metadata = null;
-                }
-
-
+                        // Build a JSONObject using the user-defined offline region title,
+                        // convert it into string, and use it to create a metadata variable.
+                        // The metadata varaible will later be passed to createOfflineRegion()
+                        byte[] metadata;
+                        try {
+                            JSONObject jsonObject = new JSONObject();
+                            jsonObject.put(JSON_FIELD_REGION_NAME, regionName);
+                            String json = jsonObject.toString();
+                            metadata = json.getBytes(JSON_CHARSET);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Failed to encode metadata: " + e.getMessage());
+                            metadata = null;
+                        }
 
 
 
-                // Create the offline region and launch the download
-                offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
-                    @Override
-                    public void onCreate(OfflineRegion offlineRegion) {
-                        Log.d(TAG, "Offline region created: " + regionName);
-                        FragmentActivity.this.offlineRegion = offlineRegion;
-                        launchDownload();
-
-                    }
 
 
-                    @Override
-                    public void onError(String error) {
-                        Log.e(TAG, "Error: " + error);
-                        errorDownloadNotification();
-                        Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.error_download), Toast.LENGTH_LONG).show();
+                        // Create the offline region and launch the download
+                        offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
+                            @Override
+                            public void onCreate(OfflineRegion offlineRegion) {
+                                Log.d(TAG, "Offline region created: " + regionName);
+                                FragmentActivity.this.offlineRegion = offlineRegion;
+                                launchDownload();
+
+                            }
+
+
+                            @Override
+                            public void onError(String error) {
+                                Log.e(TAG, "Error: " + error);
+                                errorDownloadNotification();
+                                Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.error_download), Toast.LENGTH_LONG).show();
+
+                            }
+                        });
 
                     }
                 });
-
-                    }
-                                    });
 
 
                 Looper.loop();
@@ -935,76 +936,81 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     synchronized public void deleteMarkers() {
         Log.d("map", "deleteOldMarker start");
+   try {
+       if (isClear() && mapbox != null) {
+           List<Marker> markers = mapbox.getMarkers();
+           for (int i = 0; i < markers.size(); i++) {
+               mapbox.removeMarker(markers.get(i));
+           }
+       }
 
-        if (isClear() && mapbox != null) {
-            List<Marker> markers = mapbox.getMarkers();
-            for (int i = 0; i < markers.size(); i++) {
-                mapbox.removeMarker(markers.get(i));
-            }
-        }
 
+       try {
+           if (mapbox.getSource("marker-source-auto") != null)
+               mapbox.removeSource("marker-source-auto");
+       } catch (NoSuchSourceException e) {
+           e.printStackTrace();
+           e.getMessage();
+       }
 
-        try {
-            if (mapbox.getSource("marker-source-auto") != null)
-                mapbox.removeSource("marker-source-auto");
-        } catch (NoSuchSourceException e) {
-            e.printStackTrace();
-            e.getMessage();
-        }
+       try {
+           if (mapbox.getSource("marker-source-manual") != null)
+               mapbox.removeSource("marker-source-manual");
+       } catch (NoSuchSourceException e) {
+           e.printStackTrace();
+           e.getMessage();
+       }
 
-        try {
-            if (mapbox.getSource("marker-source-manual") != null)
-                mapbox.removeSource("marker-source-manual");
-        } catch (NoSuchSourceException e) {
-            e.printStackTrace();
-            e.getMessage();
-        }
+       mapbox.removeImage("my-marker-image-auto");
+       mapbox.removeImage("my-marker-image-manual");
 
-        mapbox.removeImage("my-marker-image-auto");
-        mapbox.removeImage("my-marker-image-manual");
+       try {
+           if (mapbox.getLayer("marker-layer-auto") != null)
+               mapbox.removeLayer("marker-layer-auto");
+       } catch (NoSuchLayerException e) {
+           e.getMessage();
+       }
+       try {
+           if (mapbox.getLayer("marker-layer-manual") != null)
+               mapbox.removeLayer("marker-layer-manual");
+       } catch (NoSuchLayerException e) {
+           e.getMessage();
+       }
 
-        try {
-            if (mapbox.getLayer("marker-layer-auto") != null)
-                mapbox.removeLayer("marker-layer-auto");
-        } catch (NoSuchLayerException e) {
-            e.getMessage();
-        }
-        try {
-            if (mapbox.getLayer("marker-layer-manual") != null)
-                mapbox.removeLayer("marker-layer-manual");
-        } catch (NoSuchLayerException e) {
-            e.getMessage();
-        }
+       try {
+           if (mapbox.getSource("selected-marker-auto") != null)
+               mapbox.removeSource("selected-marker-auto");
+       } catch (NoSuchSourceException e) {
+           e.printStackTrace();
+           e.getMessage();
+       }
 
-        try {
-            if (mapbox.getSource("selected-marker-auto") != null)
-                mapbox.removeSource("selected-marker-auto");
-        } catch (NoSuchSourceException e) {
-            e.printStackTrace();
-            e.getMessage();
-        }
+       try {
+           if (mapbox.getSource("selected-marker-manual") != null)
+               mapbox.removeSource("selected-marker-manual");
+       } catch (NoSuchSourceException e) {
+           e.printStackTrace();
+           e.getMessage();
+       }
 
-        try {
-            if (mapbox.getSource("selected-marker-manual") != null)
-                mapbox.removeSource("selected-marker-manual");
-        } catch (NoSuchSourceException e) {
-            e.printStackTrace();
-            e.getMessage();
-        }
+       try {
+           if (mapbox.getLayer("selected-marker-layer-auto") != null)
+               mapbox.removeLayer("selected-marker-layer-auto");
+       } catch (NoSuchLayerException e) {
+           e.getMessage();
+       }
 
-        try {
-            if (mapbox.getLayer("selected-marker-layer-auto") != null)
-                mapbox.removeLayer("selected-marker-layer-auto");
-        } catch (NoSuchLayerException e) {
-            e.getMessage();
-        }
-
-        try {
-            if (mapbox.getLayer("selected-marker-layer-manual") != null)
-                mapbox.removeLayer("selected-marker-layer-manual");
-        } catch (NoSuchLayerException e) {
-            e.getMessage();
-        }
+       try {
+           if (mapbox.getLayer("selected-marker-layer-manual") != null)
+               mapbox.removeLayer("selected-marker-layer-manual");
+       } catch (NoSuchLayerException e) {
+           e.getMessage();
+       }
+   }catch (ConcurrentModificationException cme) {
+       System.out.println("--- Stack Trace ---");
+       cme.printStackTrace();
+       cme.getMessage();
+   }
 
         Log.d("map", "deleteOldMarker finish");
     }
@@ -1013,45 +1019,51 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     synchronized public void showMarkers() {
 
         Log.d("map", "showNewMarker start");
+ try {
+     FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(autoMarkerCoordinates);
+     Source geoJsonSourceAuto = new GeoJsonSource("marker-source-auto", featureCollectionAuto);
+     mapbox.addSource(geoJsonSourceAuto);
 
-        FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(autoMarkerCoordinates);
-        Source geoJsonSourceAuto = new GeoJsonSource("marker-source-auto", featureCollectionAuto);
-        mapbox.addSource(geoJsonSourceAuto);
-
-        FeatureCollection featureCollectionManual = FeatureCollection.fromFeatures(manualMarkerCoordinates);
-        Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
-        mapbox.addSource(geoJsonSourceManual);
+     FeatureCollection featureCollectionManual = FeatureCollection.fromFeatures(manualMarkerCoordinates);
+     Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
+     mapbox.addSource(geoJsonSourceManual);
 
 
-        Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
-        mapbox.addImage("my-marker-image-auto", iconAuto);
+     Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
+     mapbox.addImage("my-marker-image-auto", iconAuto);
 
-        SymbolLayer markerAuto = new SymbolLayer("marker-layer-auto", "marker-source-auto")
-                .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
-        mapbox.addLayer(markerAuto);
+     SymbolLayer markerAuto = new SymbolLayer("marker-layer-auto", "marker-source-auto")
+             .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
+     mapbox.addLayer(markerAuto);
 
-        Bitmap iconManual = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_marker);
-        mapbox.addImage("my-marker-image-manual", iconManual);
+     Bitmap iconManual = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_marker);
+     mapbox.addImage("my-marker-image-manual", iconManual);
 
-        SymbolLayer markersManual = new SymbolLayer("marker-layer-manual", "marker-source-manual")
-                .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
-        mapbox.addLayer(markersManual);
+     SymbolLayer markersManual = new SymbolLayer("marker-layer-manual", "marker-source-manual")
+             .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
+     mapbox.addLayer(markersManual);
 
-        FeatureCollection emptySourceAuto = FeatureCollection.fromFeatures(new Feature[]{});
-        Source selectedMarkerSourceAuto = new GeoJsonSource("selected-marker-auto", emptySourceAuto);
-        mapbox.addSource(selectedMarkerSourceAuto);
+     FeatureCollection emptySourceAuto = FeatureCollection.fromFeatures(new Feature[]{});
+     Source selectedMarkerSourceAuto = new GeoJsonSource("selected-marker-auto", emptySourceAuto);
+     mapbox.addSource(selectedMarkerSourceAuto);
 
-        FeatureCollection emptySourceManual = FeatureCollection.fromFeatures(new Feature[]{});
-        Source selectedMarkerSourceManual = new GeoJsonSource("selected-marker-manual", emptySourceManual);
-        mapbox.addSource(selectedMarkerSourceManual);
+     FeatureCollection emptySourceManual = FeatureCollection.fromFeatures(new Feature[]{});
+     Source selectedMarkerSourceManual = new GeoJsonSource("selected-marker-manual", emptySourceManual);
+     mapbox.addSource(selectedMarkerSourceManual);
 
-        SymbolLayer selectedMarkerAuto = new SymbolLayer("selected-marker-layer-auto", "selected-marker-auto")
-                .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
-        mapbox.addLayer(selectedMarkerAuto);
+     SymbolLayer selectedMarkerAuto = new SymbolLayer("selected-marker-layer-auto", "selected-marker-auto")
+             .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
+     mapbox.addLayer(selectedMarkerAuto);
 
-        SymbolLayer selectedMarkerManual = new SymbolLayer("selected-marker-layer-manual", "selected-marker-manual")
-                .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
-        mapbox.addLayer(selectedMarkerManual);
+     SymbolLayer selectedMarkerManual = new SymbolLayer("selected-marker-layer-manual", "selected-marker-manual")
+             .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
+     mapbox.addLayer(selectedMarkerManual);
+
+ }catch (ConcurrentModificationException cme) {
+     System.out.println("--- Stack Trace ---");
+     cme.printStackTrace();
+     cme.getMessage();
+ }
 
         Log.d("map", "showNewMarker finish");
 
@@ -1086,21 +1098,24 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
 
                             );
-
-                            Feature feature = autoMarkerCoordinates.get(a);
-                            feature.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.auto_bump) + "\n" +
-                                    getActivity().getResources().getString(R.string.number_bump) + "1\n" +
-                                    getActivity().getResources().getString(R.string.modif) + " " + now_formated);
-                            a++;
+                            if (autoMarkerCoordinates.size() ==a+1) {
+                                Feature feature = autoMarkerCoordinates.get(a);
+                                feature.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.auto_bump) + "\n" +
+                                        getActivity().getResources().getString(R.string.number_bump) + "1\n" +
+                                        getActivity().getResources().getString(R.string.modif) + " " + now_formated);
+                                a++;
+                            }
                         } else {
                             manualMarkerCoordinates.add(Feature.fromGeometry(
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                             );
-                            Feature featurea = manualMarkerCoordinates.get(b);
-                            featurea.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.manual_bump) + "\n" +
-                                    getActivity().getResources().getString(R.string.number_bump) + "1\n" +
-                                    getActivity().getResources().getString(R.string.modif) + " " + now_formated);
-                            b++;
+                            if (manualMarkerCoordinates.size() ==b+1) {
+                                Feature featurea = manualMarkerCoordinates.get(b);
+                                featurea.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.manual_bump) + "\n" +
+                                        getActivity().getResources().getString(R.string.number_bump) + "1\n" +
+                                        getActivity().getResources().getString(R.string.modif) + " " + now_formated);
+                                b++;
+                            }
                         }
                     }
                     i++;
@@ -2509,4 +2524,3 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
 
 }
-
