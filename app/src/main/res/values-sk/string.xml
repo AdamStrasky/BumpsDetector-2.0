@@ -120,7 +120,8 @@
     <string name="add_marker">Pridaný výtlk</string>
     <string name="list">Zoznam</string>
 
-
+    <string name="error_download">Chyba,sťahovanie máp bolo prerušené</string>
+    <string name="map_exceeded">Povolené množstvo stiahnutých máp bolo prekročené. Prosím vymažte mapy na stiahnutie nových</string>
 
 
 

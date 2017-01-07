@@ -34,6 +34,8 @@ import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static navigationapp.main_application.FragmentActivity.checkCloseDb;
+import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
 import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_gps;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
@@ -265,8 +267,11 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                     {
                                                         DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
                                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                                        checkIntegrityDB(database);
                                                         database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
                                                         database.close();
+                                                        checkCloseDb(database);
+
                                                     }
                                                     finally
                                                     {
@@ -313,8 +318,12 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                         {
                                                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
                                                             SQLiteDatabase database = databaseHelper.getWritableDatabase();
+
+                                                            checkIntegrityDB(database);
                                                             database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
                                                             database.close();
+                                                            checkCloseDb(database);
+
                                                         }
                                                         finally
                                                         {
@@ -386,6 +395,8 @@ public class Accelerometer extends Service implements SensorEventListener {
                                 {
                                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
                                     SQLiteDatabase database = databaseHelper.getWritableDatabase();
+
+                                    checkIntegrityDB(database);
                                     BigDecimal bd = new BigDecimal(Float.toString(data));
                                     bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
                                     hashToArray.put(location,data);
@@ -396,6 +407,8 @@ public class Accelerometer extends Service implements SensorEventListener {
                                     contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
                                     database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                                     database.close();
+                                    checkCloseDb(database);
+
                                 }
                                 finally
                                 {

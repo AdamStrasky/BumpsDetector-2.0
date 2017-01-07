@@ -565,7 +565,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
             case R.id.download:
+
+                if (fragmentActivity!=null) {
+                    if (fragmentActivity.isMapTitleExceeded()) {
+                        Toast.makeText(this, this.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
+                        return true;
+                    }
+
+                }
                 close();
+
+
                 if (!fragmentActivity.checkGPSEnable()) {
                     Toast.makeText(this,this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
@@ -627,6 +637,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
                                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
                                             SQLiteDatabase sb = databaseHelper.getWritableDatabase();
+
+                                            fragmentActivity.checkIntegrityDB(sb);
                                             sb.beginTransaction();
                                             int i = 0;
                                             for (HashMap<Location, Float> bump : list) {
@@ -655,6 +667,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             }
                                             sb.setTransactionSuccessful();
                                             sb.endTransaction();
+                                            sb.close();
+                                            fragmentActivity.checkCloseDb(sb);
+
                                         } finally {
                                             lockZoznam.unlock();
                                             break;
@@ -927,6 +942,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                                 {
                                                                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                                                                     SQLiteDatabase database = databaseHelper.getReadableDatabase();
+
+                                                                    fragmentActivity.checkIntegrityDB(database);
                                                                     Log.d("TREEEE","vlozil do db ");
                                                                     database.beginTransaction();
                                                                     ContentValues contentValues = new ContentValues();
@@ -938,6 +955,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                                     database.setTransactionSuccessful();
                                                                     database.endTransaction();
                                                                     database.close();
+                                                                    fragmentActivity.checkCloseDb(database);
+
                                                                 }
                                                                 finally
                                                                 {

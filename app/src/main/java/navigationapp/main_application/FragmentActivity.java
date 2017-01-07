@@ -405,6 +405,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             @Override
             public void onError(String error) {
                 Log.e(TAG, "Error: " + error);
+                errorDownloadNotification();
+                Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.error_download), Toast.LENGTH_LONG).show();
+
             }
         });
 
@@ -461,13 +464,15 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             public void onError(OfflineRegionError error) {
                 Log.e(TAG, "onError reason: " + error.getReason());
                 Log.e(TAG, "onError message: " + error.getMessage());
-            }
+                }
 
             @Override
             public void mapboxTileCountLimitExceeded(long limit) {
                 Log.e(TAG, "Mapbox tile count limit exceeded: " + limit);
                 endProgress(null);
-
+                mapTitleExceeded(true);
+                errorDownloadNotification();
+                Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
             }
         });
 
@@ -573,6 +578,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         // progressBar and display a toast
 
                                         Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.region_delete), Toast.LENGTH_LONG).show();
+                                        mapTitleExceeded(false);
+
                                     }
 
                                     @Override
@@ -627,7 +634,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     private void endProgress(final String message) {
         // Don't notify more than once
+
         if (isEndNotified) return;
+
+        if (message!=null)
         mBuilder.setContentText(getActivity().getResources().getString(R.string.download_complete))
                 // Removes the progress bar
                 .setProgress(0,0,false);
@@ -651,14 +661,18 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     .setContentText( getActivity().getResources().getString(R.string.notif_map_progress))
                     .setSmallIcon(R.drawable.download);
 
-            /*    mBuilder.setContentTitle( getActivity().getResources().getString(R.string.notif_map_error))
-                        .setContentText( getActivity().getResources().getString(R.string.notif_map_interrupted))
-                        .setProgress(0, 0, false);
-                mNotifyManager.notify(0, mBuilder.build());*/
+
     }
 
     public void endDownloadNotification(){
         mNotifyManager.cancelAll();
+    }
+    public void errorDownloadNotification(){
+        mBuilder.setContentTitle( getActivity().getResources().getString(R.string.notif_map_error))
+                .setContentText( getActivity().getResources().getString(R.string.notif_map_interrupted))
+                .setProgress(0, 0, false);
+        mNotifyManager.notify(0, mBuilder.build());
+
     }
     /*******************************************************************************************************/
     public void get_loaded_index (){
@@ -735,6 +749,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                            checkIntegrityDB(database);
                             database.beginTransaction();
 
                             Cursor cursor = null;
@@ -788,6 +803,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
+                            checkCloseDb(database);
+
 
                         }
                         finally {
@@ -1116,6 +1133,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
+
+                            checkIntegrityDB(database);
                             database.beginTransaction();
                             // max b_id_collisions z databazy
                             String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
@@ -1142,6 +1161,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
+                            checkCloseDb(database);
+
 
                         }
                         finally
@@ -1289,6 +1310,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     {
                                         DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
+
+                                        checkIntegrityDB(database);
                                         database.beginTransaction();
                                         for (int i = 0; i < bumps.length(); i++) {
                                             JSONObject c = null;
@@ -1376,6 +1399,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             database.setTransactionSuccessful();
                                             database.endTransaction();
                                             database.close();
+                                            checkCloseDb(database);
 
 
                                             ////////// updatesLock.getAndSet(false);
@@ -1390,6 +1414,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             // rollbacknem databazu
                                             database.endTransaction();
                                             database.close();
+                                            checkCloseDb(database);
+
                                             //////////////   updatesLock.getAndSet(false);
                                         }
                                     }
@@ -1472,6 +1498,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             String ago_formated = ago.format(cal.getTime());
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
+
+                            checkIntegrityDB(database);
                             database.beginTransaction();
                             // vytiahnem najvyššie b_id z bumps
                             String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
@@ -1499,6 +1527,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
+                            checkCloseDb(database);
+
 
 
                         }
@@ -1616,6 +1646,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
 
+                                        checkIntegrityDB(database);
                                         database.beginTransaction();
                                         for (int i = 0; i < bumps.length(); i++) {
                                             JSONObject c = null;
@@ -1663,12 +1694,16 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             database.setTransactionSuccessful();
                                             database.endTransaction();
                                             database.close();
+                                            checkCloseDb(database);
+
                                             //////// updatesLock.getAndSet(false);
 
                                         } else {
                                             // nastala chyba, načitaj uložene vytlky
                                             database.endTransaction();
                                             database.close();
+                                            checkCloseDb(database);
+
 
 
                                         }
@@ -1994,6 +2029,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
+
+                            checkIntegrityDB(database);
                             Cursor cursor
                                     = database.rawQuery(selectQuery, null);
                             ArrayList<HashMap<Location, Float>> hashToArray = new ArrayList<HashMap<Location, Float>>();
@@ -2031,6 +2068,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     database.setTransactionSuccessful();
                                     database.endTransaction();
                                     database.close();
+                                    checkCloseDb(database);
+
                                 }
                             }
                         } finally {
@@ -2173,6 +2212,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                                 {
                                                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                                                     SQLiteDatabase database = databaseHelper.getWritableDatabase();
+
+
+                                                    checkIntegrityDB(database);
                                                     // ak mi prišlo potvrdenie o odoslaní, mažem z db
                                                     database.beginTransaction();
                                                     database.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND("+loc.getLatitude()+",7)  and ROUND(longitude,7)= ROUND("+loc.getLongitude()+",7)"
@@ -2185,6 +2227,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                                     database.setTransactionSuccessful();
                                                     database.endTransaction();
                                                     database.close();
+                                                    checkCloseDb(database);
+
                                                 }
                                                 finally
                                                 {
@@ -2236,6 +2280,8 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                             int i=0;
                                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
                                             SQLiteDatabase database = databaseHelper.getWritableDatabase();
+
+                                            checkIntegrityDB(database);
                                             for (HashMap<Location, Float> oldList : listHelp) {
                                                 Iterator oldListIteam = oldList.entrySet().iterator();
                                                 while (oldListIteam.hasNext()) {
@@ -2268,6 +2314,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                                 }
                                             }
                                             database.close();
+                                            checkCloseDb(database);
+
+
                                             // doplnim do zoznamu povodné, ktoré sa nezmenili
                                             accelerometer.getPossibleBumps().addAll(listHelp);
                                             accelerometer.getBumpsManual().addAll(bumpsManualHelp);
@@ -2335,6 +2384,21 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             } };
         t.start();
 
+    }
+
+    public static void checkCloseDb(SQLiteDatabase database) {
+        while (true) {
+            if (!database.isOpen())
+                break;
+        }
+
+    }
+
+    public static void checkIntegrityDB(SQLiteDatabase database){
+        while(true) {
+            if (!database.isDbLockedByOtherThreads())
+                break;
+        }
     }
 
     public void getBumpsWithLevel() {
@@ -2450,12 +2514,19 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
     public void mapTitleExceeded(Boolean value) {
-        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putBoolean("exceeded", value);
+
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences.Editor prefEditor = sharedPref.edit(); // Get preference in editor mode
+        prefEditor.putBoolean("exceeded", value);
+        prefEditor.commit();
+
+
     }
 
     public  boolean isMapTitleExceeded() {
+
+
         // či je dovolené sťahovať len na wifi
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         Boolean net = prefs.getBoolean("exceeded", Boolean.parseBoolean(null));
@@ -2466,3 +2537,4 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             return false;
     }
 }
+
