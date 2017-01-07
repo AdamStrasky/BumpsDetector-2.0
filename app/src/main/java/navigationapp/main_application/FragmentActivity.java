@@ -141,6 +141,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     static Lock updatesLock = new ReentrantLock();
     navigationapp.main_application.Location detection = null;
 
+    public final  double minZoomDownloadMap = 12;
+    public final  double maxZoomDownloadMap = 16;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -152,7 +155,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         regular_update = true ;
 
         // myView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
 
         if (!isNetworkAvailable()){
             if (isEneableShowText())
@@ -331,7 +333,17 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         mAlertDialog.show();
     }
 
-    public void downloadRegion(final String regionName,  int select) {
+    public void downloadRegion(final String regionName, final int select) {
+
+        Thread t = new Thread() {
+            public void run() {
+
+                Looper.prepare();
+
+
+
+
+
         LatLngBounds bounds =null;
         // ak bola zvolená sučasna obrazovka, vezme mapu zobrazenu na displeji
         if (select == 0) {
@@ -361,9 +373,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
 
         String styleURL = mapbox.getStyleUrl();
-        double minZoom = mapbox.getCameraPosition().zoom;
-        double maxZoom = mapbox.getMaxZoom();
-        float pixelRatio = this.getResources().getDisplayMetrics().density;
+        double minZoom = minZoomDownloadMap;
+        double maxZoom = maxZoomDownloadMap;
+        float pixelRatio = getActivity().getResources().getDisplayMetrics().density;
         OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
                 styleURL, bounds, minZoom, maxZoom, pixelRatio);
 
@@ -395,6 +407,19 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 Log.e(TAG, "Error: " + error);
             }
         });
+
+
+
+
+
+
+                Looper.loop();
+
+
+
+            }
+        };
+        t.start();
     }
 
     public boolean isClear() {
@@ -595,7 +620,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     // Progress bar methods
     private void startProgress() {
         Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.download_start), Toast.LENGTH_LONG).show();
-        downloadNotification(true);
+        downloadNotification();
         flagDownload=true;
         isEndNotified = false;
     }
@@ -619,23 +644,21 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     private NotificationManager mNotifyManager;
     private Builder mBuilder;
 
-    public void downloadNotification(Boolean progress) {
-
-        if (progress) {
+    public void downloadNotification() {
             mNotifyManager = (NotificationManager)getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
             mBuilder = new android.support.v4.app.NotificationCompat.Builder(getActivity());
             mBuilder.setContentTitle( getActivity().getResources().getString(R.string.notif_map_download))
                     .setContentText( getActivity().getResources().getString(R.string.notif_map_progress))
                     .setSmallIcon(R.drawable.download);
-        }
-        else {
-            if (flagDownload) {
-                mBuilder.setContentTitle( getActivity().getResources().getString(R.string.notif_map_error))
+
+            /*    mBuilder.setContentTitle( getActivity().getResources().getString(R.string.notif_map_error))
                         .setContentText( getActivity().getResources().getString(R.string.notif_map_interrupted))
                         .setProgress(0, 0, false);
-                mNotifyManager.notify(0, mBuilder.build());
-            }
-        }
+                mNotifyManager.notify(0, mBuilder.build());*/
+    }
+
+    public void endDownloadNotification(){
+        mNotifyManager.cancelAll();
     }
     /*******************************************************************************************************/
     public void get_loaded_index (){
@@ -2426,5 +2449,20 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
+    public void mapTitleExceeded(Boolean value) {
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean("exceeded", value);
+    }
 
+    public  boolean isMapTitleExceeded() {
+        // či je dovolené sťahovať len na wifi
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean net = prefs.getBoolean("exceeded", Boolean.parseBoolean(null));
+        if (net) {
+            return true;
+        }
+        else
+            return false;
+    }
 }

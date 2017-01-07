@@ -1097,9 +1097,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
-        fragmentActivity.downloadNotification(false);
+        fragmentActivity.endDownloadNotification();
         super.onDestroy();
         mapView.onDestroy();
+        super.onUserLeaveHint();
         finish();
         android.os.Process.killProcess(android.os.Process.myPid());
 

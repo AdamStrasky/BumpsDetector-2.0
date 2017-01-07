@@ -9,6 +9,12 @@
             android:dialogTitle="@string/setting_name" />
 
     </PreferenceCategory>
+    <ListPreference
+        android:defaultValue="@string/english"
+        android:title="@string/setting_language"
+        android:entries="@array/language"
+        android:entryValues="@array/language"
+        android:key="lang" />
     <CheckBoxPreference android:key="alarm"
         android:title="@string/setting_alarm"
         android:defaultValue="true"/>
@@ -27,10 +33,4 @@
     <CheckBoxPreference android:key="screen"
         android:title="@string/setting_screen"
         android:defaultValue="false"/>
-    <ListPreference
-        android:defaultValue="@string/english"
-        android:title="@string/setting_language"
-        android:entries="@array/language"
-        android:entryValues="@array/language"
-        android:key="lang" />
 </PreferenceScreen>
