@@ -33,10 +33,11 @@ import java.util.List;
 
 import android.animation.TypeEvaluator;
 
-import static navigationapp.main_application.FragmentActivity.setOnPosition;
+
 import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
 import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
 import static navigationapp.main_application.MainActivity.mapbox;
+import static navigationapp.main_application.MapManager.setOnPosition;
 
 
 /**

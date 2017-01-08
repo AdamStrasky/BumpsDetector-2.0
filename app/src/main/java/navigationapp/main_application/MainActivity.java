@@ -75,14 +75,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.mapbox.mapboxsdk.offline.OfflineManager.getInstance;
-import static navigationapp.main_application.FragmentActivity.flagDownload;
+
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.lockZoznamDB;
-import static navigationapp.main_application.FragmentActivity.setOnPosition;
-import static navigationapp.main_application.FragmentActivity.selectedName;
+
 import static navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.MapManager.flagDownload;
+import static navigationapp.main_application.MapManager.selectedName;
+import static navigationapp.main_application.MapManager.setOnPosition;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener {
     private Context context;
@@ -110,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     com.mapbox.mapboxsdk.geometry.LatLng  convert_location  =null;
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
+    private MapManager mapManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -264,7 +266,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         back_button.setOnClickListener(this);
         navig_on.setOnClickListener(this);
 
-
+        mapManager = new MapManager(this);
         isEneableScreen();
 
 
@@ -577,7 +579,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.download:
 
                 if (fragmentActivity!=null) {
-                    if (fragmentActivity.isMapTitleExceeded()) {
+                    if (mapManager.isMapTitleExceeded()) {
                         Toast.makeText(this, this.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
                         return true;
                     }
@@ -604,7 +606,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if ( flagDownload)
                     Toast.makeText(this, this.getResources().getString(R.string.download_run), Toast.LENGTH_LONG).show();
                 else
-                    fragmentActivity.downloadRegionDialog();
+                    mapManager.downloadRegionDialog();
                 return true;
 
             case R.id.list:
@@ -625,7 +627,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     Toast.makeText(this,this.getResources().getString(R.string.download_run_list) , Toast.LENGTH_LONG).show();
                 else
-                    fragmentActivity.downloadedRegionList();
+                    mapManager.downloadedRegionList();
                 return true;
 
             case R.id.exit:
@@ -1047,13 +1049,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setOnPosition =true;
                 SetUpCamera();
                 // spusti sa alert dialog na opetovné hladanie mapy
-                fragmentActivity.alertSelectRegion(selectedName,1);
+                mapManager.alertSelectRegion(selectedName,1);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
 
                 break;
             case R.id.saveMap_btn:
-                fragmentActivity.downloadRegion(selectedName, 0);
+                mapManager.downloadRegion(selectedName, 0);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
                 setOnPosition =true;
@@ -1130,7 +1132,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
-        fragmentActivity.endDownloadNotification();
+        mapManager.endDownloadNotification();
         super.onDestroy();
         mapView.onDestroy();
         super.onUserLeaveHint();
