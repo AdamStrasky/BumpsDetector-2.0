@@ -1,9 +1,5 @@
 package navigationapp.main_application;
 
-/**
- * Created by monikas on 23. 3. 2015.
- */
-
 import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -25,7 +21,7 @@ public class Bump {
     private Location location;
     private int rating;
     private int manual;
-
+    private final String TAG = "Bump";
     public Bump(Location location, float delta, Integer manual) {
         this.intensity = delta;
         this.location = location;
@@ -50,9 +46,9 @@ public class Bump {
             e.printStackTrace();
         }
         if (response != null)
-            Log.d("BUMP", response);
+            Log.d(TAG, response);
         else
-            Log.d("BUMP", "vratilo null");
+            Log.d(TAG, "return null");
         returnMethod.callback(response);
     }
 

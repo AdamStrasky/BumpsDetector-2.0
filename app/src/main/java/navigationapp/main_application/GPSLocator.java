@@ -1,28 +1,21 @@
 package navigationapp.main_application;
 
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import com.example.monikas.navigationapp.R;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
 
-import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
@@ -31,40 +24,27 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 
 import java.util.List;
 
-import android.animation.TypeEvaluator;
-
-
 import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
 import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
 import static navigationapp.main_application.MainActivity.mapbox;
 import static navigationapp.main_application.MapManager.setOnPosition;
 
-
-/**
- * Created by monikas on 24. 3. 2015.
- */
 public class GPSLocator extends Service implements LocationListener,  MapboxMap.OnMyLocationChangeListener{
 
     private Location mCurrentLocation=null;
     private GoogleApiClient mGoogleApiClient;
-   // private float level;
-    private com.mapbox.mapboxsdk.geometry.LatLng latLng;
-    private com.mapbox.mapboxsdk.annotations.Marker marker;
-    private PolylineOptions draw_road= null;
+    private final String TAG = "GPSLocator";
+    private boolean draw_road= false;
 
     public GPSLocator () {
         this.mGoogleApiClient = global_mGoogleApiClient;
         startLocationUpdates();
     }
 
-    //public void setLevel(float level) {
-    //    this.level = level;
-   // }
-
-    //vykresli cestu z miesta from do miesta to
+    //vykresli cestu
     public void showDirection (final List<LatLng> directionPoint) {
-
-        Thread t = new Thread() {
+        Log.d(TAG, "showDirection - vykreslujem cestu");
+        new Thread() {
             public void run() {
                 Looper.prepare();
         com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
@@ -74,34 +54,30 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
                     directionPoint.get(i).longitude);
         }
 
-        draw_road =  new PolylineOptions()
-                .add(points)
-                .color(Color.parseColor("#009688"))
-                .width(5);
+        draw_road = true;
         mapbox.addPolyline(new PolylineOptions()
                 .add(points)
                 .color(Color.parseColor("#009688"))
                 .width(5));
                 Looper.loop();
             }
-        };
-        t.start();
-
+        }.start();
     }
-    public void remove_draw_road () {
-       if (draw_road!=null) {
+
+    public void remove_draw_road () { // maže vykreslenu cestu
+       Log.d(TAG, "remove_draw_road");
+       if (draw_road) {
            if(mapbox!=null) {
                List<Polyline> markers =  mapbox.getPolylines();
                for (int i = 0; i < markers.size(); i++) {
                    mapbox.removePolyline(markers.get(i));
                }
-
-             draw_road=null;
+            draw_road=false;
            }
        }
     }
 
-    public Location getmCurrentLocation() {
+    public Location getmCurrentLocation() {   // vracia aktuálnu polohu
         return mCurrentLocation;
     }
 
@@ -125,54 +101,48 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
 
     public void onLocationChanged(Location location) {
-        Log.d("GPS", " change GPS position");
+        Log.d(TAG, " change GPS position");
         if (location!=null && location.hasAccuracy())
             mCurrentLocation = location;
         else
             mCurrentLocation=null;
 
-      if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
+      if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {   // nastavujem kameru ak zmenim pozíciu
             try {
                 if (mapbox!=null)
                 mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
             } catch  (NullPointerException e) {
+                e.getMessage();
             }
             if (ZoomInit)
                SetZoom();
-        }
-
+      }
     }
     private boolean ZoomInit = true;
-    public void SetZoom() {
+
+    public void SetZoom() {    // nastavujem kam sa ma presunúť kamera s akým zoomov
         ZoomInit = false;
         if (mapbox!=null  && getmCurrentLocation()!=null) {
          final   com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
             if (mapbox != null && yourLatLng != null) {
                 CameraPosition position = new CameraPosition.Builder()
-                        .target(yourLatLng) // Sets the new camera position
-                        .zoom(ZOOM_LEVEL) // Sets the zoom
-                        .build(); // Creates a CameraPosition from the builder
-
+                        .target(yourLatLng)
+                        .zoom(ZOOM_LEVEL)
+                        .build();
                 mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
                         new MapboxMap.CancelableCallback() {
                             @Override
                             public void onCancel() {
-
                             }
 
                             @Override
                             public void onFinish() {
-
-                            }
+                             }
                         });
-
-
             }
-
-
-
         }
     }
+
     public void getOnPosition() {
         ZoomInit = true;
         SetZoom();

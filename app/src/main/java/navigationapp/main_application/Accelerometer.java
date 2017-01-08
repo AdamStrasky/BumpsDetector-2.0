@@ -58,8 +58,9 @@ public class Accelerometer extends Service implements SensorEventListener {
     private float delta;
     private boolean recalibrate = true;
     private boolean unlock = true;
+    public final String TAG = "Acceleromater";
 
-    private static Timer timer = new Timer();
+    private  Timer timer = new Timer();
     public Accelerometer(){
         this.contexts = fragment_context;
         LIFO = new ArrayList<>();
@@ -68,29 +69,24 @@ public class Accelerometer extends Service implements SensorEventListener {
         mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-
         possibleBumps = new ArrayList<>();
         BumpsManual = new ArrayList<>();
     }
-    private void startService() {
+    private void startService() {  // spustenie pravidelneho rekalibrovania
         recalibrate=false;
-        //  timer.scheduleAtFixedRate(new mainTask(), 0, 60000);
+        timer.scheduleAtFixedRate(new Recalibrate(), 0, 60000);
     }
 
-
-    private class mainTask extends TimerTask
-    {
-        public void run()
-        {
+    private class Recalibrate extends TimerTask {
+        public void run() {
             if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()== 0) {
-                Log.d("ACC", "sensor Accelerometer automatic re-calibrate");
+                Log.d(TAG, "sensor Accelerometer automatic re-calibrate");
                 calibrate();
             }
             else
-                Log.d("ACC", "sensor Accelerometer automatic re-calibrate no gps");
+                Log.d(TAG, "sensor Accelerometer automatic re-calibrate no gps or speed > 0");
         }
     }
-
 
     public ArrayList<HashMap<Location, Float>> getPossibleBumps() {
         return possibleBumps;

@@ -2,10 +2,6 @@ package navigationapp.main_application;
 
 import android.provider.BaseColumns;
 
-/**
- * Created by Adam on 7.10.2016.
- */
-
 public interface Provider {
     public interface bumps_detect extends BaseColumns {
         public static final String TABLE_NAME_BUMPS = "my_bumps";

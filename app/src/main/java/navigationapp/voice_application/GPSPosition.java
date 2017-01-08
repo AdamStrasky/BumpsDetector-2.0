@@ -18,17 +18,15 @@ public class GPSPosition extends Service implements LocationListener {
     boolean isGPSEnabled = false;
     boolean isNetworkEnabled = false;
     boolean canGetLocation = false;
-    android.location.Location location;
+    android.location.Location location = null;
     double latitude;
     double longitude;
     protected LocationManager locationManager;
+    private final String TAG = "GPSPosition";
 
     public GPSPosition(Context context) {
         this.mContext = context;
-         getLocation();
-    }
-    public GPSPosition() {
-
+        getLocation();
     }
 
     public android.location.Location getLocation() {
@@ -38,13 +36,12 @@ public class GPSPosition extends Service implements LocationListener {
             isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
-               Log.d("GPSPosition"," no gps");
+               Log.d(TAG," no gps");
             } else {
                 this.canGetLocation = true;
                 if (isNetworkEnabled) {
                     locationManager.requestLocationUpdates(
                             LocationManager.NETWORK_PROVIDER,60000,10, this);
-                    Log.d("Network", "Network");
                     if (locationManager != null) {
                         location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                         if (location != null) {
@@ -61,7 +58,7 @@ public class GPSPosition extends Service implements LocationListener {
                         }
                         locationManager.requestLocationUpdates(
                                 LocationManager.GPS_PROVIDER,60000,10, this);
-                        Log.d("GPS Enabled", "GPS Enabled");
+                        Log.d(TAG, "GPS Enabled");
                         if (locationManager != null) {
                             location = locationManager
                                     .getLastKnownLocation(LocationManager.GPS_PROVIDER);

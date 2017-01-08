@@ -3,12 +3,9 @@ package navigationapp.main_application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.preference.EditTextPreference;
-import android.preference.Preference;
 import android.preference.PreferenceActivity;
 
 import android.os.Bundle;
@@ -16,26 +13,22 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.example.monikas.navigationapp.R;
 
-import static android.R.id.message;
 import static com.example.monikas.navigationapp.R.xml.settings;
 
+
 public class SettingsActivity extends PreferenceActivity  implements SharedPreferences.OnSharedPreferenceChangeListener {
-    public static final String PREF_FILE_NAME = "Settings";
-    String lang;
+    public  final String TAG = "SettingsActivity";
+    String lang = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(settings);
-        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        //setName();
-      //
         initializeSummaries();
-        lang = getLanguage();
+        lang = getLanguage(); // uložím jazyk, aby som vedel či ho mením
     }
 
     private void initializeSummaries() {
@@ -43,7 +36,6 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         for (String key : sharedPreferences.getAll().keySet()) {
             onSharedPreferenceChanged(sharedPreferences, key);
         }
-
     }
 
     @Override
@@ -54,25 +46,23 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
 
-
     @Override
     public void onPause() {
         MainActivity.activityPaused();
         getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
         super.onPause();
-
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if("name".equals(key)) {
-            findPreference(key).setSummary(sharedPreferences.getString(key, ""));
+            findPreference(key).setSummary(sharedPreferences.getString(key, ""));  // zobrazí sa meno pod titlom
         }
         if("lang".equals(key)) {
-            findPreference(key).setSummary(sharedPreferences.getString(key, ""));
+            findPreference(key).setSummary(sharedPreferences.getString(key, "")); // zobrazí sa jazyk pod titlom
         }
 
        if (lang!=null && !lang.equals(getLanguage())) {
-         new AlertDialog.Builder(this)
+             new AlertDialog.Builder(this)
                     .setTitle(getApplication().getResources().getString(R.string.warning))
                     .setMessage(getApplication().getResources().getString(R.string.warning_msg))
                     .setIcon(android.R.drawable.ic_dialog_alert)
@@ -81,7 +71,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
 
                         public void onClick(DialogInterface dialog, int whichButton) {
                            initializeSummaries();
-                            Intent i = getBaseContext().getPackageManager()
+                            Intent i = getBaseContext().getPackageManager()  // reštartujem aplikáciu, lebo mením jazyk
                                     .getLaunchIntentForPackage(getBaseContext().getPackageName());
                             i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(i);
@@ -90,87 +80,61 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
                     })
                     .setNegativeButton(getApplication().getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int whichButton) {
-                            setLanguage(lang);
+                            setLanguage(lang);      // vraciam pôvodný jazyk
                             initializeSummaries();
                         }
-
-
                     }).show();
+       }
 
-
-
-
-        }
-
-
-        // reaguje na zmenu nastavenia a sucasneho stavu internetu
+         // reaguje na zmenu nastavenia a sucasneho stavu internetu
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        boolean NisConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
-        if (NisConnected) {
+        boolean isConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        if (isConnected) {
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                Log.d("onSharedChanged", "TYPE_WIFI");
+                Log.d(TAG, "onSharedChanged - TYPE_WIFI");
                 MainActivity.manager.setConnected(true);
             }
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
-                Log.d("onSharedChanged", "TYPE_MOBILE");
+                Log.d(TAG, "onSharedChanged - TYPE_MOBILE");
                 if (isEneableOnlyWifiMap())
                     MainActivity.manager.setConnected(false);
                 else
                     MainActivity.manager.setConnected(true);
             }
         }
-
         isEneableScreen();
-
     }
 
     public boolean isEneableOnlyWifiMap() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Boolean map = prefs.getBoolean("map", Boolean.parseBoolean(null));
-        Log.d("xxxxx", String.valueOf(map));
-        if ((map)) {
-            return true;
-        } else
-            return false;
+        Log.d(TAG,"isEneableOnlyWifiMap "+ String.valueOf(prefs.getBoolean("map", Boolean.parseBoolean(null))));
+        return prefs.getBoolean("map", Boolean.parseBoolean(null));
     }
 
     public void isEneableScreen() {
-        Log.d("aasc", "adasdasdasdasdasdasdasdsadsad");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Boolean imgSett = prefs.getBoolean("screen", Boolean.parseBoolean(null));
-
-        Log.d("aasc", String.valueOf(imgSett));
-        if (imgSett) {
-            Log.d("aasc", "qqqqqqqqqqqqqqqqqqq");
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
+        Boolean screen = prefs.getBoolean("screen", Boolean.parseBoolean(null));
+        Log.d(TAG , "isEneableScreen " +String.valueOf(screen));
+        if (screen) {
+           getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
-            Log.d("aasc", "tttttttttttttttttttt");
-            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+           getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
-
-
 
     public String getLanguage() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String name = prefs.getString("lang", "");
+        Log.d(TAG, "getLanguage - " + name);
         return name;
     }
 
     public void setLanguage(String lang) {
-
+        Log.d(TAG, "onSharedChasetLanguagenged - " + lang);
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
-        SharedPreferences.Editor prefEditor = sharedPref.edit(); // Get preference in editor mode
-        prefEditor.putString("lang",lang); // set your default value here (could be empty as well)
-        prefEditor.commit(); // finally save changes
+        SharedPreferences.Editor prefEditor = sharedPref.edit();
+        prefEditor.putString("lang",lang);
+        prefEditor.commit();
     }
-
-
-
-
-
-
-
 }

@@ -49,17 +49,9 @@ import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
-import com.mapbox.mapboxsdk.constants.Style;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.mapboxsdk.maps.Projection;
-import com.mapbox.mapboxsdk.offline.OfflineManager;
-import com.mapbox.mapboxsdk.offline.OfflineRegion;
-import com.mapbox.mapboxsdk.offline.OfflineRegionError;
-import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
-import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
@@ -75,13 +67,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.lockZoznamDB;
 
 import static navigationapp.main_application.FragmentActivity.updatesLock;
-import static navigationapp.main_application.MapManager.flagDownload;
 import static navigationapp.main_application.MapManager.selectedName;
 import static navigationapp.main_application.MapManager.setOnPosition;
 
@@ -102,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public  static MapView mapView = null;
     public static LinearLayout mapConfirm;
     public static Button navig_on,add_button;
-    public static MapboxMap mapbox;
+    public static MapboxMap mapbox = null;
     public static MapboxAccountManager manager;
     private boolean markerSelected = false;
     private boolean markerSelected1 = false;
@@ -603,7 +593,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 fragmentActivity.mapLayer.setClear(true);
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
-                if ( flagDownload)
+                if ( mapManager!=null && !mapManager.isEndNotified())
                     Toast.makeText(this, this.getResources().getString(R.string.download_run), Toast.LENGTH_LONG).show();
                 else
                     mapManager.downloadRegionDialog();
@@ -623,7 +613,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.mapLayer.setClear(true);
                 navig_on.setVisibility(View.INVISIBLE);
-                if (flagDownload)
+                if (mapManager!=null && !mapManager.isEndNotified())
 
                     Toast.makeText(this,this.getResources().getString(R.string.download_run_list) , Toast.LENGTH_LONG).show();
                 else

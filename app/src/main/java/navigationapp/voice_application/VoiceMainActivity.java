@@ -25,23 +25,23 @@ import java.util.Locale;
 
 public class VoiceMainActivity extends Activity  {
 
-    SQLiteDatabase sb;
-    DatabaseOpenHelper databaseHelper;
-    Boolean voice = false;
-    GPSPosition gps;
-    private Bump Handler;
-    TextToSpeech talker;
+    private SQLiteDatabase sb = null;
+    private DatabaseOpenHelper databaseHelper = null;
+    private Boolean voice = false;
+    private GPSPosition gps = null;
+    private Bump Handler = null;
+    private TextToSpeech talker = null;
+    private final String TAG = "VoiceMainActivity";
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        String query="";
+        String query= "";
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             voice = isEneableVoice();
 
-
             if (!query.equals("bump")) {
+                Log.d(TAG,"zly hlasový príkaz");
                 if (voice) {
                     talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
                         @Override
@@ -67,27 +67,25 @@ public class VoiceMainActivity extends Activity  {
             }
         }
 
-        initialization_database();
+        initialization_database(); // inicializácia databázy
         gps = new GPSPosition(VoiceMainActivity.this);
 
-        if(gps.canGetLocation()){ // check if GPS enabled
-
-           final double latitude = gps.getLatitude();
-           final double longitude = gps.getLongitude();
-
-           Location loc = new Location("Location");
-           loc.setLatitude(gps.getLatitude());
-           loc.setLongitude(gps.getLongitude());
-           Handler = new Bump(loc, 6.0f, 1);
-           Handler.getResponse(new CallBackReturn() {
+        if(gps.canGetLocation()){ // kontrola GPS
+            final double latitude = gps.getLatitude(); // vratim si polohu
+            final double longitude = gps.getLongitude();
+            Log.d(TAG," mám polohu ");
+            Location loc = new Location("Location");
+            loc.setLatitude(gps.getLatitude());
+            loc.setLongitude(gps.getLongitude());
+            Handler = new Bump(loc, 6.0f, 1);
+            Handler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if (results.equals("success")) {
-                        Log.d("voice","success handler");
+                        Log.d(TAG,"success handler");
                     } else {
-                        Log.d("voice","error handler");
+                        Log.d(TAG,"error handler, zapisujem do db");
                         BigDecimal bd = new BigDecimal(Float.toString(6));
                         bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-
                         ContentValues contentValues = new ContentValues();
                         contentValues.put(Provider.new_bumps.LATITUDE, latitude);
                         contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
@@ -97,9 +95,6 @@ public class VoiceMainActivity extends Activity  {
                     }
                 }
            });
-
-
-
             if (voice) {
                 talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
                     @Override
@@ -121,8 +116,6 @@ public class VoiceMainActivity extends Activity  {
             }
             else
                 Toast.makeText(this, getApplication().getResources().getString(R.string.bump_add)  ,Toast.LENGTH_LONG).show();
-
-
         }else {
             if (voice) {
                 talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -155,17 +148,16 @@ public class VoiceMainActivity extends Activity  {
         sb = databaseHelper.getWritableDatabase();
     }
 
-    public  String setting_name() {
+    public  String setting_name() { // ziskavam používatelove meno z nastavení
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String name = prefs.getString("name", "");
-        if (name.equals("") )
-            return "";
-        else
-            return name;
+        Log.d(TAG,"retur name "+ prefs.getString("name", ""));
+        return prefs.getString("name", "");
+
     }
 
     public  boolean isEneableVoice() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        Log.d(TAG,"isEneableVoice stav "+prefs.getBoolean("voice_alarm", Boolean.parseBoolean(null)));
         return prefs.getBoolean("voice_alarm", Boolean.parseBoolean(null));
     }
 }

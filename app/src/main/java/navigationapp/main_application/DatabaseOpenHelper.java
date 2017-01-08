@@ -21,10 +21,6 @@ import static  navigationapp.main_application.Provider.bumps_collision.INTENSITY
 import static  navigationapp.main_application.Provider.bumps_collision.CRETED_AT;
 import static  navigationapp.main_application.Provider.new_bumps.TABLE_NAME_NEW_BUMPS;
 
-/**
- * Created by Adam on 6.10.2016.
- */
-
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
 
         public static final String DATABASE_NAME = "bump";
