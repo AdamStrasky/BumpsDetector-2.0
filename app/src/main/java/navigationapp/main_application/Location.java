@@ -1,5 +1,7 @@
 package navigationapp.main_application;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -29,7 +31,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import static navigationapp.main_application.Accelerometer.getDistance;
 import static navigationapp.main_application.FragmentActivity.checkCloseDb;
 import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
-import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_gps;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
@@ -56,11 +57,12 @@ public class Location {
     ArrayList<LatLng> select_road = null,  choise_bump = null;
     LatLng position = null;
     TextToSpeech tts;
-
-    public Location() {
+    Activity context = null;
+    public Location(Activity context) {
+        this.context= context;
         select_road = new  ArrayList<LatLng>();
         LIFO = new ArrayList<Position>();
-        tts=new TextToSpeech(fragment_context, new TextToSpeech.OnInitListener() {
+        tts=new TextToSpeech(context, new TextToSpeech.OnInitListener() {
 
             @Override
             public void onInit(int status) {
@@ -295,7 +297,7 @@ public class Location {
                                         String ago_formated = ago.format(cal.getTime());
                                         // ziskam sučasnu poziciu
                                         // seleknutie vytlk z oblasti a starych 280 dni
-                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(fragment_context);
+                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
                                         checkIntegrityDB(database);
                                         database.beginTransaction();
@@ -560,7 +562,7 @@ public class Location {
                                 if (!isEneableShow()) {
                                     final double i =  actual_distance;
                                     while (tts.isSpeaking()){ }
-                                    fragment_context.runOnUiThread(new Runnable() {
+                                    context.runOnUiThread(new Runnable() {
                                         public void run() {
                                             tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
                                         }
@@ -569,9 +571,9 @@ public class Location {
                                 }
                                 else {
 
-                                    fragment_context.runOnUiThread(new Runnable() {
+                                    context.runOnUiThread(new Runnable() {
                                         public void run() {
-                                            Toast.makeText(fragment_context, fragment_context.getResources().getString(R.string.attention_bump), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(context, context.getResources().getString(R.string.attention_bump), Toast.LENGTH_SHORT).show();
                                         }
                                     });
                                 }
@@ -653,7 +655,7 @@ public class Location {
     }
 
     public  boolean isEneableShow() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(fragment_context);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         Boolean show = prefs.getBoolean("voice", Boolean.parseBoolean(null));
         if ((show) /*|| (!show && MainActivity.isActivityVisible())*/) {
             return true;

@@ -1,9 +1,5 @@
 package navigationapp.main_application;
 
-/**
- * Created by monikas on 23. 3. 2015.
- */
-
 import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;

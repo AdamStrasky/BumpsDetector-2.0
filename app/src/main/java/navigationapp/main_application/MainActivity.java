@@ -377,7 +377,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
             case R.id.layer:
-                if (!fragmentActivity.isNetworkAvailable() || mapbox == null) {
+                if (!fragmentActivity.isNetworkAvailable(context) || mapbox == null) {
                     Toast.makeText(this,this.getResources().getString(R.string.change_map_style), Toast.LENGTH_LONG).show();
                     return true;
                 }
@@ -1095,7 +1095,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         text.setCursorVisible(false);
         hideKeyboard(v);
         String location = text.getText().toString();
-        if (fragmentActivity.isNetworkAvailable()) {
+        if (fragmentActivity.isNetworkAvailable(context)) {
             try {
                 address = Route.findLocality(location, this);
                 if (address == null) {

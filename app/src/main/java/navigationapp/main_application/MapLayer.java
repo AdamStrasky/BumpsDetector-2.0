@@ -1,12 +1,10 @@
 package navigationapp.main_application;
 
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.location.*;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
@@ -44,26 +42,28 @@ import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.MainActivity.mapbox;
 
-/**
- * Created by Adam on 8.1.2017.
- */
 
 public class MapLayer {
-    Accelerometer accelerometer;
-    private Context context;
-    public MapLayer ( Accelerometer acc, Context context) {
-        accelerometer =acc;
-        this.context = context;
-    }
-
+    Accelerometer accelerometer = null ;
+    private Context context = null;
     private final float ALL_BUMPS = 1.0f;   //level defaultne nastaveny pre zobrazovanie vsetkych vytlkov
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
     public float level = ALL_BUMPS;
 
-    List<Feature> autoMarkerCoordinates = null;
-    List<Feature> manualMarkerCoordinates = null;
-    boolean deleteMap = false;
+    private List<Feature> autoMarkerCoordinates = null;  // markery
+    private List<Feature> manualMarkerCoordinates = null;
+
+    boolean deleteMap = false;  // flag na mazanie mapy
+    boolean clear = true; // flag či mazať celu mapu
+
+    public final String TAG = "MapLayer";
+
+    public MapLayer ( Accelerometer acc, Context context) {
+        accelerometer =acc;
+        this.context = context;
+    }
+
     synchronized public void getAllBumps(final Double latitude, final Double longitude) {
         if (latitude == null || longitude == null) {
             Toast.makeText(context, context.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
@@ -72,12 +72,14 @@ public class MapLayer {
         new Thread() {
             public void run() {
                 Looper.prepare();
+                Log.d(TAG, " gettAllBump zobrazenie markerov  spustene ");
                 int autoBumpSequence = 0, manualBumpSequence = 0;
                 autoMarkerCoordinates = new ArrayList<>();
                 manualMarkerCoordinates = new ArrayList<>();
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {
+                            Log.d(TAG, " lock získaný ");
                             if (deleteMap && mapbox != null)
                                 deleteOldMarker();
 
@@ -142,10 +144,11 @@ public class MapLayer {
                             checkCloseDb(database);
                         } finally {
                             updatesLock.unlock();
+                            Log.d(TAG, " gettAllBump markery z databázy vytiahnuté ");
                             break;
                         }
                     } else {
-                        Log.d("aaa", "getAllBumps lock" + this.getId());
+                        Log.d(TAG, " gettAllBump lock ");
                         try {
                             Random ran = new Random();
                             int x = ran.nextInt(20) + 1;
@@ -158,66 +161,62 @@ public class MapLayer {
                 ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
                 while (true) {
                     if (lockAdd.tryLock()) {
-                        // Got the lock
-                        try {
-
-                            while (true) {
-                                if (lockZoznam.tryLock()) {
-                                    // Got the lock
-                                    try {
-                                        if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
-
-
-                                            bumpList.addAll(accelerometer.getPossibleBumps());
-                                            bumpsManual.addAll(accelerometer.getBumpsManual());
-
+                       try {
+                           while (true) {
+                               if (lockZoznam.tryLock()) {
+                                   try {
+                                       if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
+                                           Log.d(TAG, " gettAllBump kopírujem zoznam ");
+                                           bumpList.addAll(accelerometer.getPossibleBumps());
+                                           bumpsManual.addAll(accelerometer.getBumpsManual());
                                         }
-                                    } finally {
+                                   } finally {
                                         lockZoznam.unlock();
+                                        Log.d(TAG, " gettAllBump zoznam unlock ");
                                         break;
                                     }
-                                } else {
+                               } else {
                                     try {
+                                        Log.d(TAG, " gettAllBump zoznam lock ");
                                         Random ran = new Random();
                                         int x = ran.nextInt(20) + 1;
                                         Thread.sleep(x);
 
                                     } catch (InterruptedException e) {
+                                        e.getMessage();
                                     }
-                                }
+                               }
 
-                            }
-                        } finally {
-                            // Make sure to unlock so that we don't cause a deadlock
-                            lockAdd.unlock();
-                            break;
-                        }
+                           }
+                       } finally {
+                           Log.d(TAG, " gettAllBump lockadd unlock ");
+                           lockAdd.unlock();
+                           break;
+                       }
                     } else {
                         try {
+                            Log.d(TAG, " gettAllBump lockadd lock ");
                             Random ran = new Random();
                             int x = ran.nextInt(20) + 1;
                             Thread.sleep(x);
                         } catch (InterruptedException e) {
+                            e.getMessage();
                         }
                     }
                 }
-
+                // zobrazenie výtlkov , ktoré boli pridané automaticky / manuálne bez synchronizácie zo serverom
                 notSendBumps(bumpList, bumpsManual, autoBumpSequence, manualBumpSequence);
                 if (mapbox != null)
-                    showNewMarker();
+                    showNewMarker(); // zobrazenie markerov
                 deleteMap = true;
-
-
                 Looper.loop();
 
             }
         }.start();
+        }
 
 
-    }
-
-
-    synchronized public void deleteOldMarker() {
+    synchronized public void deleteOldMarker() {  // mazanie starých markerov
         mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
             @Override
             public void onFinish() {
@@ -234,17 +233,16 @@ public class MapLayer {
     private static class DefaultCallback implements MapboxMap.CancelableCallback {
         @Override
         public void onCancel() {
-            Log.d("map", "showNewMarker onCancel");
+            Log.d("MapLayer", "DefaultCallback onCancel");
         }
 
         @Override
         public void onFinish() {
-            Log.d("map", "showNewMarker onFinish");
+            Log.d("MapLayer", "DefaultCallback onFinish");
         }
     }
 
-    synchronized public void showNewMarker() {
-
+    synchronized private void showNewMarker() {  // zobrazenie nových markerov
         mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
             @Override
             public void onFinish() {
@@ -258,19 +256,9 @@ public class MapLayer {
         });
     }
 
-    boolean clear = true;
+    synchronized private void deleteMarkers() {
 
-    public boolean isClear() {
-
-        return clear;
-    }
-
-    public void setClear(boolean clear) {
-        this.clear = clear;
-    }
-
-    synchronized public void deleteMarkers() {
-        Log.d("map", "deleteOldMarker start");
+        Log.d(TAG, "deleteOldMarker start");
         try {
             if (isClear() && mapbox != null) {
                 List<Marker> markers = mapbox.getMarkers();
@@ -278,7 +266,6 @@ public class MapLayer {
                     mapbox.removeMarker(markers.get(i));
                 }
             }
-
 
             try {
                 if (mapbox.getSource("marker-source-auto") != null)
@@ -341,19 +328,17 @@ public class MapLayer {
             } catch (NoSuchLayerException e) {
                 e.getMessage();
             }
-        }catch (ConcurrentModificationException cme) {
-            System.out.println("--- Stack Trace ---");
-            cme.printStackTrace();
-            cme.getMessage();
+        } catch (ConcurrentModificationException e) {
+           e.printStackTrace();
+           e.getMessage();
         }
 
-        Log.d("map", "deleteOldMarker finish");
+        Log.d(TAG, "deleteOldMarker finish");
     }
 
+    synchronized private void showMarkers() {
+        Log.d(TAG, "showNewMarker start");
 
-    synchronized public void showMarkers() {
-
-        Log.d("map", "showNewMarker start");
         try {
             FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(autoMarkerCoordinates);
             Source geoJsonSourceAuto = new GeoJsonSource("marker-source-auto", featureCollectionAuto);
@@ -362,7 +347,6 @@ public class MapLayer {
             FeatureCollection featureCollectionManual = FeatureCollection.fromFeatures(manualMarkerCoordinates);
             Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
             mapbox.addSource(geoJsonSourceManual);
-
 
             Bitmap iconAuto = BitmapFactory.decodeResource(context.getResources(), R.drawable.default_marker);
             mapbox.addImage("my-marker-image-auto", iconAuto);
@@ -394,36 +378,32 @@ public class MapLayer {
                     .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
             mapbox.addLayer(selectedMarkerManual);
 
-        }catch (ConcurrentModificationException cme) {
-            System.out.println("--- Stack Trace ---");
-            cme.printStackTrace();
-            cme.getMessage();
+        } catch (ConcurrentModificationException e) {
+            e.printStackTrace();
+            e.getMessage();
         }
 
-        Log.d("map", "showNewMarker finish");
-
+        Log.d(TAG, "showNewMarker finish");
     }
 
-
-    public void notSendBumps(ArrayList<HashMap<android.location.Location, Float>> bumps, ArrayList<Integer> bumpsManual, int a, int b) {
-        /// updatesLock=false;      toto tu nema čo robiť podľa mna !!!!!!!!!!!!!!!!!!!!!!!!!
-        float rating;
+    public void notSendBumps(ArrayList<HashMap<android.location.Location, Float>> bumps, ArrayList<Integer> bumpsManual, int autoSeq, int manulSeq) {
+        Log.d(TAG, "notSendBumps dopnanie zoznamu");
+        float rating = 1;
         int i = 0;
         if (bumps.size() > 0) {
-
+            Log.d(TAG, "notSendBumps obsahuje zoznamy");
             SimpleDateFormat now;
             Calendar cal = Calendar.getInstance();
             cal.setTime(new Date());
             now = new SimpleDateFormat("dd/MM/yyyy");
             String now_formated = now.format(cal.getTime());
             for (HashMap<android.location.Location, Float> bump : bumps) {
-
                 Iterator it = bump.entrySet().iterator();
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
                     android.location.Location loc = (android.location.Location) pair.getKey();
                     float data = (float) pair.getValue();
-                    rating = 1;                             // 1 ,1,5 2,5
+                    rating = 1;
                     if (isBetween(data, 0, 6)) rating = 1;
                     if (isBetween(data, 6, 10)) rating = 1.5f;
                     if (isBetween(data, 10, 10000)) rating = 2.5f;
@@ -431,36 +411,37 @@ public class MapLayer {
                         if (bumpsManual.get(i) == 0) {
                             autoMarkerCoordinates.add(Feature.fromGeometry(
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
-
                             );
-                            if (autoMarkerCoordinates.size() ==a+1) {
-                                Feature feature = autoMarkerCoordinates.get(a);
-                                feature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
+                            Feature autoFeature = autoMarkerCoordinates.get(autoSeq);
+                            autoFeature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
                                         context.getResources().getString(R.string.number_bump) + "1\n" +
                                         context.getResources().getString(R.string.modif) + " " + now_formated);
-                                a++;
-                            }
+                            autoSeq++;
+
                         } else {
                             manualMarkerCoordinates.add(Feature.fromGeometry(
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                             );
-                            if (manualMarkerCoordinates.size() ==b+1) {
-                                Feature featurea = manualMarkerCoordinates.get(b);
-                                featurea.addStringProperty("property",context.getResources().getString(R.string.manual_bump) + "\n" +
+                            Feature manualFeature = manualMarkerCoordinates.get(manulSeq);
+                            manualFeature.addStringProperty("property",context.getResources().getString(R.string.manual_bump) + "\n" +
                                         context.getResources().getString(R.string.number_bump) + "1\n" +
                                         context.getResources().getString(R.string.modif) + " " + now_formated);
-                                b++;
-                            }
+                            manulSeq++;
                         }
                     }
                     i++;
                 }
             }
         }
+        Log.d(TAG, "notSendBumps koniec");
 
     }
 
+    public boolean isClear() {
+        return clear;
+    }
 
-
-
+    public void setClear(boolean clear) {
+        this.clear = clear;
+    }
 }
