@@ -151,19 +151,7 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         }
     }
 
-    public void setName() {
-        final EditTextPreference pref = (EditTextPreference) findPreference("name");
-        pref.setTitle(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("name", ""));
-        // Loads the title for the first time
-        // Listens for change in value, and then changes the title if required.
-        pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                pref.setText(newValue.toString());
-                return false;
-            }
-        });
-    }
+
 
     public String getLanguage() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);

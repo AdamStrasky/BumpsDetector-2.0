@@ -3,7 +3,6 @@ package navigationapp.main_application;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -17,8 +16,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.PointF;
-import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -29,36 +26,19 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.util.Log;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import com.example.monikas.navigationapp.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.constants.Style;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.mapboxsdk.maps.Projection;
-import com.mapbox.mapboxsdk.offline.OfflineManager;
-import com.mapbox.mapboxsdk.offline.OfflineRegion;
-import com.mapbox.mapboxsdk.offline.OfflineRegionError;
-import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
-import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapbox.mapboxsdk.style.layers.NoSuchLayerException;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
@@ -68,11 +48,8 @@ import com.mapbox.mapboxsdk.style.sources.Source;
 import com.mapbox.services.commons.geojson.Feature;
 import com.mapbox.services.commons.geojson.FeatureCollection;
 import com.mapbox.services.commons.geojson.Point;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -87,111 +64,67 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.mapbox.mapboxsdk.offline.OfflineManager.getInstance;
 import static navigationapp.main_application.Bump.isBetween;
-import static navigationapp.main_application.MainActivity.add_button;
-import static navigationapp.main_application.MainActivity.mapConfirm;
-
-import static navigationapp.main_application.MainActivity.mapView;
 import static navigationapp.main_application.MainActivity.mapbox;
-import static navigationapp.main_application.MainActivity.navig_on;
 import static navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
-import android.support.v4.app.NotificationCompat.Builder;
-
-import okhttp3.internal.Util;
 
 public class FragmentActivity extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
-
     private GoogleApiClient mGoogleApiClient;
-    public GPSLocator gps = null;
+
     public Accelerometer accelerometer = null;
+    private Accelerometer mLocnServAcc = null;
+    boolean mServiceConnectedAcc = false;    // flagy na vytvorenie services
+    boolean mBoundAcc = false;
+    public GPSLocator gps = null;
+    private GPSLocator mLocnServGPS = null;
+    boolean mServiceConnectedGPS = false;
+    boolean mBoundGPS = false;
+    private boolean GPS_FLAG = true;
+    private final float ALL_BUMPS = 1.0f;   //level defaultne nastaveny pre zobrazovanie vsetkych vytlkov
+    private final float MEDIUM_BUMPS = 1.5f;
+    private final float LARGE_BUMPS = 2.5f;
+    public float level = ALL_BUMPS;
+    LocationManager locationManager;
+    private JSONArray bumps;
+    private int loaded_index;   // maximálny index v databáze
+    private boolean regular_update = false;  // flag na pravidelný update
+    private boolean clear = true;   // flag na čistenie mapy
+    JSONParser jsonParser = new JSONParser();  // vytvaranie tried
+    navigationapp.main_application.Location detection = null;
+    static Lock lockZoznam = new ReentrantLock();  // zámky
+    static Lock lockZoznamDB = new ReentrantLock();
+    static Lock lockAdd = new ReentrantLock();  // zámok na pridavanie do zoznamu
+    static Lock updatesLock = new ReentrantLock();  // zámok na databazu
     public static Activity fragment_context;
     public static GPSLocator global_gps = null;
     public static GoogleApiClient global_mGoogleApiClient;
-    //konstanty pre level (podiel rating/count pre vytlk v databaze)
-    private final float ALL_BUMPS = 1.0f;
-    private final float MEDIUM_BUMPS = 1.5f;
-    private final float LARGE_BUMPS = 2.5f;
-    //level defaultne nastaveny pre zobrazovanie vsetkych vytlkov
-    public float level = ALL_BUMPS;
-    JSONParser jsonParser = new JSONParser();
-    boolean mServiceConnectedAcc = false;
-    boolean mBoundAcc = false;
-    private Accelerometer mLocnServAcc = null;
-    private boolean GPS_FLAG = true;
-    boolean mServiceConnectedGPS = false;
-    boolean mBoundGPS = false;
-    private GPSLocator mLocnServGPS = null;
-    LocationManager locationManager;
-
-    private JSONArray bumps;
-    private int loaded_index;
-
-
-
-
-
-    private boolean mapNotification = true;
-    // Offline objects
-
-
-
-    // JSON encoding/decoding
-    public final static String JSON_CHARSET = "UTF-8";
-    public final static String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
-    private boolean regular_update = false;
-    private boolean clear = true;
-    static Lock lockZoznam = new ReentrantLock();
-    static Lock lockZoznamDB = new ReentrantLock();
-    static Lock lockAdd = new ReentrantLock();
-    static Lock updatesLock = new ReentrantLock();
-    navigationapp.main_application.Location detection = null;
-
-
+    List<Feature> autoMarkerCoordinates = null;   // markery v mape
+    List<Feature> manualMarkerCoordinates = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-
-
-        get_loaded_index();
-        // ak sa pripojím na internet požiam o update
-        regular_update = true;
-
-        // myView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        get_loaded_index();  // načítanie maximálne ho indexu v databáze
+        regular_update = true;  // ak sa pripojím na internet požiam o update
 
         if (!isNetworkAvailable()) {
             if (isEneableShowText())
-
                 Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.offline_mode), Toast.LENGTH_SHORT).show();
         }
-        // reaguje na zapnutie/ vypnutie GPS
-        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);  // reaguje na zapnutie/ vypnutie GPS
         getActivity().registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
-        // ak nie je povolené GPS , upozornenie na zapnutie
-        if (!checkGPSEnable()) {
+       if (!checkGPSEnable()) {   // ak nie je povolené GPS , upozornenie na zapnutie
             showGPSDisabledAlertToUser();
         } else {
             GPS_FLAG = false;
-            initialization();
+            initialization();  // ak je povolená, inicializujem
         }
 
-        // pravidelný update ak nemám povolený internet
-        new Timer().schedule(new Regular_upgrade(), 180000, 180000);// 3600000
-
+        new Timer().schedule(new Regular_upgrade(), 180000, 180000);// 3600000   // pravidelný update ak nemám povolený internet
     }
 
-    // presunúť do inej triedy
-
-    /*******************************************************************************************************/
-    public void setClear(boolean clear) {
-        this.clear = clear;
-    }
-
-    /*******************************************************************************************************/
     public void get_loaded_index() {
         //  najvyššie uložený index po uspešnej transakcie collision
         SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
@@ -205,11 +138,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
-    boolean mapReady = false;
-    List<Feature> autoMarkerCoordinates = null;
-    List<Feature> manualMarkerCoordinates = null;
-
-
     private class Regular_upgrade extends TimerTask {
         @Override
         public void run() {
@@ -217,16 +145,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
-
     boolean deleteMap = false;
-
     synchronized public void getAllBumps(final Double latitude, final Double longitude) {
         if (latitude == null || longitude == null) {
             Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
             return;
         }
-
-
         Thread t = new Thread() {
             public void run() {
                 Looper.prepare();
@@ -446,7 +370,10 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         return clear;
     }
 
+    public void setClear(boolean clear) {
 
+        this.clear = clear;
+    }
 
     synchronized public void deleteMarkers() {
         Log.d("map", "deleteOldMarker start");

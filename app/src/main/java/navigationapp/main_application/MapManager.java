@@ -39,8 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import static com.mapbox.mapboxsdk.offline.OfflineManager.getInstance;
-import static navigationapp.main_application.FragmentActivity.JSON_CHARSET;
-import static navigationapp.main_application.FragmentActivity.JSON_FIELD_REGION_NAME;
+
 import static navigationapp.main_application.MainActivity.add_button;
 import static navigationapp.main_application.MainActivity.mapConfirm;
 import static navigationapp.main_application.MainActivity.mapView;
@@ -65,7 +64,8 @@ public class MapManager extends Activity {
     public static boolean flagDownload = false;
     private boolean isEndNotified = true;
     Context context;
-
+    public final  String JSON_CHARSET = "UTF-8";
+    public final  String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
     public MapManager(Context context) {
         offlineManager = getInstance(context);
         this.context = context;
