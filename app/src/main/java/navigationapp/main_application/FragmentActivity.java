@@ -80,10 +80,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     boolean mServiceConnectedGPS = false;
     boolean mBoundGPS = false;
     private boolean GPS_FLAG = true;
-    private final float ALL_BUMPS = 1.0f;   //level defaultne nastaveny pre zobrazovanie vsetkych vytlkov
-    private final float MEDIUM_BUMPS = 1.5f;
-    private final float LARGE_BUMPS = 2.5f;
-    public float level = ALL_BUMPS;
+    MapLayer mapLayer = null;
     LocationManager locationManager;
     private JSONArray bumps;
     private int loaded_index;   // maximálny index v databáze
@@ -98,9 +95,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public static Activity fragment_context;
     public static GPSLocator global_gps = null;
     public static GoogleApiClient global_mGoogleApiClient;
-    List<Feature> autoMarkerCoordinates = null;   // markery v mape
-    List<Feature> manualMarkerCoordinates = null;
-
+    public final String TAG = "FragmentActivity";
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -145,426 +140,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         }
     }
 
-    boolean deleteMap = false;
-    synchronized public void getAllBumps(final Double latitude, final Double longitude) {
-        if (latitude == null || longitude == null) {
-            Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
-            return;
-        }
-        Thread t = new Thread() {
-            public void run() {
-                Looper.prepare();
-                Log.d("getAllBumps", " thread name " + this.getId());
 
-                int autoBumpSequence = 0, manualBumpSequence = 0;
-                autoMarkerCoordinates = new ArrayList<>();
-                manualMarkerCoordinates = new ArrayList<>();
-
-                while (true) {
-                    if (updatesLock.tryLock()) {
-                        try {
-
-
-                            if (deleteMap && mapbox != null) {
-                                deleteOldMarker();
-                            }
-
-
-                            SimpleDateFormat now, ago;
-                            Calendar cal = Calendar.getInstance();
-                            cal.setTime(new Date());
-                            now = new SimpleDateFormat("yyyy-MM-dd");
-                            String now_formated = now.format(cal.getTime());
-                            // posun od dnesneho dna o 280 dni
-                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
-                            ago = new SimpleDateFormat("yyyy-MM-dd");
-                            String ago_formated = ago.format(cal.getTime());
-
-
-                            // seleknutie vytlk z oblasti a starych 280 dni
-                            String selectQuery = "SELECT latitude,longitude,count,manual,last_modified FROM my_bumps WHERE rating/count >=" + level + " AND " +
-                                    " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
-                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(getActivity());
-                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                            checkIntegrityDB(database);
-                            database.beginTransaction();
-
-                            Cursor cursor = null;
-                            try {
-                                cursor = database.rawQuery(selectQuery, null);
-
-                                if (cursor.moveToFirst()) {
-                                    do {
-                                        String ds1 = "2007-06-30";
-                                        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
-                                        SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy");
-                                        String ds2 = null;
-
-
-                                        try {
-                                            ds2 = sdf2.format(sdf1.parse(cursor.getString(4).substring(0, 10)));
-                                        } catch (ParseException e) {
-                                            e.printStackTrace();
-                                        }
-
-
-                                        if (cursor.getInt(3) == 0) {
-                                            autoMarkerCoordinates.add(Feature.fromGeometry(
-                                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0)))) // Boston Common Park
-
-                                            );
-                                            Feature feature = autoMarkerCoordinates.get(autoBumpSequence);
-                                            feature.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.auto_bump) + "\n" +
-                                                    getActivity().getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
-                                                    getActivity().getResources().getString(R.string.modif) + " " + ds2);
-                                            autoBumpSequence++;
-                                        } else {
-                                            manualMarkerCoordinates.add(Feature.fromGeometry(
-                                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0)))) // Boston Common Park
-                                            );
-                                            Feature featurea = manualMarkerCoordinates.get(manualBumpSequence);
-                                            featurea.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.manual_bump) + "\n" +
-                                                    getActivity().getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
-                                                    getActivity().getResources().getString(R.string.modif) + " " + ds2);
-                                            manualBumpSequence++;
-                                        }
-                                    }
-                                    while (cursor.moveToNext());
-                                }
-                            } finally {
-                                if (cursor != null)
-                                    cursor.close();
-                            }
-
-                            database.setTransactionSuccessful();
-                            database.endTransaction();
-                            database.close();
-                            checkCloseDb(database);
-
-
-                        } finally {
-                            updatesLock.unlock();
-                            break;
-                        }
-                    } else {
-                        Log.d("getAllBumps", "getAllBumps thread lockAAAAAA " + this.getId());
-                        try {
-                            Random ran = new Random();
-                            int x = ran.nextInt(20) + 1;
-                            Thread.sleep(x);
-                        } catch (InterruptedException e) {
-                        }
-                    }
-
-                }
-
-                ArrayList<HashMap<Location, Float>> bumpList = new ArrayList<HashMap<Location, Float>>();
-                ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
-                while (true) {
-                    if (lockAdd.tryLock()) {
-                        // Got the lock
-                        try {
-
-                            while (true) {
-                                if (lockZoznam.tryLock()) {
-                                    // Got the lock
-                                    try {
-                                        if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
-
-
-                                            bumpList.addAll(accelerometer.getPossibleBumps());
-                                            bumpsManual.addAll(accelerometer.getBumpsManual());
-
-                                        }
-                                    } finally {
-                                        lockZoznam.unlock();
-                                        break;
-                                    }
-                                } else {
-                                    try {
-                                        Random ran = new Random();
-                                        int x = ran.nextInt(20) + 1;
-                                        Thread.sleep(x);
-
-                                    } catch (InterruptedException e) {
-                                    }
-                                }
-
-                            }
-                        } finally {
-                            // Make sure to unlock so that we don't cause a deadlock
-                            lockAdd.unlock();
-                            break;
-                        }
-                    } else {
-                        try {
-                            Random ran = new Random();
-                            int x = ran.nextInt(20) + 1;
-                            Thread.sleep(x);
-                        } catch (InterruptedException e) {
-                        }
-                    }
-                }
-
-                notSendBumps(bumpList, bumpsManual, autoBumpSequence, manualBumpSequence);
-                if (mapbox != null)
-                    showNewMarker();
-                deleteMap = true;
-
-
-                Looper.loop();
-
-            }
-        };
-        t.start();
-
-
-    }
-
-
-    synchronized public void deleteOldMarker() {
-        mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
-            @Override
-            public void onFinish() {
-                deleteMarkers();
-            }
-
-            @Override
-            public void onCancel() {
-                deleteMarkers();
-            }
-        });
-    }
-
-    private static class DefaultCallback implements MapboxMap.CancelableCallback {
-        @Override
-        public void onCancel() {
-            Log.d("map", "showNewMarker onCancel");
-        }
-
-        @Override
-        public void onFinish() {
-            Log.d("map", "showNewMarker onFinish");
-        }
-    }
-
-    synchronized public void showNewMarker() {
-
-        mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(mapbox.getCameraPosition()), new DefaultCallback() {
-            @Override
-            public void onFinish() {
-                showMarkers();
-            }
-
-            @Override
-            public void onCancel() {
-                showMarkers();
-            }
-        });
-    }
-
-
-    public boolean isClear() {
-
-        return clear;
-    }
-
-    public void setClear(boolean clear) {
-
-        this.clear = clear;
-    }
-
-    synchronized public void deleteMarkers() {
-        Log.d("map", "deleteOldMarker start");
-   try {
-       if (isClear() && mapbox != null) {
-           List<Marker> markers = mapbox.getMarkers();
-           for (int i = 0; i < markers.size(); i++) {
-               mapbox.removeMarker(markers.get(i));
-           }
-       }
-
-
-       try {
-           if (mapbox.getSource("marker-source-auto") != null)
-               mapbox.removeSource("marker-source-auto");
-       } catch (NoSuchSourceException e) {
-           e.printStackTrace();
-           e.getMessage();
-       }
-
-       try {
-           if (mapbox.getSource("marker-source-manual") != null)
-               mapbox.removeSource("marker-source-manual");
-       } catch (NoSuchSourceException e) {
-           e.printStackTrace();
-           e.getMessage();
-       }
-
-       mapbox.removeImage("my-marker-image-auto");
-       mapbox.removeImage("my-marker-image-manual");
-
-       try {
-           if (mapbox.getLayer("marker-layer-auto") != null)
-               mapbox.removeLayer("marker-layer-auto");
-       } catch (NoSuchLayerException e) {
-           e.getMessage();
-       }
-       try {
-           if (mapbox.getLayer("marker-layer-manual") != null)
-               mapbox.removeLayer("marker-layer-manual");
-       } catch (NoSuchLayerException e) {
-           e.getMessage();
-       }
-
-       try {
-           if (mapbox.getSource("selected-marker-auto") != null)
-               mapbox.removeSource("selected-marker-auto");
-       } catch (NoSuchSourceException e) {
-           e.printStackTrace();
-           e.getMessage();
-       }
-
-       try {
-           if (mapbox.getSource("selected-marker-manual") != null)
-               mapbox.removeSource("selected-marker-manual");
-       } catch (NoSuchSourceException e) {
-           e.printStackTrace();
-           e.getMessage();
-       }
-
-       try {
-           if (mapbox.getLayer("selected-marker-layer-auto") != null)
-               mapbox.removeLayer("selected-marker-layer-auto");
-       } catch (NoSuchLayerException e) {
-           e.getMessage();
-       }
-
-       try {
-           if (mapbox.getLayer("selected-marker-layer-manual") != null)
-               mapbox.removeLayer("selected-marker-layer-manual");
-       } catch (NoSuchLayerException e) {
-           e.getMessage();
-       }
-   }catch (ConcurrentModificationException cme) {
-       System.out.println("--- Stack Trace ---");
-       cme.printStackTrace();
-       cme.getMessage();
-   }
-
-        Log.d("map", "deleteOldMarker finish");
-    }
-
-
-    synchronized public void showMarkers() {
-
-        Log.d("map", "showNewMarker start");
- try {
-     FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(autoMarkerCoordinates);
-     Source geoJsonSourceAuto = new GeoJsonSource("marker-source-auto", featureCollectionAuto);
-     mapbox.addSource(geoJsonSourceAuto);
-
-     FeatureCollection featureCollectionManual = FeatureCollection.fromFeatures(manualMarkerCoordinates);
-     Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
-     mapbox.addSource(geoJsonSourceManual);
-
-
-     Bitmap iconAuto = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.default_marker);
-     mapbox.addImage("my-marker-image-auto", iconAuto);
-
-     SymbolLayer markerAuto = new SymbolLayer("marker-layer-auto", "marker-source-auto")
-             .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
-     mapbox.addLayer(markerAuto);
-
-     Bitmap iconManual = BitmapFactory.decodeResource(FragmentActivity.this.getResources(), R.drawable.green_marker);
-     mapbox.addImage("my-marker-image-manual", iconManual);
-
-     SymbolLayer markersManual = new SymbolLayer("marker-layer-manual", "marker-source-manual")
-             .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
-     mapbox.addLayer(markersManual);
-
-     FeatureCollection emptySourceAuto = FeatureCollection.fromFeatures(new Feature[]{});
-     Source selectedMarkerSourceAuto = new GeoJsonSource("selected-marker-auto", emptySourceAuto);
-     mapbox.addSource(selectedMarkerSourceAuto);
-
-     FeatureCollection emptySourceManual = FeatureCollection.fromFeatures(new Feature[]{});
-     Source selectedMarkerSourceManual = new GeoJsonSource("selected-marker-manual", emptySourceManual);
-     mapbox.addSource(selectedMarkerSourceManual);
-
-     SymbolLayer selectedMarkerAuto = new SymbolLayer("selected-marker-layer-auto", "selected-marker-auto")
-             .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
-     mapbox.addLayer(selectedMarkerAuto);
-
-     SymbolLayer selectedMarkerManual = new SymbolLayer("selected-marker-layer-manual", "selected-marker-manual")
-             .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
-     mapbox.addLayer(selectedMarkerManual);
-
- }catch (ConcurrentModificationException cme) {
-     System.out.println("--- Stack Trace ---");
-     cme.printStackTrace();
-     cme.getMessage();
- }
-
-        Log.d("map", "showNewMarker finish");
-
-    }
-
-
-    public void notSendBumps(ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual, int a, int b) {
-        /// updatesLock=false;      toto tu nema čo robiť podľa mna !!!!!!!!!!!!!!!!!!!!!!!!!
-        float rating;
-        int i = 0;
-        if (bumps.size() > 0) {
-
-            SimpleDateFormat now;
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(new Date());
-            now = new SimpleDateFormat("dd/MM/yyyy");
-            String now_formated = now.format(cal.getTime());
-            for (HashMap<Location, Float> bump : bumps) {
-
-                Iterator it = bump.entrySet().iterator();
-                while (it.hasNext()) {
-                    HashMap.Entry pair = (HashMap.Entry) it.next();
-                    Location loc = (Location) pair.getKey();
-                    float data = (float) pair.getValue();
-                    rating = 1;                             // 1 ,1,5 2,5
-                    if (isBetween(data, 0, 6)) rating = 1;
-                    if (isBetween(data, 6, 10)) rating = 1.5f;
-                    if (isBetween(data, 10, 10000)) rating = 2.5f;
-                    if (rating >= level) {
-                        if (bumpsManual.get(i) == 0) {
-                            autoMarkerCoordinates.add(Feature.fromGeometry(
-                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
-
-                            );
-                            if (autoMarkerCoordinates.size() ==a+1) {
-                                Feature feature = autoMarkerCoordinates.get(a);
-                                feature.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.auto_bump) + "\n" +
-                                        getActivity().getResources().getString(R.string.number_bump) + "1\n" +
-                                        getActivity().getResources().getString(R.string.modif) + " " + now_formated);
-                                a++;
-                            }
-                        } else {
-                            manualMarkerCoordinates.add(Feature.fromGeometry(
-                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
-                            );
-                            if (manualMarkerCoordinates.size() ==b+1) {
-                                Feature featurea = manualMarkerCoordinates.get(b);
-                                featurea.addStringProperty("aaaaaa", getActivity().getResources().getString(R.string.manual_bump) + "\n" +
-                                        getActivity().getResources().getString(R.string.number_bump) + "1\n" +
-                                        getActivity().getResources().getString(R.string.modif) + " " + now_formated);
-                                b++;
-                            }
-                        }
-                    }
-                    i++;
-                }
-            }
-        }
-
-    }
 
     private double lang_database, longt_database;
     private int net, b_id_database, c_id_database, updates, max_number = 0;
@@ -722,7 +298,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             public void run() {
 
                                 LatLng convert_location = gps.getCurrentLatLng();
-                                getAllBumps(convert_location.latitude, convert_location.longitude);
+                                mapLayer.getAllBumps(convert_location.latitude, convert_location.longitude);
                             }
                         });
 
@@ -742,7 +318,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             public void run() {
 
                                 LatLng convert_location = gps.getCurrentLatLng();
-                                getAllBumps(convert_location.latitude, convert_location.longitude);
+                                mapLayer.getAllBumps(convert_location.latitude, convert_location.longitude);
                             }
                         });
                     }
@@ -911,7 +487,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                     public void run() {
 
                                         LatLng convert_location = gps.getCurrentLatLng();
-                                        getAllBumps(convert_location.latitude, convert_location.longitude);
+                                        mapLayer.getAllBumps(convert_location.latitude, convert_location.longitude);
                                     }
                                 });
                             }
@@ -1186,7 +762,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                         public void run() {
 
                                             LatLng convert_location = gps.getCurrentLatLng();
-                                            getAllBumps(convert_location.latitude, convert_location.longitude);
+                                            mapLayer.getAllBumps(convert_location.latitude, convert_location.longitude);
                                         }
                                     });
                                 }
@@ -1247,7 +823,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                                 public void run() {
 
                                     LatLng convert_location = gps.getCurrentLatLng();
-                                    getAllBumps(convert_location.latitude, convert_location.longitude);
+                                    mapLayer.getAllBumps(convert_location.latitude, convert_location.longitude);
                                 }
                             });
                         }
@@ -1426,7 +1002,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     //  Log.d("TTRREEE","bezi  sa Thread");
                 }
                 detection = new navigationapp.main_application.Location();
-
+                mapLayer = new MapLayer(accelerometer,fragment_context);
                 startGPS();
 
                 Looper.loop();
@@ -1841,7 +1417,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     // stiahnem najnovšie udaje a zobrazím mapu
                     Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.map_setting), Toast.LENGTH_SHORT).show();
                 regular_update = false;
-                mLocnServGPS.setLevel(level);
+                //mLocnServGPS.setLevel(level);
                 gps = mLocnServGPS;
                 Log.d("TTRREEE", "gps pred null");
                 if (gps != null) {
@@ -1872,7 +1448,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         public void run() {
 
                             LatLng convert_location = gps.getCurrentLatLng();
-                            getAllBumps(convert_location.latitude, convert_location.longitude);
+                            mapLayer.getAllBumps(convert_location.latitude, convert_location.longitude);
                         }
                     });
                 }
@@ -1887,7 +1463,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     public void run() {
 
                         LatLng convert_location = gps.getCurrentLatLng();
-                        getAllBumps(convert_location.latitude, convert_location.longitude);
+                        mapLayer.getAllBumps(convert_location.latitude, convert_location.longitude);
                     }
                 });
             }
@@ -1905,21 +1481,14 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
 
     public boolean isEneableDownload() {
-        // či je dovolené sťahovať len na wifi
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        Boolean net = prefs.getBoolean("net", Boolean.parseBoolean(null));
-        if (net) {
-            return true;
-        } else
-            return false;
+        return prefs.getBoolean("net", Boolean.parseBoolean(null));
+
     }
 
-    public boolean isConnectedWIFI() {
-        // či je pripojená wifi alebo mobilný internet
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+    public boolean isConnectedWIFI() {   // či je pripojená wifi alebo mobilný internet
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-
         boolean NisConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
         if (NisConnected) {
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI)

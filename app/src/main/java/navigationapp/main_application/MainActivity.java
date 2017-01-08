@@ -221,15 +221,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             deselectMarker(marker1, 1);
                         }
                         if (features.size() > 0) {
-                            if (features.get(0).getStringProperty("aaaaaa")!=null)
-                                Toast.makeText(getApplication(), features.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
+                            if (features.get(0).getStringProperty("property")!=null)
+                                Toast.makeText(getApplication(), features.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
 
                             selectMarker(marker,  0);
                             return;
                         }
                         if (features1.size() > 0) {
-                            if (features1.get(0).getStringProperty("aaaaaa")!=null)
-                                Toast.makeText(getApplication(), features1.get(0).getStringProperty("aaaaaa"), Toast.LENGTH_LONG).show();
+                            if (features1.get(0).getStringProperty("property")!=null)
+                                Toast.makeText(getApplication(), features1.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
 
                             selectMarker(marker1, 1);
                             return;
@@ -412,23 +412,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                            fragmentActivity.setClear(false);
-                                        fragmentActivity.getAllBumps(lightBumps.latitude, lightBumps.longitude);
+                                            fragmentActivity.mapLayer.setClear(false);
+                                        fragmentActivity.mapLayer.getAllBumps(lightBumps.latitude, lightBumps.longitude);
                                         break;
 
                                     case 1:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                                         LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                            fragmentActivity.setClear(false);
-                                        fragmentActivity.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
+                                            fragmentActivity.mapLayer.setClear(false);
+                                        fragmentActivity.mapLayer.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
                                         LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                            fragmentActivity.setClear(false);;
-                                        fragmentActivity.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
+                                            fragmentActivity.mapLayer.setClear(false);;
+                                        fragmentActivity.mapLayer.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
 
                                         break;
                                 }
@@ -470,11 +470,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     case 0:
                                         new Thread() {
                                             public void run() {
-                                                fragmentActivity.level = ALL_BUMPS;
+                                                fragmentActivity.mapLayer.level = ALL_BUMPS;
                                                 LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
-                                                    fragmentActivity.setClear(false);;
-                                                fragmentActivity.getAllBumps(allBumps.latitude, allBumps.longitude);
+                                                    fragmentActivity.mapLayer.setClear(false);;
+                                                fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
                                             }
                                         }.start();
                                         break;
@@ -482,11 +482,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     case 1:
                                         new Thread() {
                                             public void run() {
-                                                fragmentActivity.level = MEDIUM_BUMPS;
+                                                fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
                                                 LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
-                                                    fragmentActivity.setClear(false);;
-                                                fragmentActivity.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
+                                                    fragmentActivity.mapLayer.setClear(false);;
+                                                fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
 
                                             }
                                         }.start();
@@ -494,11 +494,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     case 2:
                                         new Thread() {
                                             public void run() {
-                                                fragmentActivity.level = LARGE_BUMPS;
+                                                fragmentActivity.mapLayer.level = LARGE_BUMPS;
                                                 LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
-                                                    fragmentActivity.setClear(false);;
-                                                fragmentActivity.getAllBumps(largeBumps.latitude, largeBumps.longitude);
+                                                    fragmentActivity.mapLayer.setClear(false);;
+                                                fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
                                             }
                                         }.start();
                                         break;
@@ -545,9 +545,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 close();
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     if (featureMarker!=null)
-                        fragmentActivity.setClear(false);;
+                        fragmentActivity.mapLayer.setClear(false);;
                     fragmentActivity.gps.remove_draw_road();
-                    fragmentActivity.deleteOldMarker();
+                    fragmentActivity.mapLayer.deleteOldMarker();
 
                 }
                 return true;
@@ -600,7 +600,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 // fragmentActivity.gps.setUpMap(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.setClear(true);
+                fragmentActivity.mapLayer.setClear(true);
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 if ( flagDownload)
@@ -621,7 +621,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.setClear(true);
+                fragmentActivity.mapLayer.setClear(true);
                 navig_on.setVisibility(View.INVISIBLE);
                 if (flagDownload)
 
@@ -896,7 +896,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 // spustenie listenera na mapu
                                 allow_click=true;
                                 confirm.setVisibility(View.VISIBLE);
-                                fragmentActivity.setClear(false);
+                                fragmentActivity.mapLayer.setClear(false);
                                 add_button.setVisibility(View.INVISIBLE);
 
                             }
@@ -908,7 +908,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.setClear(true);
+                fragmentActivity.mapLayer.setClear(true);
                 // vrati polohu  kde som stlačil na mape
 
                 save(true);
@@ -1043,7 +1043,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 allow_click=false;
                 save(false);
                 convert_location  =null;
-                fragmentActivity.setClear(true);
+                fragmentActivity.mapLayer.setClear(true);
                 break;
             case R.id.backMap_btn:
                 setOnPosition =true;

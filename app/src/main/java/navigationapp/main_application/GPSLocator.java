@@ -47,7 +47,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
     private Location mCurrentLocation=null;
     private GoogleApiClient mGoogleApiClient;
-    private float level;
+   // private float level;
     private com.mapbox.mapboxsdk.geometry.LatLng latLng;
     private com.mapbox.mapboxsdk.annotations.Marker marker;
     private PolylineOptions draw_road= null;
@@ -57,9 +57,9 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         startLocationUpdates();
     }
 
-    public void setLevel(float level) {
-        this.level = level;
-    }
+    //public void setLevel(float level) {
+    //    this.level = level;
+   // }
 
     //vykresli cestu z miesta from do miesta to
     public void showDirection (final List<LatLng> directionPoint) {
