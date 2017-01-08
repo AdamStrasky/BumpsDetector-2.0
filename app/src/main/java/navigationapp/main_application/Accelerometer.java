@@ -74,7 +74,7 @@ public class Accelerometer extends Service implements SensorEventListener {
     }
     private void startService() {  // spustenie pravidelneho rekalibrovania
         recalibrate=false;
-        timer.scheduleAtFixedRate(new Recalibrate(), 0, 60000);
+       // timer.scheduleAtFixedRate(new Recalibrate(), 0, 60000);
     }
 
     private class Recalibrate extends TimerTask {

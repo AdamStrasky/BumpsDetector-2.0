@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -280,15 +281,23 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
     public static void checkCloseDb(SQLiteDatabase database) {
         while (true) {  // kontrola či je databáza zatvorená
-            if (!database.isOpen())
-                break;
+            try {
+                if (!database.isOpen())
+                    break;
+            }catch(SQLiteException e){
+                e.getMessage();
+            }
         }
     }
 
     public static void checkIntegrityDB(SQLiteDatabase database) {
         while (true) {  // kontrola či je databázu nepoužíva iné vlákno
-            if (!database.isDbLockedByOtherThreads())
-                break;
+            try {
+                if (!database.isDbLockedByOtherThreads())
+                    break;
+            }catch(SQLiteException e){
+                e.getMessage();
+            }
         }
     }
 

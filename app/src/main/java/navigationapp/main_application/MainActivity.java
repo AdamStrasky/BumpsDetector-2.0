@@ -83,7 +83,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final float LARGE_BUMPS = 2.5f;
     public static int ZOOM_LEVEL = 16;
     private FragmentActivity fragmentActivity =null;
-    public static final String FRAGMENTACTIVITY_TAG = "blankFragment";
+    public  final String FRAGMENTACTIVITY_TAG = "blankFragment";
+    public  final String TAG = "MainActivity";
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
     private Float intensity = null;
@@ -94,8 +95,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static Button navig_on,add_button;
     public static MapboxMap mapbox = null;
     public static MapboxAccountManager manager;
-    private boolean markerSelected = false;
-    private boolean markerSelected1 = false;
+    private boolean markerSelectedAuto = false;
+    private boolean markerSelectedManual = false;
     private Marker featureMarker;
     boolean allow_click= false;
     com.mapbox.mapboxsdk.geometry.LatLng  convert_location  =null;
@@ -108,8 +109,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         Language.setLanguage(MainActivity.this,getLanguage());
-
         setContentView(R.layout.activity_main);
+        context = this;
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(new OnMapReadyCallback() {
@@ -120,26 +121,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (setOnPosition)
                     mapbox.setMyLocationEnabled(true);
 
-
-
-
-
                 mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
                     @Override
                     public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
-
-
-                        if (allow_click) {
-                            if (featureMarker != null) {
+                        if (allow_click) {  // ak som klikol na plus, možem klikať
+                            if (featureMarker != null) { // ak existuje marker, posuvam ho po mape
                                 ValueAnimator markerAnimator = ObjectAnimator.ofObject(featureMarker, "position",
                                         new LatLngEvaluator(), featureMarker.getPosition(), point);
                                 markerAnimator.setDuration(2000);
                                 markerAnimator.start();
                                 convert_location = point;
-                                Log.d("TREEEE"," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
+                                Log.d(TAG," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
-                            else {
-
+                            else {  // neexistuje , tak ho vytváram
+                                Log.d(TAG," Vytvaram marker ");
                                 IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
                                 Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.purple_marker);
                                 com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
@@ -149,87 +144,73 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         .icon(icons)
                                 );
                                 convert_location = point;
-                                Log.d("TREEEE"," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
+                                Log.d(TAG," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
-
-
                         }
-
 
                         ////////////////////////////////////////////////////////////////
-                        final SymbolLayer marker = (SymbolLayer) mapbox.getLayer("selected-marker-layer-auto");
-                        final SymbolLayer marker1 = (SymbolLayer) mapbox.getLayer("selected-marker-layer-manual");
+                        final SymbolLayer markerAuto = (SymbolLayer) mapbox.getLayer("selected-marker-layer-auto");
+                        final SymbolLayer markerManual = (SymbolLayer) mapbox.getLayer("selected-marker-layer-manual");
 
                         final PointF pixel = mapbox.getProjection().toScreenLocation(point);
-                        List<Feature> features = mapbox.queryRenderedFeatures(pixel, "marker-layer-auto");
-                        List<Feature> selectedFeature = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-auto");
-                        List<Feature> features1 = mapbox.queryRenderedFeatures(pixel, "marker-layer-manual");
-                        List<Feature> selectedFeature1 = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-manual");
+                        List<Feature> featureAuto = mapbox.queryRenderedFeatures(pixel, "marker-layer-auto");
+                        List<Feature> selectedFeatureAuto = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-auto");
+                        List<Feature> featuresManual = mapbox.queryRenderedFeatures(pixel, "marker-layer-manual");
+                        List<Feature> selectedFeatureManual = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-manual");
 
-                        if (selectedFeature.size() > 0 && markerSelected) {
+                        if (selectedFeatureAuto.size() > 0 && markerSelectedAuto) {
                             return;
                         }
-                        if (selectedFeature1.size() > 0 && markerSelected1) {
+                        if (selectedFeatureManual.size() > 0 && markerSelectedManual) {
                             return;
                         }
 
-                        if (features.isEmpty() || features1.isEmpty()) {
-                            if (markerSelected) {
-                                deselectMarker(marker, 0);
+                        if (featureAuto.isEmpty() || featuresManual.isEmpty()) {
+                            if (markerSelectedAuto) {
+                                deselectMarker(markerAuto, 0);
                                 return;
                             }
-                            if (markerSelected1) {
-                                deselectMarker(marker1, 1);
-
-                            }
-
-
-                        }
-
-
-                        if (features.size() > 0) {
-                            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
-                                    new Feature[]{Feature.fromGeometry(features.get(0).getGeometry())});
-                            GeoJsonSource source = mapbox.getSourceAs("selected-marker-auto");
-                            if (source != null) {
-                                source.setGeoJson(featureCollection);
+                            if (markerSelectedManual) {
+                                deselectMarker(markerManual, 1);
+                                return;
                             }
                         }
-                        if (features1.size() > 0) {
-                            FeatureCollection featureCollection1 = FeatureCollection.fromFeatures(
-                                    new Feature[]{Feature.fromGeometry(features1.get(0).getGeometry())});
-                            GeoJsonSource source1 = mapbox.getSourceAs("selected-marker-manual");
-                            if (source1 != null) {
-                                source1.setGeoJson(featureCollection1);
-                            }
 
+                        if (featureAuto.size() > 0) {
+                            FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(
+                                    new Feature[]{Feature.fromGeometry(featureAuto.get(0).getGeometry())});
+                            GeoJsonSource sourceAuto = mapbox.getSourceAs("selected-marker-auto");
+                            if (sourceAuto != null)
+                                sourceAuto.setGeoJson(featureCollectionAuto);
                         }
-                        if (markerSelected) {
-                            deselectMarker(marker, 0);
+                        if (featuresManual.size() > 0) {
+                            FeatureCollection featureCollectionManual = FeatureCollection.fromFeatures(
+                                    new Feature[]{Feature.fromGeometry(featuresManual.get(0).getGeometry())});
+                            GeoJsonSource sourceManual = mapbox.getSourceAs("selected-marker-manual");
+                            if (sourceManual != null)
+                                sourceManual.setGeoJson(featureCollectionManual);
                         }
-                        if (markerSelected1) {
-                            deselectMarker(marker1, 1);
-                        }
-                        if (features.size() > 0) {
-                            if (features.get(0).getStringProperty("property")!=null)
-                                Toast.makeText(getApplication(), features.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
 
-                            selectMarker(marker,  0);
+                        if (markerSelectedAuto) {
+                            deselectMarker(markerAuto, 0);
+                        }
+                        if (markerSelectedManual) {
+                            deselectMarker(markerManual, 1);
+                        }
+                        if (featureAuto.size() > 0) {
+                            if (featureAuto.get(0).getStringProperty("property")!=null)
+                                Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                            selectMarker(markerAuto,  0);
                             return;
                         }
-                        if (features1.size() > 0) {
-                            if (features1.get(0).getStringProperty("property")!=null)
-                                Toast.makeText(getApplication(), features1.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
-
-                            selectMarker(marker1, 1);
+                        if (featuresManual.size() > 0) {
+                            if (featuresManual.get(0).getStringProperty("property")!=null)
+                                Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                            selectMarker(markerManual, 1);
                             return;
                         }
-
                     }
                 });
-
-
-
             }
         });
 
@@ -255,28 +236,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         downloand_button.setOnClickListener(this);
         back_button.setOnClickListener(this);
         navig_on.setOnClickListener(this);
-
         mapManager = new MapManager(this);
-        isEneableScreen();
 
+        isEneableScreen();  // nastavenie či vypínať displej
 
-
-
-
-        searchBar.setOnClickListener(new View.OnClickListener() {
+        searchBar.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
             @Override
             public void onClick(View v) {
-                //  if (v.getId() == searchBar.getId()) {
                 searchBar.setCursorVisible(true);
                 searchBar.setText("");
-                //  }
             }
         });
-        context = this;
 
         registerReceiver(netReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
-        FragmentManager fragmentManager = getFragmentManager();
+        FragmentManager fragmentManager = getFragmentManager();  // vytváranie fragmentu
         fragmentActivity = (FragmentActivity) fragmentManager.findFragmentByTag(FRAGMENTACTIVITY_TAG);
 
         if (fragmentActivity == null) {
@@ -285,33 +259,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
-        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);     // vytvorenie hamburger menu
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-
         drawerToggle = new ActionBarDrawerToggle(this,
                 drawerLayout,
                 R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close
         );
-
         drawerLayout.setDrawerListener(drawerToggle);
-
-
-
-
-
-
         drawerToggle.syncState();
-
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
     }
 
     @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
+    protected void onPostCreate(Bundle savedInstanceState) {  // reaguje na klik na menu
         super.onPostCreate(savedInstanceState);
         drawerToggle.syncState();
     }
@@ -322,10 +285,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drawerToggle.onConfigurationChanged(newConfig);
     }
 
-
-
     @Override
-    public void onBackPressed() {
+    public void onBackPressed() {  // preťažený klik spať ak je zobrazené menu
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -333,29 +294,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.onBackPressed();
         }
     }
-
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+    public boolean onCreateOptionsMenu(Menu menu) {   // zovbrezenie menu s ikonami
         getMenuInflater().inflate(R.menu.activity_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-
         if(drawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
-
-
         switch (item.getItemId()) {
 
-
-            case R.id.position:
+            case R.id.position:   // nastavenie aktualnej polohy a zoomu po kliku na ikonu
                 if (!fragmentActivity.checkGPSEnable()) {
                     Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
@@ -371,17 +323,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(this,this.getResources().getString(R.string.change_map_style), Toast.LENGTH_LONG).show();
                     return true;
                 }
-
-                AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
-                builderSingle.setTitle(this.getResources().getString(R.string.map));
+                if (fragmentActivity==null || fragmentActivity.mapLayer==null )
+                    return true ;
+                // spustenie menu na výber typu vrstvy
+                AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+                alert.setTitle(this.getResources().getString(R.string.map));
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                         MainActivity.this, android.R.layout.select_dialog_singlechoice);
                 arrayAdapter.add(this.getResources().getString(R.string.street));
                 arrayAdapter.add(this.getResources().getString(R.string.satellite));
                 arrayAdapter.add(this.getResources().getString(R.string.outdoors));
-
-
-                builderSingle.setNegativeButton(
+                alert.setNegativeButton(
                         this.getResources().getString(R.string.cancel),
                         new DialogInterface.OnClickListener() {
                             @Override
@@ -390,14 +342,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             }
                         });
 
-                builderSingle.setAdapter(
+                alert.setAdapter(
                         arrayAdapter,
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int select) {
                                 switch (select) {
-
-
                                     case 0:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
@@ -424,10 +374,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 }
                             }
                         });
-                builderSingle.show();
+                alert.show();
                 return true;
 
-            case R.id.filter:
+            case R.id.filter: // zobrayenie typu výtlkov
+                if (fragmentActivity==null || fragmentActivity.mapLayer==null )
+                    return true ;
                 if (!fragmentActivity.checkGPSEnable()) {
                     Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
@@ -500,10 +452,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             default:
                 return super.onOptionsItemSelected(item);
-
         }
-
-
     }
 
     public void close () {
@@ -514,11 +463,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.int id = item.getItemId();
+       switch (item.getItemId()) {
 
-        switch (item.getItemId()) {
-
-            case R.id.calibrate:
+           case R.id.calibrate:  // spusti prekalibrovanie aplikácie
                 close();
                 if ( fragmentActivity.accelerometer!=null) {
                     fragmentActivity.accelerometer.calibrate();
@@ -530,7 +477,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 return true;
 
-            case R.id.clear_map:
+           case R.id.clear_map:  // vyčistí mapu
 
                 close();
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
@@ -542,7 +489,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 return true;
 
-            case R.id.navigation:
+           case R.id.navigation:  // ukončuje navigáciu
                 close();
                 EditText text = (EditText) findViewById(R.id.location);
 
@@ -553,23 +500,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             fragmentActivity.gps.remove_draw_road();
                             fragmentActivity.detection.setRoad(false);
                             fragmentActivity.detection.stop_collison_navigate();
-
                         }
                     }.start();
                 }
-
                 return true;
 
 
-            case R.id.action_settings:
+           case R.id.action_settings: // presun do seeting activity
                 close();
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
 
-            case R.id.download:
+           case R.id.download:
 
                 if (fragmentActivity!=null) {
-                    if (mapManager.isMapTitleExceeded()) {
+                    if (mapManager.isMapTitleExceeded()) {  // upozornenie na prekročenie kapacity map
                         Toast.makeText(this, this.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
                         return true;
                     }
@@ -577,17 +522,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 close();
 
-
-                if (!fragmentActivity.checkGPSEnable()) {
+                if (!fragmentActivity.checkGPSEnable()) { // nie je gps
                     Toast.makeText(this,this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
-                if ( mapbox==null) {
+                if ( mapbox==null) { // nieje načítana mapa
                     Toast.makeText(this, this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 save(false);
-                // fragmentActivity.gps.setUpMap(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.mapLayer.setClear(true);
@@ -599,22 +542,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mapManager.downloadRegionDialog();
                 return true;
 
-            case R.id.list:
+           case R.id.list:
                 close();
                 save(false);
-
                 if ( mapbox==null) {
                     Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
                 }
-
-                add_button.setVisibility(View.VISIBLE);
+                add_button.setVisibility(View.VISIBLE);  //  schovanie tlačidiel
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.mapLayer.setClear(true);
                 navig_on.setVisibility(View.INVISIBLE);
                 if (mapManager!=null && !mapManager.isEndNotified())
-
                     Toast.makeText(this,this.getResources().getString(R.string.download_run_list) , Toast.LENGTH_LONG).show();
                 else
                     mapManager.downloadedRegionList();
@@ -624,22 +564,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 close();
                 if (fragmentActivity.accelerometer!=null) {
                     while (true) {
-                        if (updatesLock.tryLock())
-                        {
-                            // Got the lock
-                            try
-                            {
-
+                        if (updatesLock.tryLock()) {
+                            Log.d(TAG," exit updatesLock lock");
+                           try  {
                                 while (true) {
                                     if (lockZoznam.tryLock()) {
-                                        // Got the lock
                                         try {
-
+                                            Log.d(TAG," exit lockzoznam lock");
                                             ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
                                             ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
                                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
                                             SQLiteDatabase sb = databaseHelper.getWritableDatabase();
-
                                             fragmentActivity.checkIntegrityDB(sb);
                                             sb.beginTransaction();
                                             int i = 0;
@@ -656,7 +591,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                     bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
                                                     Cursor cursor = sb.rawQuery(sql, null);
                                                     if (cursor.getCount() == 0) {
-                                                        Log.d("MainActivity", "vkladam ");
+                                                        Log.d(TAG, "exit ukladam data ");
                                                         ContentValues contentValues = new ContentValues();
                                                         contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
                                                         contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
@@ -673,56 +608,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             fragmentActivity.checkCloseDb(sb);
 
                                         } finally {
+                                            Log.d(TAG, " exit lockZoznam unlock  ");
                                             lockZoznam.unlock();
                                             break;
                                         }
                                     } else {
-                                        Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                                        Log.d(TAG, " exit lockZoznam try lock  ");
                                         try {
                                             Thread.sleep(20);
                                         } catch (InterruptedException e) {
+                                            e.getMessage();
                                         }
                                     }
                                 }
-
-
                             }
-                            finally
-                            {
-                                // Make sure to unlock so that we don't cause a deadlock
-                                updatesLock.unlock();
-                                break;
+                            finally {
+                               Log.d(TAG, " exit updatesLock unlock  ");
+                               updatesLock.unlock();
+                               break;
                             }
-                        } else {
-                            Log.d("getAllBumps", "getAllBumps thread lock iiiiiiiiiii");
+                           } else {
+                            Log.d(TAG, " exit updatesLock try lock");
                             try {
                                 Thread.sleep(20);
                             } catch (InterruptedException e) {
+                                e.getMessage();
                             }
                         }
-
                     }
-
-                    fragmentActivity.stop_servise();
+                        fragmentActivity.stop_servise();  // ukončujem servises
                 }
                 onDestroy();
                 return true;
 
-            default:
+           default:
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
                 return true;
 
-        }
-
-
-
+       }
     }
 
     private  class LatLngEvaluator implements TypeEvaluator<com.mapbox.mapboxsdk.geometry.LatLng> {
-        // Method is used to interpolate the marker animation.
+        // animácia na pohyb markeru
         private com.mapbox.mapboxsdk.geometry.LatLng  psoition = new com.mapbox.mapboxsdk.geometry.LatLng();
-
         @Override
         public com.mapbox.mapboxsdk.geometry.LatLng evaluate(float fraction, com.mapbox.mapboxsdk.geometry.LatLng startValue, com.mapbox.mapboxsdk.geometry.LatLng endValue) {
             psoition.setLatitude(startValue.getLatitude()
@@ -733,9 +662,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
-
     private void selectMarker(final SymbolLayer marker, int i) {
+        // animácia na vybraný marker - zväčšenie
         if (marker==null)
             return;
         ValueAnimator markerAnimator = new ValueAnimator();
@@ -753,12 +681,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         markerAnimator.start();
         if (i==0)
-            markerSelected = true;
+            markerSelectedAuto = true;
         else
-            markerSelected1 = true;
+            markerSelectedManual = true;
     }
 
     private void deselectMarker(final SymbolLayer marker, int i) {
+        // animácia na vybraný marker - zmenšenie
         if (marker==null)
             return;
         ValueAnimator markerAnimator = new ValueAnimator();
@@ -774,31 +703,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         markerAnimator.start();
-        if (i== 0)
-            markerSelected = false;
+        if (i == 0)
+            markerSelectedAuto = false;
         else
-            markerSelected1 = false;
+            markerSelectedManual = false;
     }
 
     public void isEneableScreen() {
-        Log.d("rrrrrr","adasdasdasdasdasdasdasdsadsad");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Boolean imgSett = prefs.getBoolean("screen", Boolean.parseBoolean(null));
-
-        Log.d("rrrrrr", String.valueOf(imgSett));
-        if (imgSett) {
-            Log.d("aasc","qqqqqqqqqqqqqqqqqqq");
+        Boolean screen = prefs.getBoolean("screen", Boolean.parseBoolean(null));
+        Log.d(TAG, "isEneableScreen stav - "+String.valueOf(screen));
+        if (screen)
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        }
-        else {
-            Log.d("aasc","tttttttttttttttttttt");
-            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        }
+        else
+          getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-
     public void save(boolean save_click) {
+        Log.d(TAG, "save click stav - " + save_click );
         if (!save_click && featureMarker!=null )
             featureMarker.remove();
         featureMarker=null;
@@ -814,14 +736,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
 
-                boolean NisConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
-                if (NisConnected) {
+                boolean isConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
+                if (isConnected) {
                     if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                        Log.d("fdsgszdf", "TYPE_WIFI");
+                        Log.d(TAG, "netReceiver TYPE_WIFI ");
                         manager.setConnected(true);
                     }
                     if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
-                        Log.d("fdsgszdf", "TYPE_MOBILE");
+                        Log.d(TAG, "netReceiver TYPE_MOBILE ");
                         if (isEneableOnlyWifiMap())
                             manager.setConnected(false);
                         else
@@ -834,14 +756,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public boolean isEneableOnlyWifiMap() {
         SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
-        Boolean map = preferences.getBoolean("map", Boolean.parseBoolean(null));
-        if ((map))
-            return true;
-        else
-            return false;
+        Log.d(TAG, "isEneableOnlyWifiMap stav - "+ preferences.getBoolean("map", Boolean.parseBoolean(null)));
+        return preferences.getBoolean("map", Boolean.parseBoolean(null));
     }
 
-    public void onClick(View v) {
+    public void onClick(View v) {   // pridanie markeru na stlačenie pluska
         switch (v.getId()) {
             case R.id.add_button:
                 if (!fragmentActivity.checkGPSEnable()) {
@@ -894,19 +813,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 builderSingle.show();
                 break;
 
-            case R.id.save_btn:
-
+            case R.id.save_btn:   // potvrdenie pridania markera
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.mapLayer.setClear(true);
-                // vrati polohu  kde som stlačil na mape
-
                 save(true);
-
-                //vytvorenie markera
-                //fragmentActivity.gps.addBumpToMap (convert_location,1,1);
                 if (convert_location != null) {
-
                     Toast.makeText(this, this.getResources().getString(R.string.bump_add), Toast.LENGTH_LONG).show();
                     final double ll = intensity;
                     final Location location = new Location("new");
@@ -917,40 +829,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     new Thread() {
                         public void run() {
                             Looper.prepare();
-
                             while(true) {
-
                                 if (!threadLock.get() ) {
-
-                                    if (lockAdd.tryLock())
-                                    {
-                                        // Got the lock
-                                        try
-                                        {
-                                            if (lockZoznam.tryLock())
-                                            {
-                                                // Got the lock
-                                                try
-                                                {
-                                                    Log.d("TREEEE","vlozil do zoznamu  ");
+                                    if (lockAdd.tryLock()) {
+                                        Log.d(TAG," save button lockAdd lock ");
+                                        try {
+                                            if (lockZoznam.tryLock()) {
+                                                Log.d(TAG," save button lockZoznam lock ");
+                                                try {
+                                                    Log.d(TAG," save button pridal do zoznamu");
                                                     threadLock.getAndSet(true);
                                                     fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                                     fragmentActivity.accelerometer.addBumpsManual(1);
-                                                    if (updatesLock.tryLock())
-                                                    {
-                                                        // Got the lock
-                                                        try
-                                                        {
-                                                            if (lockZoznamDB.tryLock())
-                                                            {
-                                                                // Got the lock
-                                                                try
-                                                                {
+                                                    if (updatesLock.tryLock()) {
+                                                        Log.d(TAG," save button updatesLock lock ");
+                                                        try  {
+                                                            if (lockZoznamDB.tryLock()) {
+                                                                Log.d(TAG," save button lockZoznamDB lock ");
+                                                                try {
                                                                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                                                                     SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
                                                                     fragmentActivity.checkIntegrityDB(database);
-                                                                    Log.d("TREEEE","vlozil do db ");
+                                                                    Log.d(TAG," save button vlozil do db ");
                                                                     database.beginTransaction();
                                                                     ContentValues contentValues = new ContentValues();
                                                                     contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
@@ -962,88 +863,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                                     database.endTransaction();
                                                                     database.close();
                                                                     fragmentActivity.checkCloseDb(database);
-
                                                                 }
-                                                                finally
-                                                                {
-                                                                    // Make sure to unlock so that we don't cause a deadlock
+                                                                finally  {
+                                                                    Log.d(TAG," save button lockZoznamDB  unlock");
                                                                     lockZoznamDB.unlock();
                                                                 }
                                                             }
                                                         }
-                                                        finally
-                                                        {
-                                                            // Make sure to unlock so that we don't cause a deadlock
+                                                        finally {
+                                                            Log.d(TAG," save button updatesLock unlock");
                                                             updatesLock.unlock();
                                                         }
                                                     }
-
-
-
-
-                                                    threadLock.getAndSet(false);
-                                                    Log.d("TREEEE","casovy lock koniec");
-
+                                                     threadLock.getAndSet(false);
+                                                     Log.d(TAG," save button casový lock end");
                                                 }
-                                                finally
-                                                {
-                                                    // Make sure to unlock so that we don't cause a deadlock
+                                                finally {
+                                                    Log.d(TAG," save button lockZoznam unlock");
                                                     lockZoznam.unlock();
                                                     break;
                                                 }
                                             }
                                         }
-                                        finally
-                                        {
-                                            // Make sure to unlock so that we don't cause a deadlock
+                                        finally {
+                                            Log.d(TAG," save button lockAdd unlock");
                                             lockAdd.unlock();
                                         }
                                     }
                                 }
-
-
-
-
-
-
-                                Log.d("TREEEE","casovy lock");
-                                Log.d("TREEEE", String.valueOf(location.getLatitude()));
-                                Log.d("TREEEE", String.valueOf(location.getLongitude()));
-                                Log.d("TREEEE", String.valueOf(ll));
+                                Log.d(TAG,"casovy lock");
+                                Log.d(TAG, " save button " + String.valueOf(location.getLatitude()));
+                                Log.d(TAG, " save button " + String.valueOf(location.getLongitude()));
+                                Log.d(TAG, " save button " + String.valueOf(ll));
                                 try {
                                     Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
                                 } catch (InterruptedException e) {
-                                    // NOP (no operation)
+                                   e.getMessage();
                                 }
                             }
-
                             Looper.loop();
                         }
                     }.start();
                 }
                 else
-                    Log.d("TREEEE","null locatoin asfadsfdsds");
+                    Log.d(TAG, " save button  null location !!!!!! " );
                 break;
-            case R.id.delete_btn:
-
+            case R.id.delete_btn:   // mazania označeného markeru
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
-
-                // disable listener na klik
-                allow_click=false;
+                allow_click=false;  // disable listener na klik
                 save(false);
                 convert_location  =null;
-                fragmentActivity.mapLayer.setClear(true);
+                fragmentActivity.mapLayer.setClear(true);  // mapa už bude mazať aj marker
                 break;
             case R.id.backMap_btn:
-                setOnPosition =true;
+                setOnPosition = true;
                 SetUpCamera();
-                // spusti sa alert dialog na opetovné hladanie mapy
-                mapManager.alertSelectRegion(selectedName,1);
+                mapManager.alertSelectRegion(selectedName,1); // spusti sa alert dialog na opetovné hladanie mapy
                 mapConfirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
-
-                break;
+                 break;
             case R.id.saveMap_btn:
                 mapManager.downloadRegion(selectedName, 0);
                 mapConfirm.setVisibility(View.INVISIBLE);
@@ -1062,8 +941,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
-
-
 
     public static boolean isActivityVisible() {
         return activityVisible;
@@ -1094,8 +971,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 else {
                     final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
-
-                    new Thread() {
+                    new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
                         public void run() {
 
                             fragmentActivity.detection.stop_collison_navigate();
@@ -1128,7 +1004,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onUserLeaveHint();
         finish();
         android.os.Process.killProcess(android.os.Process.myPid());
-
     }
 
     public void SetUpCamera(){
@@ -1160,14 +1035,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     protected void onResume() {
-        Log.d("rrrrrr","onResume run ");
         isEneableScreen();
         super.onResume();
-
-
-
-
-        SetUpCamera();
+        SetUpCamera();  // nastavenie kamery
         mapView.onResume();
         MainActivity.activityResumed();
     }
@@ -1182,16 +1052,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean isEneableShowText() {
         SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
         Boolean alarm = preferences.getBoolean("alarm", Boolean.parseBoolean(null));
-        if ((alarm) || (!alarm && MainActivity.isActivityVisible())) {
-            return true;
-        }
-        else
-            return false;
+        Log.d(TAG,"isEneableShowText stav - "+alarm);
+        return ((alarm) || (!alarm && MainActivity.isActivityVisible()));
     }
 
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
-
         long factor = (long) Math.pow(10, places);
         value = value * factor;
         long tmp = Math.round(value);
@@ -1201,8 +1067,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public  String getLanguage() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String name = prefs.getString("lang", "");
+        Log.d(TAG,"getLanguage stav - "+name);
         return name;
     }
-
-
 }
