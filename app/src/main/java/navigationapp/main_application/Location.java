@@ -1,7 +1,6 @@
 package navigationapp.main_application;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -35,15 +34,11 @@ import static navigationapp.main_application.FragmentActivity.global_gps;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 
-/**
- * Created by Adam on 2.11.2016.
- */
-
 public class Location {
 
     private final int lifo_size = 60;
     private boolean  first_start_estimation = false;
-    private boolean  road = false;  // nastavi5 na tru ked kliknem  na navigate, ked kliknem na end tak false
+    private boolean  road = false;  // nastaviť na tru ked kliknem  na navigate, ked kliknem na end tak false
     Lock lock_position = new ReentrantLock();
     Lock lock_choise = new ReentrantLock();
     private boolean  new_data = false;
@@ -52,21 +47,20 @@ public class Location {
     private boolean  get_road = false;
     private boolean  only_for_test = false;
     Thread collision_thread = null ,estimation_thread = null;
-    FragmentActivity activity;
+    FragmentActivity activity =null;
     private ArrayList<Position> LIFO;
     ArrayList<LatLng> select_road = null,  choise_bump = null;
     LatLng position = null;
-    TextToSpeech tts;
+    TextToSpeech tts = null;
     Activity context = null;
+    public  final String TAG = "Location";
     public Location(Activity context) {
         this.context= context;
         select_road = new  ArrayList<LatLng>();
         LIFO = new ArrayList<Position>();
         tts=new TextToSpeech(context, new TextToSpeech.OnInitListener() {
-
-            @Override
+             @Override
             public void onInit(int status) {
-                // TODO Auto-generated method stub
                 if(status == TextToSpeech.SUCCESS){
                     int result=tts.setLanguage(Locale.UK);
                     if(result==TextToSpeech.LANG_MISSING_DATA ||
@@ -78,15 +72,9 @@ public class Location {
                     Log.e("error", "Initilization Failed!");
             }
         });
-
-
-
+        Log.d(TAG, "Location inicialization");
         analyzePosition();
-
-
     }
-
-
 
     public void analyzePosition() {
         Thread analyze_thread = new Thread() {
@@ -96,73 +84,62 @@ public class Location {
                 while(true) {
                     if (global_gps != null && global_gps.getmCurrentLocation() != null) {
                         if (lock_position.tryLock()) {
-                            // Got the lock
                             try {
                                 if (LIFO.size() == lifo_size)
                                     LIFO.remove(0);
                                 location = global_gps.getmCurrentLocation();
                                 Position new_position = new Position(location.getSpeed(), location.getLatitude(), location.getLongitude(), location.getTime());
                                 LIFO.add(new_position);
-
-
                             } finally {
-                                // Make sure to unlock so that we don't cause a deadlock
                                 lock_position.unlock();
                             }
                         }
                         if (road && select_road != null) {
-                            Log.d("analyzePosition", "zadaná a nájdena cesta");
+                            Log.d(TAG, "analyzePosition - zadaná a nájdena cesta");
                             if (only_for_test && get_road && select_road != null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
                                 get_road = false;
+                                Log.d(TAG, "analyzePosition - mimo cesty - zmena trasy flag");
                                 if (collision_thread != null && collision_thread.isAlive()) {
                                     if (lock_stop.tryLock()) {
-                                        // Got the lock
-                                        try {
-                                            Log.d("analyzePosition", "beží thread na hľadanie koliznych miest");
+                                       try {
+                                            Log.d(TAG, "analyzePosition - collision_thread run , call interrupt");
                                             collision_thread.interrupt();
                                             collision_thread = null;
                                             collision_places();
                                             first_start_estimation = false;
                                             collision_thread.start();
-
                                             if (estimation_thread != null && estimation_thread.isAlive()) {
-                                                Log.d("analyzePosition", "beží thread na upozornovanie koliznych miest");
+                                                Log.d(TAG, "analyzePosition - estimation_thread run , call interrupt");
                                                 estimation_thread.interrupt();
                                                 estimation_thread = null;
                                             }
-                                        } finally {
-                                            // Make sure to unlock so that we don't cause a deadlock
+                                       } finally {
                                             lock_stop.unlock();
-                                        }
+                                       }
                                     }
                                 }
                             } else {
                                 if (position != null) {
-                                    Log.d("analyzePosition", String.valueOf(position.latitude));
-                                    Log.d("analyzePosition", String.valueOf(position.longitude));
-                                    Log.d("analyzePosition", String.valueOf(location.getLatitude()));
-                                    Log.d("analyzePosition", String.valueOf(location.getLongitude()));
+                                    Log.d(TAG,"analyzePosition position.latitude -" + String.valueOf(position.latitude));
+                                    Log.d(TAG,"analyzePosition position.longitude -" + String.valueOf(position.longitude));
+                                    Log.d(TAG,"analyzePosition location.getLatitude() -" + String.valueOf(location.getLatitude()));
+                                    Log.d(TAG,"analyzePosition location.getLongitude() -" + String.valueOf(location.getLongitude()));
                                 }
                                 if (position != null && getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude) < 10) {
                                     if (lock_stop.tryLock()) {
-                                        // Got the lock
                                         try {
-                                            Log.d("analyzePosition", String.valueOf(getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude)));
-                                            Log.d("analyzePosition", "som v cieli");
+                                            Log.d(TAG, "analyzePosition - ciel " + String.valueOf(getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude)));
+                                            Log.d(TAG, "analyzePosition - som v cieli");
                                             stop_collision_thread();
                                             stop_estimation_thread();
                                         } finally {
-                                            // Make sure to unlock so that we don't cause a deadlock
                                             lock_stop.unlock();
                                         }
                                     }
-
-
                                 }
                             }
                         }
                     }
-
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) { }
@@ -173,6 +150,7 @@ public class Location {
     }
 
     public void stop_collison_navigate() {
+        Log.d(TAG, "stop_collison_navigate - start");
         start_bumps = true;
         Thread stop_navigate = new Thread() {
             public void run() {
@@ -180,19 +158,21 @@ public class Location {
                 while (true) {
                     if (lock_stop.tryLock()) {
                         try {
+                            Log.d(TAG, "stop_collison_navigate - call interrupt thread");
                             stop_collision_thread();
                             stop_estimation_thread();
                             start_bumps = false;
                             get_road = false;
                         } finally {
-                            // Make sure to unlock so that we don't cause a deadlock
                             lock_stop.unlock();
                             break;
                         }
                     } else {
                         try {
+                            Log.d(TAG, "stop_collison_navigate  try lock_stop");
                             Thread.sleep(20);
                         } catch (InterruptedException e) {
+                            e.getMessage();
                         }
                     }
                 }
@@ -203,18 +183,17 @@ public class Location {
 
     public void stop_collision_thread() {
         if (collision_thread!=null && collision_thread.isAlive()) {
-            Log.d("stop_collision_thread", "vykonal sa stop");
+            Log.d(TAG, "stop_collision_thread interrupt");
             collision_thread.interrupt();
             collision_thread= null;
             first_start_estimation = false;
             position=null;
-
         }
     }
 
     public void stop_estimation_thread() {
         if (estimation_thread!=null && estimation_thread.isAlive()) {
-            Log.d("stop_estimation_thread", "vykonal sa stop");
+            Log.d(TAG, "estimation_thread interrupt");
             estimation_thread.interrupt();
             estimation_thread= null;
         }
@@ -228,19 +207,20 @@ public class Location {
                 while (true) {
                     if (start_bumps == false ) {
                         road = true;
-                        Log.d("bumps_on_position", "start function");
+                        Log.d(TAG, "bumps_on_position start ");
                         position = to_position;
                         collision_places();
-                        Log.d("bumps_on_position", "start thread");
+                        Log.d(TAG, "bumps_on_position collision_thread start ");
                         collision_thread.start();
                         break;
                     }
                     try {
                         Thread.sleep(20);
-                    } catch (InterruptedException e) { }
-                    Log.d("bumps_on_position", "wait");
+                    } catch (InterruptedException e) {
+                        e.getMessage();
+                    }
+                    Log.d(TAG, "bumps_on_position  try lock ");
                 }
-
             }
         }.start();
     }
@@ -251,41 +231,37 @@ public class Location {
                 Looper.prepare();
                 try {
                     if (this.isInterrupted()) {
-                        Log.d("bumps_on_position", "on start  ");
+                        Log.d(TAG, "collision_places  isInterrupted ");
                     }
                     while(!this.isInterrupted() ) {
-                        Log.d("collision_places", "name of pid "+ String.valueOf(this.getId()));
+                        Log.d(TAG, "collision_places - name of pid " + String.valueOf(this.getId()));
 
                         if (Thread.currentThread().isInterrupted()) {
-                            Log.d("collision_places", "throw exception on if ");
+                            Log.d(TAG, "collision_places  InterruptedException ");
                             throw new InterruptedException();
                         }
 
                         double longitude = 0, latitude = 0;
                         if (global_gps != null && global_gps.getmCurrentLocation() != null) {
-                            Log.d("collision_places", "get gps");
+                            Log.d(TAG, "collision_places  get gps ");
                             latitude = global_gps.getmCurrentLocation().getLatitude();
                             longitude = global_gps.getmCurrentLocation().getLongitude();
                             LatLng my_position = new LatLng(latitude,longitude);
                             if (!get_road) {
-                                Log.d("aaasssdddd", "get_road false");
+                                Log.d(TAG, "collision_places - get_road false ");
                                 select_road = directionPoint(position, my_position, this);  // vratim cestu
                                 if (select_road!=null) {
-                                    Log.d("aaasssdddd", "select_road null");
+                                    Log.d(TAG, "collision_places - roud found ");
                                     get_road = true;
                                 }else
-                                    Log.d("aaasssdddd", "select_road not null");
+                                    Log.d(TAG, "collision_places - roud not found ");
                             }else
-                                Log.d("aaasssdddd", "get_road true");
+                                Log.d(TAG, "collision_places - get_road true ");;
 
                             ArrayList<LatLng> all_bumps = new ArrayList<LatLng>();
                             while (true) {
-                                if (updatesLock.tryLock())
-                                {
-                                    // Got the lock
-                                    try
-                                    {
-
+                                if (updatesLock.tryLock())  {
+                                    try  {
                                         SimpleDateFormat now, ago;
                                         Calendar cal = Calendar.getInstance();
                                         cal.setTime(new Date());
@@ -322,12 +298,9 @@ public class Location {
                                         database.endTransaction();
                                         database.close();
                                         checkCloseDb(database);
-                                        Log.d("collision_places", "all_bumps.size() "+all_bumps.size());
-
+                                        Log.d(TAG, "collision_places  bump size "+all_bumps.size());
                                     }
-                                    finally
-                                    {
-                                        // Make sure to unlock so that we don't cause a deadlock
+                                    finally {
                                         updatesLock.unlock();
                                         break;
                                     }
@@ -335,89 +308,74 @@ public class Location {
                                     try {
                                         Thread.sleep(20);
                                     } catch (InterruptedException e) {
-                                        Log.d("collision_places", "throw intr on update lock ");
+                                        Log.d(TAG, "collision_places  InterruptedException ");
                                         throw new InterruptedException("Stopped by ifInterruptedStop()");
                                     }
                                 }
-
                             }
-
-
-
 
                             if (select_road != null && select_road.size() > 0) {
                                 while (true) {
-                                    if (lock_choise.tryLock())
-                                    {
-                                        // Got the lock
-                                        try
-                                        {
+                                    if (lock_choise.tryLock()) {
+                                        try {
                                             choise_bump = new ArrayList<LatLng>();
                                             for (int i = 0; i < all_bumps.size(); i++) {
                                                 if (select_road!= null && isLocationOnEdge(all_bumps.get(i), select_road, true, 4.0)) {
                                                     choise_bump.add(all_bumps.get(i));
-                                                    Log.d("collision_places", "choise  "+ i );
+                                                    Log.d(TAG, "collision_places  add bump to warning " + i);
                                                 }
                                             }
                                         }
-                                        finally
-                                        {
-                                            // Make sure to unlock so that we don't cause a deadlock
+                                        finally {
                                             lock_choise.unlock();
                                             break;
                                         }
                                     }
-                                    else
-                                    {
+                                    else   {
                                         try {
                                             Thread.sleep(20);
                                         } catch (InterruptedException e) {
-                                            Log.d("collision_places", "throw intr after while on update lock_choise ");
+                                            Log.d(TAG, "collision_places  InterruptedException ");
                                             throw new InterruptedException();
                                         }
                                     }
-
                                 }
-
                                 all_bumps = new ArrayList<LatLng>();
 
                                 if (this.isInterrupted()) {
-                                    Log.d("collision_places", "pre spustanim estimation ");
+                                    Log.d(TAG, "collision_places  InterruptedException, pred estimation ");
                                     throw new InterruptedException();
                                 } else {
                                     new_data = true;
                                     if (!first_start_estimation && estimation_thread == null) {
                                         first_start_estimation = true;
                                         estimation();
-                                        Log.d("collision_places", " estimation start ");
+                                        Log.d(TAG, "collision_places  estimation start ");
                                         estimation_thread.start();
                                     }
                                 }
-
                             } else {
-                                Log.d("collision_places", "no selected road");
+                                Log.d(TAG, "collision_places  no selected road");
                             }
-
                             try {
                                 Thread.sleep(40000);
                             } catch (InterruptedException e) {
-                                Log.d("collision_places", "throw sleep  for 10 seconds ");
+                                Log.d(TAG,"collision_places throw sleep  for 40 seconds ");
                                 throw new InterruptedException();
                             }
-                        }else    Log.d("collision_places", "gps no ");
+                        }else
+                            Log.d(TAG, "collision_places no gps " );
                     }
                 } catch (InterruptedException t) {
-                    Log.d("collision_places", "cath interuoption " + this.getId());
+                    Log.d(TAG, "cath InterruptedException " + this.getId());
                 }
-
-                Log.d("bumps_on_position", " end pid  "+String.valueOf(this.getId()));
-
+                Log.d(TAG, " collision_places end pid  "+String.valueOf(this.getId()));
             }
         };
     }
 
     public void estimation() {
-        Log.d("estimation"," function start");
+        Log.d(TAG, "estimation start");
         estimation_thread = new Thread() {
             public void run() {
                 Looper.prepare();
@@ -434,29 +392,23 @@ public class Location {
                 ArrayList<LatLng> bump_actual = new ArrayList<LatLng>();
                 try {
                     while(!this.isInterrupted() ) {
-
                         while (true) {
-
                             if (lock_position.tryLock()) {
-                                // Got the lock
                                 try {
                                     for (int i = 0; i < LIFO.size(); i++) {
                                         speed += LIFO.get(i).getSpeed();
                                     }
                                     avarage_speed = speed / LIFO.size();
-
-                                    Log.d("estimation", "avarage_speed " + String.valueOf(avarage_speed));
-                                    Log.d("estimation", "getLatitude " + String.valueOf(LIFO.get(0).getLatitude()));
-                                    Log.d("estimation", "getLongitude " + String.valueOf(LIFO.get(0).getLongitude()));
-                                    Log.d("estimation", " last getLatitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLatitude()));
-                                    Log.d("estimation", "last  getLongitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLongitude()));
-
+                                    Log.d(TAG,"estimation avarage_speed " + String.valueOf(avarage_speed));
+                                    Log.d(TAG, "estimation first getLatitude  " + String.valueOf(LIFO.get(0).getLatitude()));
+                                    Log.d(TAG, "estimation first getLongitude " + String.valueOf(LIFO.get(0).getLongitude()));
+                                    Log.d(TAG, "estimation last getLatitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLatitude()));
+                                    Log.d(TAG, "estimation last getLongitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLongitude()));
                                     distance = getDistance((float) LIFO.get(0).getLatitude(), (float) LIFO.get(0).getLongitude(), (float) LIFO.get(LIFO.size() - 1).getLatitude(), (float) LIFO.get(LIFO.size() - 1).getLongitude());
-                                    Log.d("estimation", "distance " + String.valueOf(distance));
+                                    Log.d(TAG, "estimation distance " + String.valueOf(distance));
                                     time = LIFO.get(LIFO.size() - 1).getTime() - LIFO.get(0).getTime();
-                                    Log.d("estimation", "time " + String.valueOf(time));
+                                    Log.d(TAG, "estimation time " + String.valueOf(time));
                                 } finally {
-                                    // Make sure to unlock so that we don't cause a deadlock
                                     lock_position.unlock();
                                     break;
                                 }
@@ -464,7 +416,7 @@ public class Location {
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
-                                    Log.d("estimation_thread", "throw intr  while on update lock_position ");
+                                    Log.d(TAG, "estimation InterruptedException lock_position ");
                                     throw new InterruptedException("");
                                 }
                             }
@@ -474,9 +426,9 @@ public class Location {
                         time -= TimeUnit.MINUTES.toMillis(minutes);
                         long seconds = TimeUnit.MILLISECONDS.toSeconds(time);
                         avarage_speed_second = (float) (distance/ (minutes+seconds));
-                        Log.d("estimation", "Mins "+ String.valueOf(minutes));
-                        Log.d("estimation", "seconds "+ String.valueOf(seconds));
-                        Log.d("estimation", "avarage_speed_second "+ String.valueOf(avarage_speed_second));
+                        Log.d(TAG, " estimation Mins "+ String.valueOf(minutes));
+                        Log.d(TAG, "estimation seconds "+ String.valueOf(seconds));
+                        Log.d(TAG, "estimation avarage_speed_second "+ String.valueOf(avarage_speed_second));
 
                         if (avarage_speed > avarage_speed_second )
                             best_cause = avarage_speed_second;
@@ -490,16 +442,12 @@ public class Location {
                             longitude = global_gps.getmCurrentLocation().getLongitude();
                             if (new_data) {
                                 if (lock_choise.tryLock()) {
-                                    // Got the lock
                                     try {
                                         bump_actual = new ArrayList<LatLng>();
                                         if (choise_bump != null && choise_bump.size() > 0)
                                             bump_actual.addAll(choise_bump);
                                     } finally {
-                                        // Make sure to unlock so that we don't cause a deadlock
                                         lock_choise.unlock();
-
-
                                     }
                                     new_data = false;
                                     if (bump_actual != null && bump_actual.size() > 0) {
@@ -536,15 +484,13 @@ public class Location {
                                 }
                             }
 
-                            Log.d("estimation", "actual distance   " + String.valueOf(actual_distance));
+                            Log.d(TAG, "estimation actual distance   " + String.valueOf(actual_distance));
                             double times_to_sleep = actual_distance / best_cause;
-                            Log.d("estimation", "čas ku výtlku  " + String.valueOf(times_to_sleep));
-
+                            Log.d(TAG, "estimation čas ku výtlku  " + String.valueOf(times_to_sleep));
                             //  - čas pred výtlkom
-
                             if (String.valueOf(times_to_sleep).equals("NaN")) {
                                 times_to_sleep = 999999;
-                                Log.d("estimation", "čas ku výtlku bol NAN " );
+                                Log.d(TAG, "estimation čas ku výtlku bol NAN " );
                             }
                             long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
                             double convert_time = result;
@@ -555,11 +501,10 @@ public class Location {
                                 time_stop = treshold;
                             else if (convert_time < 5000) {
                                 if (this.isInterrupted()) {
-                                    Log.d("estimation_thread", "throw intr pred upozornenim na výtlk ");
+                                    Log.d(TAG, "estimation isInterrupted pred upozornenim na výtlk ");
                                     throw new InterruptedException("");
                                 }
-
-                                if (!isEneableShow()) {
+                                    if (!isEneableShow()) {
                                     final double i =  actual_distance;
                                     while (tts.isSpeaking()){ }
                                     context.runOnUiThread(new Runnable() {
@@ -570,8 +515,7 @@ public class Location {
                                     while (tts.isSpeaking()){ }
                                 }
                                 else {
-
-                                    context.runOnUiThread(new Runnable() {
+                                        context.runOnUiThread(new Runnable() {
                                         public void run() {
                                             Toast.makeText(context, context.getResources().getString(R.string.attention_bump), Toast.LENGTH_SHORT).show();
                                         }
@@ -585,21 +529,20 @@ public class Location {
                                 time_stop = (int) convert_time;
 
                         } else
-                            Log.d("estimation_thread", "no gps ");
+                            Log.d(TAG, "estimation no gps ");
                         try {
                             Thread.sleep(time_stop);
                         } catch (InterruptedException e) {
-                            Log.d("estimation_thread", "throw intr sleep  ");
+                            Log.d(TAG, "estimation InterruptedException sleep  ");
                             throw new InterruptedException();
                         }
                     }
                 } catch (InterruptedException t) {
-                    Log.d("estimation_thread", "cath interuption " + this.getId());
+                    Log.d(TAG, "cath interuption " + this.getId());
                 }
                 Looper.loop();
             }
         };
-
     }
 
     public static List<LatLng> sortLocations(List<LatLng> locations, final double myLatitude,final double myLongitude) {
@@ -621,29 +564,27 @@ public class Location {
         return locations;
     }
 
-
-
     public  ArrayList<LatLng>  directionPoint(LatLng to_position, LatLng my_position, Thread thread) {
         ArrayList<LatLng> directionPoint = null;
-        Log.d("directionPoint", " get selected road");
+        Log.d(TAG, "directionPoint get selected road");
         double latitude,longitude ;
         Route md = new Route();
         Document doc = md.getDocument(my_position, to_position);
-
         if (doc == null)
             return null;
         directionPoint = new  ArrayList<LatLng>();
         directionPoint = md.getDirection(doc);
-        Log.d("choise_bump", " return  directionPoints");
-        if (directionPoint== null || directionPoint.size() ==0 )
+        Log.d(TAG, " return  directionPoints");
+        if (directionPoint== null || directionPoint.size() ==0 ) {
+            Log.d(TAG, " return  directionPoints null");
             return null;
+        }
         else {
+            Log.d(TAG, " return  directionPoints no null");
             activity.gps.remove_draw_road();
             activity.gps.showDirection(directionPoint);
-
             return directionPoint;
         }
-
     }
 
     public boolean isRoad() {
@@ -663,5 +604,4 @@ public class Location {
         else
             return false;
     }
-
 }

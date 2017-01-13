@@ -323,8 +323,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(this,this.getResources().getString(R.string.change_map_style), Toast.LENGTH_LONG).show();
                     return true;
                 }
-                if (fragmentActivity==null || fragmentActivity.mapLayer==null )
-                    return true ;
+                if (fragmentActivity==null || fragmentActivity.mapLayer==null ) {
+                    Toast.makeText(this,this.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
+                    return true;
+                }
                 // spustenie menu na výber typu vrstvy
                 AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
                 alert.setTitle(this.getResources().getString(R.string.map));
@@ -378,10 +380,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
             case R.id.filter: // zobrayenie typu výtlkov
-                if (fragmentActivity==null || fragmentActivity.mapLayer==null )
-                    return true ;
                 if (!fragmentActivity.checkGPSEnable()) {
                     Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                if (fragmentActivity==null || fragmentActivity.mapLayer==null ) {
+                    Toast.makeText(this, this.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 AlertDialog.Builder builderSingles = new AlertDialog.Builder(MainActivity.this);
