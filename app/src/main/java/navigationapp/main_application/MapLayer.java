@@ -409,16 +409,19 @@ public class MapLayer {
                     if (isBetween(data, 10, 10000)) rating = 2.5f;
                     if (rating >= level) {
                         if (bumpsManual.get(i) == 0) {
-                            autoMarkerCoordinates.add(Feature.fromGeometry(
-                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
-                            );
-                            Feature autoFeature = autoMarkerCoordinates.get(autoSeq);
-                            autoFeature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
+                            if (autoMarkerCoordinates.size() == autoSeq) {
+                                autoMarkerCoordinates.add(Feature.fromGeometry(
+                                        Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
+                                );
+                                Feature autoFeature = autoMarkerCoordinates.get(autoSeq);
+                                autoFeature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
                                         context.getResources().getString(R.string.number_bump) + "1\n" +
                                         context.getResources().getString(R.string.modif) + " " + now_formated);
-                            autoSeq++;
+                                autoSeq++;
+                            }
 
-                        } else {
+                        } else
+                            if (manualMarkerCoordinates.size() == manulSeq) {
                             manualMarkerCoordinates.add(Feature.fromGeometry(
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                             );
