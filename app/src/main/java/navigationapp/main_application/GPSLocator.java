@@ -125,7 +125,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         if (mapbox!=null  && getmCurrentLocation()!=null) {
          final   com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
             if (mapbox != null && yourLatLng != null) {
-                CameraPosition position = new CameraPosition.Builder()
+                final CameraPosition position = new CameraPosition.Builder()
                         .target(yourLatLng)
                         .zoom(ZOOM_LEVEL)
                         .build();
@@ -133,10 +133,14 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
                         new MapboxMap.CancelableCallback() {
                             @Override
                             public void onCancel() {
+                                mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
+                                Log.d("XXXXX","SetZoom onCancel ");
                             }
 
                             @Override
                             public void onFinish() {
+                                Log.d("XXXXX","SetZoom onFinish ");
+                                mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
                              }
                         });
             }

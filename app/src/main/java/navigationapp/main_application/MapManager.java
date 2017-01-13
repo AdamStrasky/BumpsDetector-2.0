@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.example.monikas.navigationapp.R;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -185,23 +186,7 @@ public class MapManager extends Activity {
                             mAlertDialog.cancel();
 
                             selectedName = regionName;
-                            CameraPosition position = new CameraPosition.Builder()
-                                    .target(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude(), address.getLongitude())) // Sets the new camera position
-                                    .zoom(15) // Sets the zoom
-                                    .build(); // Creates a CameraPosition from the builder
-
-                            mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
-                                    new MapboxMap.CancelableCallback() {
-                                        @Override
-                                        public void onCancel() {
-
-                                        }
-
-                                        @Override
-                                        public void onFinish() {
-
-                                        }
-                                    });
+                            animetaCamera(address.getLatitude(), address.getLongitude());
                             // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
                             mapConfirm.setVisibility(View.VISIBLE);
                             add_button.setVisibility(View.INVISIBLE);
@@ -211,6 +196,26 @@ public class MapManager extends Activity {
             }
         });
         mAlertDialog.show();
+    }
+
+    private void animetaCamera(double latitude, double longitude) {
+        final CameraPosition position = new CameraPosition.Builder()
+                .target(new com.mapbox.mapboxsdk.geometry.LatLng(latitude,longitude)) // Sets the new camera position
+                .zoom(15) // Sets the zoom
+                .build(); // Creates a CameraPosition from the builder
+
+        mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
+                new MapboxMap.CancelableCallback() {
+                    @Override
+                    public void onCancel() {
+                        mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
+                    }
+                });
     }
 
     public void downloadRegion(final String regionName, final int select) {
@@ -377,21 +382,8 @@ public class MapManager extends Activity {
                                     LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getBounds();
                                     double regionZoom = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getMinZoom();
                                     // presuniem sa na pozíciu
-                                    CameraPosition position = new CameraPosition.Builder()
-                                            .target(bounds.getCenter())
-                                            .zoom(regionZoom)
-                                            .build();
+                                    animetaCamera(bounds.getCenter().getLatitude(), bounds.getCenter().getLongitude());
 
-                                    mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
-                                            new MapboxMap.CancelableCallback() {
-                                                @Override
-                                                public void onCancel() {
-                                                }
-
-                                                @Override
-                                                public void onFinish() {
-                                                }
-                                            });
                                     add_button.setVisibility(View.INVISIBLE);
                                     navig_on.setVisibility(View.VISIBLE);
                             }
