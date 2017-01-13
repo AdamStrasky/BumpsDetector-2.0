@@ -40,6 +40,7 @@ import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
 import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.isNetworkAvailable;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
+import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
@@ -120,16 +121,35 @@ public class SyncDatabase {
                                 } while (cursor.moveToNext());
                                 if (cursor != null) {
                                     if (accelerometer != null) {
-                                        accelerometer.getPossibleBumps().addAll(hashToArray);
-                                        accelerometer.getBumpsManual().addAll(listA);
-                                    } else
-                                        Log.d(TAG, "null accelerometer");
-                                    database.setTransactionSuccessful();
-                                    database.endTransaction();
-                                    database.close();
-                                    checkCloseDb(database);
+                                        while (true) {
+                                            if (lockZoznam.tryLock()) {
+                                                try {
+                                                    Log.d(TAG, "loadSaveDB copy old bump");
+                                                    accelerometer.getPossibleBumps().addAll(hashToArray);
+                                                    accelerometer.getBumpsManual().addAll(listA);
+                                                } finally {
+                                                    Log.d(TAG, "loadSaveDB lockZoznam unlock");
+                                                    lockZoznam.unlock();
+                                                    break;
+                                                }
+                                            } else {
+                                                Log.d(TAG, "loadSaveDB lockZoznam try lock");
+                                                try {
+                                                    Random ran = new Random();
+                                                    int x = ran.nextInt(20) + 1;
+                                                    Thread.sleep(x);
+                                                } catch (InterruptedException e) {
+                                                    e.getMessage();
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
+                            checkCloseDb(database);
                         } finally {
                             Log.d(TAG, "loadSaveDB unlock");
                             updatesLock.unlock();
@@ -181,14 +201,39 @@ public class SyncDatabase {
                                 if (!list.isEmpty()) {
                                     Log.d(TAG, "SyncDb zoznam nie je prázdny ");
                                     regularUpdatesLock = false;
-                                    ArrayList<HashMap<android.location.Location, Float>> bumps = new ArrayList<HashMap<android.location.Location, Float>>();
-                                    bumps.addAll(accelerometer.getPossibleBumps());
-                                    ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
-                                    bumpsManual.addAll(accelerometer.getBumpsManual());
-                                    accelerometer.getPossibleBumps().clear();
-                                    accelerometer.getBumpsManual().clear();
-                                    saveBump(bumps, bumpsManual, 0);
-                                } else {
+                                    new Thread() {
+                                        public void run() {
+                                            Looper.prepare();
+                                            ArrayList<HashMap<android.location.Location, Float>> bumps = new ArrayList<HashMap<android.location.Location, Float>>();
+                                            ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
+                                            while (true) {
+                                                if (lockZoznam.tryLock()) {
+                                                    try {
+                                                        bumps.addAll(accelerometer.getPossibleBumps());
+                                                        bumpsManual.addAll(accelerometer.getBumpsManual());
+                                                        accelerometer.getPossibleBumps().clear();
+                                                        accelerometer.getBumpsManual().clear();
+                                                    } finally {
+                                                        Log.d(TAG, "SyncDb lockZoznam unlock");
+                                                        lockZoznam.unlock();
+                                                        break;
+                                                    }
+                                                } else {
+                                                    Log.d(TAG, "SyncDb lockZoznam try lock");
+                                                    try {
+                                                        Random ran = new Random();
+                                                        int x = ran.nextInt(20) + 1;
+                                                        Thread.sleep(x);
+                                                    } catch (InterruptedException e) {
+                                                        e.getMessage();
+                                                        }
+                                                }
+                                            }
+                                            saveBump(bumps, bumpsManual, 0);
+                                            Looper.loop();
+                                            }
+                                        }.start();
+                                 } else {
                                     Log.d(TAG, "SyncDb zoznam je prázdny ");
                                     getBumpsWithLevel();
                                 }
@@ -815,19 +860,43 @@ public class SyncDatabase {
         alert.setMessage(context.getResources().getString(R.string.update));
         alert.setCancelable(false);
         alert.setPositiveButton(context.getResources().getString(R.string.yes),
-                new DialogInterface.OnClickListener() {
+                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
                         if (regularUpdatesLock) {
                             lockHandler = false;
-                            Log.d(TAG, "GetUpdateAction regularUpdatesLock == 1 v getupdate " );
-                            ArrayList<HashMap< android.location.Location , Float>> bumpList = new ArrayList<HashMap< android.location.Location, Float>>();
-                            bumpList.addAll(accelerometer.getPossibleBumps());
-                            ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
-                            bumpsManual.addAll(accelerometer.getBumpsManual());
-                            accelerometer.getPossibleBumps().clear();
-                            accelerometer.getBumpsManual().clear();
-                            saveBump(bumpList, bumpsManual, 0);
+                            new Thread() {
+                                public void run() {
+                                    Looper.prepare();
+                                    ArrayList<HashMap<android.location.Location, Float>> bumps = new ArrayList<HashMap<android.location.Location, Float>>();
+                                    ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
+                                    while (true) {
+                                        if (lockZoznam.tryLock()) {
+                                            try {
+                                                bumps.addAll(accelerometer.getPossibleBumps());
+                                                bumpsManual.addAll(accelerometer.getBumpsManual());
+                                                accelerometer.getPossibleBumps().clear();
+                                                accelerometer.getBumpsManual().clear();
+                                            } finally {
+                                                Log.d(TAG, "GetUpdateAction lockZoznam unlock");
+                                                lockZoznam.unlock();
+                                                break;
+                                            }
+                                        } else {
+                                            Log.d(TAG, "GetUpdateAction lockZoznam try lock");
+                                            try {
+                                                Random ran = new Random();
+                                                int x = ran.nextInt(20) + 1;
+                                                Thread.sleep(x);
+                                            } catch (InterruptedException e) {
+                                                e.getMessage();
+                                            }
+                                        }
+                                    }
+                                    saveBump(bumps, bumpsManual, 0);
+                                    Looper.loop();
+                                }
+                            }.start();
                         } else if (updates == 1) {
                             Log.d(TAG, "GetUpdateAction updates == 1 v getupdate" );
                             updates = 0;

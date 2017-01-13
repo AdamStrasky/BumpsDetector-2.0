@@ -805,7 +805,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 // spustenie listenera na mapu
                                 allow_click=true;
                                 confirm.setVisibility(View.VISIBLE);
-                                fragmentActivity.mapLayer.setClear(false);
+                                if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
+                                    fragmentActivity.mapLayer.setClear(false);
                                 add_button.setVisibility(View.INVISIBLE);
 
                             }
@@ -816,6 +817,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.save_btn:   // potvrdenie pridania markera
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
+                if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
                 fragmentActivity.mapLayer.setClear(true);
                 save(true);
                 if (convert_location != null) {
@@ -914,6 +916,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 allow_click=false;  // disable listener na klik
                 save(false);
                 convert_location  =null;
+                if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
                 fragmentActivity.mapLayer.setClear(true);  // mapa už bude mazať aj marker
                 break;
             case R.id.backMap_btn:
