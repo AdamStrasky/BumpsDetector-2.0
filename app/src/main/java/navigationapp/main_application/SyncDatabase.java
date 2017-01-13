@@ -149,6 +149,7 @@ public class SyncDatabase {
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
+                            databaseHelper.close();
                             checkCloseDb(database);
                         } finally {
                             Log.d(TAG, "loadSaveDB unlock");
@@ -316,32 +317,38 @@ public class SyncDatabase {
                             cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             String ago_formated = ago.format(cal.getTime());
-                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                            checkIntegrityDB(database);
-                            database.beginTransaction();
-                            // vytiahnem najvyššie b_id z bumps
-                            String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
-                                    + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
-                                    + " ORDER BY b_id_bumps DESC LIMIT 1 ";
-                            Cursor cursor = null;
-                            try {
-                                cursor = database.rawQuery(selectQuery, null);
-                                if (cursor.moveToFirst()) {
-                                    do {
-                                        b_id_database = cursor.getInt(0);
-                                        Log.d(TAG, "get_max_bumps najvyšší index - "+ b_id_database);
-                                    } while (cursor.moveToNext());
-                                }
-                            } finally {
-                                if (cursor != null)
-                                    cursor.close();
-                            }
-                            database.setTransactionSuccessful();
-                            database.endTransaction();
-                            database.close();
-                            checkCloseDb(database);
+                            DatabaseOpenHelper databaseHelper =null;
+                            SQLiteDatabase database = null;
+                           try {
+                               databaseHelper = new DatabaseOpenHelper(context);
+                               database = databaseHelper.getReadableDatabase();
+                               checkIntegrityDB(database);
+                               database.beginTransaction();
+                               // vytiahnem najvyššie b_id z bumps
+                               String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                                       + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                       + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
+                                       + " ORDER BY b_id_bumps DESC LIMIT 1 ";
+                               Cursor cursor = null;
+                               try {
+                                   cursor = database.rawQuery(selectQuery, null);
+                                   if (cursor.moveToFirst()) {
+                                       do {
+                                           b_id_database = cursor.getInt(0);
+                                           Log.d(TAG, "get_max_bumps najvyšší index - " + b_id_database);
+                                       } while (cursor.moveToNext());
+                                   }
+                               } finally {
+                                   if (cursor != null)
+                                       cursor.close();
+                               }
+                               database.setTransactionSuccessful();
+                               database.endTransaction();
+                           } finally {
+                               database.close();
+                               databaseHelper.close();
+                           }
+                           checkCloseDb(database);
                        } finally {
                            Log.d(TAG, "get_max_bumps unlock ");
                            updatesLock.unlock();
@@ -490,11 +497,13 @@ public class SyncDatabase {
                                             database.setTransactionSuccessful();
                                             database.endTransaction();
                                             database.close();
+                                            databaseHelper.close();
                                             checkCloseDb(database);
                                             Log.d(TAG, "Max_Bump_Number no error");
                                         } else { // nastala chyba, načitaj uložene vytlky
                                             database.endTransaction();
                                             database.close();
+                                            databaseHelper.close();
                                             checkCloseDb(database);
                                             Log.d(TAG, "Max_Bump_Number  error");
                                         }
@@ -555,32 +564,37 @@ public class SyncDatabase {
                             cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             String ago_formated = ago.format(cal.getTime());
-
-                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                            checkIntegrityDB(database);
-                            database.beginTransaction();
-                            // max b_id_collisions z databazy
-                            String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
-                                    + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1)))"
-                                    + " ORDER BY c_id DESC LIMIT 1 ";
-                            Cursor cursor = null;
+                            DatabaseOpenHelper databaseHelper =null;
+                            SQLiteDatabase database = null;
                             try {
-                                cursor = database.rawQuery(selectQuery, null);
-                                if (cursor.moveToFirst()) {
-                                    do {
-                                        c_id_database = cursor.getInt(0);
-                                        Log.d(TAG, "get_max_collision c_id_database - " + c_id_database);
-                                    } while (cursor.moveToNext());
+                                 databaseHelper = new DatabaseOpenHelper(context);
+                                 database = databaseHelper.getReadableDatabase();
+                                checkIntegrityDB(database);
+                                database.beginTransaction();
+                                // max b_id_collisions z databazy
+                                String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                                        + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                        + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1)))"
+                                        + " ORDER BY c_id DESC LIMIT 1 ";
+                                Cursor cursor = null;
+                                try {
+                                    cursor = database.rawQuery(selectQuery, null);
+                                    if (cursor.moveToFirst()) {
+                                        do {
+                                            c_id_database = cursor.getInt(0);
+                                            Log.d(TAG, "get_max_collision c_id_database - " + c_id_database);
+                                        } while (cursor.moveToNext());
+                                    }
+                                } finally {
+                                    if (cursor != null)
+                                        cursor.close();
                                 }
+                                database.setTransactionSuccessful();
+                                database.endTransaction();
                             } finally {
-                                if (cursor != null)
-                                    cursor.close();
+                                database.close();
+                                databaseHelper.close();
                             }
-                            database.setTransactionSuccessful();
-                            database.endTransaction();
-                            database.close();
                             checkCloseDb(database);
                         } finally {
                             Log.d(TAG, "get_max_collision unlock " );
@@ -801,6 +815,7 @@ public class SyncDatabase {
                                             database.setTransactionSuccessful();
                                             database.endTransaction();
                                             database.close();
+                                            databaseHelper.close();
                                             checkCloseDb(database);
                                             // uložím najvyššie b_id  z bumps po uspešnej transakcii
                                             SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
@@ -813,6 +828,7 @@ public class SyncDatabase {
                                             // rollbacknem databazu
                                             database.endTransaction();
                                             database.close();
+                                            databaseHelper.close();
                                             checkCloseDb(database);
                                             Log.d(TAG, "Max_Collision_Number  error " );
 
@@ -954,22 +970,29 @@ public class SyncDatabase {
                                         while (true) {
                                             if (updatesLock.tryLock()) {
                                                 try {
-                                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                                    checkIntegrityDB(database);
-                                                    // ak mi prišlo potvrdenie o odoslaní, mažem z db
-                                                    database.beginTransaction();
-                                                    Log.d(TAG, "saveBump success delete db " );
-                                                    database.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)= ROUND(" + loc.getLongitude() + ",7)"
-                                                            + " and  ROUND(intensity,6)==ROUND(" + data + ",6) and manual=" + bumpsManualHelp.get(num) + "");
-                                                    Log.d("TEST", "mazem");
-                                                    Log.d(TAG, "mazem "+ listHelp.get(num).toString());
-                                                    Log.d(TAG, "mazem "+bumpsManualHelp.get(num).toString());
-                                                    listHelp.remove(num);
-                                                    bumpsManualHelp.remove(num);
-                                                    database.setTransactionSuccessful();
-                                                    database.endTransaction();
-                                                    database.close();
+                                                    DatabaseOpenHelper databaseHelper =null;
+                                                    SQLiteDatabase database = null;
+                                                    try {
+                                                        databaseHelper = new DatabaseOpenHelper(context);
+                                                        database = databaseHelper.getWritableDatabase();
+                                                        checkIntegrityDB(database);
+                                                        // ak mi prišlo potvrdenie o odoslaní, mažem z db
+                                                        database.beginTransaction();
+                                                        Log.d(TAG, "saveBump success delete db ");
+                                                        database.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)= ROUND(" + loc.getLongitude() + ",7)"
+                                                                + " and  ROUND(intensity,6)==ROUND(" + data + ",6) and manual=" + bumpsManualHelp.get(num) + "");
+                                                        Log.d("TEST", "mazem");
+                                                        Log.d(TAG, "mazem " + listHelp.get(num).toString());
+                                                        Log.d(TAG, "mazem " + bumpsManualHelp.get(num).toString());
+                                                        listHelp.remove(num);
+                                                        bumpsManualHelp.remove(num);
+                                                        database.setTransactionSuccessful();
+                                                        database.endTransaction();
+                                                    }
+                                                    finally {
+                                                        database.close();
+                                                        databaseHelper.close();
+                                                    }
                                                     checkCloseDb(database);
 
                                                 } finally {
@@ -1050,6 +1073,7 @@ public class SyncDatabase {
                                                 }
                                             }
                                             database.close();
+                                            databaseHelper.close();
                                             checkCloseDb(database);
                                             // doplnim do zoznamu povodné, ktoré sa nezmenili
                                             accelerometer.getPossibleBumps().addAll(listHelp);

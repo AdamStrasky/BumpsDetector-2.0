@@ -257,11 +257,18 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                     // Got the lock
                                                     try
                                                     {
-                                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                                        checkIntegrityDB(database);
-                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
-                                                        database.close();
+                                                        DatabaseOpenHelper databaseHelper =null;
+                                                        SQLiteDatabase database = null;
+                                                        try {
+                                                            databaseHelper = new DatabaseOpenHelper(this);
+                                                            database = databaseHelper.getWritableDatabase();
+                                                            checkIntegrityDB(database);
+                                                            database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
+                                                        }
+                                                        finally {
+                                                            database.close();
+                                                            databaseHelper.close();
+                                                        }
                                                         checkCloseDb(database);
 
                                                     }
@@ -308,12 +315,19 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                         // Got the lock
                                                         try
                                                         {
-                                                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                                                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                                            DatabaseOpenHelper databaseHelper =null;
+                                                            SQLiteDatabase database = null;
+                                                            try {
+                                                                 databaseHelper = new DatabaseOpenHelper(this);
+                                                                 database = databaseHelper.getWritableDatabase();
 
-                                                            checkIntegrityDB(database);
-                                                            database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND("+hashLocation.getLatitude()+",7)  and ROUND(longitude,7)==ROUND("+hashLocation.getLongitude()+",7) ");
-                                                            database.close();
+                                                                checkIntegrityDB(database);
+                                                                database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
+                                                            }
+                                                            finally {
+                                                                database.close();
+                                                                databaseHelper.close();
+                                                            }
                                                             checkCloseDb(database);
 
                                                         }
@@ -385,20 +399,27 @@ public class Accelerometer extends Service implements SensorEventListener {
                                 // Got the lock
                                 try
                                 {
-                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                    DatabaseOpenHelper databaseHelper =null;
+                                    SQLiteDatabase database = null;
+                                    try {
+                                         databaseHelper = new DatabaseOpenHelper(this);
+                                         database = databaseHelper.getWritableDatabase();
 
-                                    checkIntegrityDB(database);
-                                    BigDecimal bd = new BigDecimal(Float.toString(data));
-                                    bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                                    hashToArray.put(location,data);
-                                    ContentValues contentValues = new ContentValues();
-                                    contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                    contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                    contentValues.put(Provider.new_bumps.MANUAL, 0);
-                                    contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                                    database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                    database.close();
+                                        checkIntegrityDB(database);
+                                        BigDecimal bd = new BigDecimal(Float.toString(data));
+                                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                        hashToArray.put(location, data);
+                                        ContentValues contentValues = new ContentValues();
+                                        contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                        contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                        contentValues.put(Provider.new_bumps.MANUAL, 0);
+                                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                        database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                    }
+                                    finally {
+                                        database.close();
+                                        databaseHelper.close();
+                                    }
                                     checkCloseDb(database);
 
                                 }

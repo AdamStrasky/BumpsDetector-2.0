@@ -609,6 +609,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             sb.setTransactionSuccessful();
                                             sb.endTransaction();
                                             sb.close();
+                                            databaseHelper.close();
                                             fragmentActivity.checkCloseDb(sb);
 
                                         } finally {
@@ -868,6 +869,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                                     database.setTransactionSuccessful();
                                                                     database.endTransaction();
                                                                     database.close();
+                                                                    databaseHelper.close();
                                                                     fragmentActivity.checkCloseDb(database);
                                                                 }
                                                                 finally  {

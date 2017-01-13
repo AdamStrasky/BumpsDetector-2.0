@@ -282,8 +282,9 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public static void checkCloseDb(SQLiteDatabase database) {
         while (true) {  // kontrola či je databáza zatvorená
             try {
-                if (!database.isOpen())
+                if (!database.isOpen() )
                     break;
+                Log.d("XXXXXXXXX", "checkCloseDb");
             }catch(SQLiteException e){
                 e.getMessage();
             }
@@ -295,6 +296,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             try {
                 if (!database.isDbLockedByOtherThreads())
                     break;
+                Log.d("XXXXXXXXX", "checkIntegrityDB");
             }catch(SQLiteException e){
                 e.getMessage();
             }

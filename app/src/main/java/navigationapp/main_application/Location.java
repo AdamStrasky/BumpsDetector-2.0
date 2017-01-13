@@ -297,6 +297,7 @@ public class Location {
                                         database.setTransactionSuccessful();
                                         database.endTransaction();
                                         database.close();
+                                        databaseHelper.close();
                                         checkCloseDb(database);
                                         Log.d(TAG, "collision_places  bump size "+all_bumps.size());
                                     }

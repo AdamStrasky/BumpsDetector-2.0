@@ -141,6 +141,7 @@ public class MapLayer {
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
+                            databaseHelper.close();
                             checkCloseDb(database);
                         } finally {
                             updatesLock.unlock();
