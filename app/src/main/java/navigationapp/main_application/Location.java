@@ -32,6 +32,7 @@ import static navigationapp.main_application.FragmentActivity.checkCloseDb;
 import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
 import static navigationapp.main_application.FragmentActivity.global_gps;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
+import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 
 public class Location {
@@ -505,7 +506,7 @@ public class Location {
                                     Log.d(TAG, "estimation isInterrupted pred upozornenim na výtlk ");
                                     throw new InterruptedException("");
                                 }
-                                    if (!isEneableShow()) {
+                                    if (!isEneableVoice()) {
                                     final double i =  actual_distance;
                                     while (tts.isSpeaking()){ }
                                     context.runOnUiThread(new Runnable() {
@@ -516,11 +517,13 @@ public class Location {
                                     while (tts.isSpeaking()){ }
                                 }
                                 else {
-                                        context.runOnUiThread(new Runnable() {
-                                        public void run() {
-                                            Toast.makeText(context, context.getResources().getString(R.string.attention_bump), Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                                   if (isEneableShowText(context)) {
+                                       context.runOnUiThread(new Runnable() {
+                                           public void run() {
+                                               Toast.makeText(context, context.getResources().getString(R.string.attention_bump), Toast.LENGTH_SHORT).show();
+                                           }
+                                       });
+                                   }
                                 }
                                 previous_distance = -1;
                                 if (directionPoint!= null && directionPoint.size() > 0)
@@ -596,13 +599,10 @@ public class Location {
         this.road = road;
     }
 
-    public  boolean isEneableShow() {
+    public  boolean isEneableVoice() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        Boolean show = prefs.getBoolean("voice", Boolean.parseBoolean(null));
-        if ((show) /*|| (!show && MainActivity.isActivityVisible())*/) {
-            return true;
-        }
-        else
-            return false;
+        Boolean voice = prefs.getBoolean("voice", Boolean.parseBoolean(null));
+        Log.d(TAG,"isEneableVoice stav - "+voice +" show stav " +isEneableShowText(context));
+        return (voice && isEneableShowText(context));
     }
 }

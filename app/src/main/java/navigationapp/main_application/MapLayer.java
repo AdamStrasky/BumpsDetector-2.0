@@ -37,6 +37,7 @@ import java.util.Random;
 import static navigationapp.main_application.Bump.isBetween;
 import static navigationapp.main_application.FragmentActivity.checkCloseDb;
 import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
+import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
@@ -66,6 +67,7 @@ public class MapLayer {
 
     synchronized public void getAllBumps(final Double latitude, final Double longitude) {
         if (latitude == null || longitude == null) {
+            if (isEneableShowText(context))
             Toast.makeText(context, context.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
             return;
         }

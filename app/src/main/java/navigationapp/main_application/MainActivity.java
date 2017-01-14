@@ -67,6 +67,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 
@@ -197,14 +198,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             deselectMarker(markerManual, 1);
                         }
                         if (featureAuto.size() > 0) {
-                            if (featureAuto.get(0).getStringProperty("property")!=null)
-                                Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                            if (featureAuto.get(0).getStringProperty("property")!=null) {
+                                if (isEneableShowText())
+                                 Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                            }
                             selectMarker(markerAuto,  0);
                             return;
                         }
                         if (featuresManual.size() > 0) {
-                            if (featuresManual.get(0).getStringProperty("property")!=null)
-                                Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                            if (featuresManual.get(0).getStringProperty("property")!=null) {
+                                if (isEneableShowText())
+                                    Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                            }
                             selectMarker(markerManual, 1);
                             return;
                         }
@@ -308,22 +313,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.position:   // nastavenie aktualnej polohy a zoomu po kliku na ikonu
                 if (!fragmentActivity.checkGPSEnable()) {
-                    Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 if (fragmentActivity.gps != null)
                     fragmentActivity.gps.getOnPosition();
-                else
-                    Toast.makeText(this, this.getResources().getString(R.string.not_position), Toast.LENGTH_LONG).show();
+                else {
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.not_position), Toast.LENGTH_LONG).show();
+                }
                 return true;
 
             case R.id.layer:
                 if (!fragmentActivity.isNetworkAvailable(context) || mapbox == null) {
-                    Toast.makeText(this,this.getResources().getString(R.string.change_map_style), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this,this.getResources().getString(R.string.change_map_style), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 if (fragmentActivity==null || fragmentActivity.mapLayer==null ) {
-                    Toast.makeText(this,this.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this,this.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 // spustenie menu na výber typu vrstvy
@@ -380,11 +390,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.filter: // zobrayenie typu výtlkov
                 if (!fragmentActivity.checkGPSEnable()) {
-                    Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 if (fragmentActivity==null || fragmentActivity.mapLayer==null ) {
-                    Toast.makeText(this, this.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 AlertDialog.Builder builderSingles = new AlertDialog.Builder(MainActivity.this);
@@ -473,10 +485,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if ( fragmentActivity.accelerometer!=null) {
                     fragmentActivity.accelerometer.calibrate();
                     if (isEneableShowText())
-
                         Toast.makeText(context, this.getResources().getString(R.string.calibrate), Toast.LENGTH_SHORT).show();
                 }else {
-                    Toast.makeText(context, this.getResources().getString(R.string.gps_calibrate), Toast.LENGTH_SHORT).show();
+                    if (isEneableShowText())
+                        Toast.makeText(context, this.getResources().getString(R.string.gps_calibrate), Toast.LENGTH_SHORT).show();
                 }
                 return true;
 
@@ -518,7 +530,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (fragmentActivity!=null) {
                     if (mapManager.isMapTitleExceeded()) {  // upozornenie na prekročenie kapacity map
-                        Toast.makeText(this, this.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
+                        if (isEneableShowText())
+                            Toast.makeText(this, this.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
                         return true;
                     }
 
@@ -526,11 +539,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 close();
 
                 if (!fragmentActivity.checkGPSEnable()) { // nie je gps
-                    Toast.makeText(this,this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this,this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 if ( mapbox==null) { // nieje načítana mapa
-                    Toast.makeText(this, this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 save(false);
@@ -539,8 +554,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 fragmentActivity.mapLayer.setClear(true);
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
-                if ( mapManager!=null && !mapManager.isEndNotified())
-                    Toast.makeText(this, this.getResources().getString(R.string.download_run), Toast.LENGTH_LONG).show();
+                if ( mapManager!=null && !mapManager.isEndNotified()) {
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.download_run), Toast.LENGTH_LONG).show();
+                }
                 else
                     mapManager.downloadRegionDialog();
                 return true;
@@ -549,7 +566,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 close();
                 save(false);
                 if ( mapbox==null) {
-                    Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
                 }
                 add_button.setVisibility(View.VISIBLE);  //  schovanie tlačidiel
@@ -557,8 +575,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 confirm.setVisibility(View.INVISIBLE);
                 fragmentActivity.mapLayer.setClear(true);
                 navig_on.setVisibility(View.INVISIBLE);
-                if (mapManager!=null && !mapManager.isEndNotified())
-                    Toast.makeText(this,this.getResources().getString(R.string.download_run_list) , Toast.LENGTH_LONG).show();
+                if (mapManager!=null && !mapManager.isEndNotified()) {
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.download_run_list), Toast.LENGTH_LONG).show();
+                }
                 else
                     mapManager.downloadedRegionList();
                 return true;
@@ -748,10 +768,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                     if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
                         Log.d(TAG, "netReceiver TYPE_MOBILE ");
-                        if (isEneableOnlyWifiMap())
+                        if (isEneableOnlyWifiMap()) {
+                            Log.d(TAG, "netReceiver - setConnected(false)");
                             manager.setConnected(false);
-                        else
+                        }
+                        else {
+                            Log.d(TAG, "netReceiver - setConnected(true)");
                             manager.setConnected(true);
+                        }
                     }
                 }
             }
@@ -759,20 +783,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     };
 
     public boolean isEneableOnlyWifiMap() {
-        SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
-        Log.d(TAG, "isEneableOnlyWifiMap stav - "+ preferences.getBoolean("map", Boolean.parseBoolean(null)));
-        return preferences.getBoolean("map", Boolean.parseBoolean(null));
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        Log.d(TAG,"isEneableOnlyWifiMap "+ String.valueOf(prefs.getBoolean("map", Boolean.parseBoolean(null))));
+        return prefs.getBoolean("map", Boolean.parseBoolean(null));
     }
 
     public void onClick(View v) {   // pridanie markeru na stlačenie pluska
         switch (v.getId()) {
             case R.id.add_button:
                 if (!fragmentActivity.checkGPSEnable()) {
-                    Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     break;
                 }
                 if (mapbox==null) {
-                    Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     break;
                 }
                 AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
@@ -825,7 +851,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 fragmentActivity.mapLayer.setClear(true);
                 save(true);
                 if (convert_location != null) {
-                    Toast.makeText(this, this.getResources().getString(R.string.bump_add), Toast.LENGTH_LONG).show();
+                    if (isEneableShowText())
+                        Toast.makeText(this, this.getResources().getString(R.string.bump_add), Toast.LENGTH_LONG).show();
                     final double ll = intensity;
                     final Location location = new Location("new");
                     location.setLatitude(round(convert_location.getLatitude(),7));
@@ -956,8 +983,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick_Search(View v) throws IOException {
         Address address = null;
         EditText text = (EditText) findViewById(R.id.location);
-
-        Toast.makeText(this, this.getResources().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
+        if (isEneableShowText())
+            Toast.makeText(this, this.getResources().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
         text.setCursorVisible(false);
         hideKeyboard(v);
         String location = text.getText().toString();

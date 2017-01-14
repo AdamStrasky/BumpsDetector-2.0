@@ -36,6 +36,7 @@ import static navigationapp.main_application.FragmentActivity.checkCloseDb;
 import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
 import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_gps;
+import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
@@ -88,7 +89,7 @@ public class Accelerometer extends Service implements SensorEventListener {
     }
      synchronized public void recalibrate() {
         Log.d(TAG, "Recalibrate start");
-        if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()== 0) {
+        if (global_gps != null && global_gps.getmCurrentLocation()!=null && global_gps.getmCurrentLocation().getSpeed()== 0) {
             Log.d(TAG, "sensor Accelerometer automatic re-calibrate");
             calibrate();
         }
@@ -210,7 +211,7 @@ public class Accelerometer extends Service implements SensorEventListener {
         protected void onPostExecute(final String result) {
              // Log.d(TAG, "sensor Accelerometer result " + result);
             if (result != null) {
-                if (isEneableShowText()) {
+                if (isEneableShowText(getApplicationContext())) {
                     Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
                         @Override
@@ -280,7 +281,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                 if ((location.getLatitude() == hashLocation.getLatitude()) && (location.getLongitude() == hashLocation.getLongitude())) {
                                     if (data > (Float) pair.getValue()) {
                                         pair.setValue(data);
-                                        Log.d(TAG, "detect - same location, bigger data");
+                                        Log.d(TAG, "detect - same location, bigger data " + data);
                                         if (updatesLock.tryLock()) {
                                             try {
                                                 Log.d(TAG, "detect - same location write DB");
@@ -305,7 +306,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                         result =  fragment_context.getResources().getString(R.string.same_bump);
                                     }
                                     else
-                                        Log.d(TAG, "detect - same location, lower data");
+                                        Log.d(TAG, "detect - same location, lower data new-" +data+ " old "+(Float) pair.getValue());
                                     isToClose = true;
                                 }
                                 else {
@@ -315,7 +316,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                     if (distance < 2000.0) {
                                         //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
                                         if (data > (Float) pair.getValue()) {
-                                            Log.d(TAG, "detect - under 2 meters ");
+                                            Log.d(TAG, "detect - under 2 meters, bigger data "+ data);
                                             pair.setValue(data);
                                             if (updatesLock.tryLock()) {
                                                 try {
@@ -339,7 +340,8 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                 }
                                             }
                                             result = fragment_context.getResources().getString(R.string.under_bump);
-                                        }
+                                        } else
+                                            Log.d(TAG, "detect - under 2 meters, lower data new-" +data+ " old "+(Float) pair.getValue());
                                         isToClose = true;
                                     }
                                 }
@@ -446,12 +448,5 @@ public class Accelerometer extends Service implements SensorEventListener {
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
-    }
-
-    public  boolean isEneableShowText() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        Boolean alarm = prefs.getBoolean("alarm", Boolean.parseBoolean(null));
-        Log.d(TAG, "isEneableShowText stav - " + ((alarm) || (!alarm && MainActivity.isActivityVisible())));
-        return ((alarm) || (!alarm && MainActivity.isActivityVisible()));
     }
 }

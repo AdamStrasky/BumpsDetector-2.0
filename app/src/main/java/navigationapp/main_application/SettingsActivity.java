@@ -97,10 +97,14 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
             }
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
                 Log.d(TAG, "onSharedChanged - TYPE_MOBILE");
-                if (isEneableOnlyWifiMap())
+                if (isEneableOnlyWifiMap()) {
+                    Log.d(TAG, "onSharedChanged - setConnected(false)");
                     MainActivity.manager.setConnected(false);
-                else
+                }
+                else {
+                    Log.d(TAG, "onSharedChanged - setConnected(true)");
                     MainActivity.manager.setConnected(true);
+                }
             }
         }
         isEneableScreen();

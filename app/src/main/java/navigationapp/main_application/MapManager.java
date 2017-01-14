@@ -40,6 +40,7 @@ import java.util.ArrayList;
 
 import static com.mapbox.mapboxsdk.offline.OfflineManager.getInstance;
 
+import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.MainActivity.add_button;
 import static navigationapp.main_application.MainActivity.mapConfirm;
 import static navigationapp.main_application.MainActivity.mapView;
@@ -69,7 +70,8 @@ public class MapManager extends Activity {
     public void downloadRegionDialog() {
         Log.d(TAG,"downloadRegionDialog start");
         if (!isNetworkAvailable()) {
-             Toast.makeText(context, context.getResources().getString(R.string.not_net_download), Toast.LENGTH_SHORT).show();
+            if (isEneableShowText(context))
+                Toast.makeText(context, context.getResources().getString(R.string.not_net_download), Toast.LENGTH_SHORT).show();
             return;
         }
         selectedName = null;
@@ -138,7 +140,8 @@ public class MapManager extends Activity {
                     public void onClick(View view) {
                         String regionName = regionNameEdit.getText().toString();
                         if (regionName.length() == 0) {
-                            Toast.makeText(context, context.getResources().getString(R.string.region_empty), Toast.LENGTH_SHORT).show();
+                            if (isEneableShowText(context))
+                                Toast.makeText(context, context.getResources().getString(R.string.region_empty), Toast.LENGTH_SHORT).show();
                         } else {
                             // zvolené zadanie regionu
                             if (click == 1) {
@@ -150,7 +153,8 @@ public class MapManager extends Activity {
                                 }
 
                                 if (address == null) {
-                                    Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_SHORT).show();
+                                    if (isEneableShowText(context))
+                                        Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_SHORT).show();
                                 } else {
                                     mAlertDialog.cancel();
                                     downloadRegion(regionName, click);
@@ -178,7 +182,8 @@ public class MapManager extends Activity {
                         }
 
                         if (address == null) {
-                            Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_LONG).show();
+                            if (isEneableShowText(context))
+                                Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_LONG).show();
 
                         } else {
                             setOnPosition = false;
@@ -243,7 +248,8 @@ public class MapManager extends Activity {
                             if (address == null) {
                                 Log.d(TAG, "downloadRegion sťahovanie podla názvu neuspešne");
                                 endProgress(context.getResources().getString(R.string.unable_find));
-                                Toast.makeText(context, context.getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
+                                if (isEneableShowText(context))
+                                    Toast.makeText(context, context.getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
                                 return;
                             } else {
                                 Log.d(TAG, "downloadRegion sťahujem podla názvu");
@@ -286,8 +292,8 @@ public class MapManager extends Activity {
                             public void onError(String error) {
                                 Log.e(TAG, "Error: " + error);
                                 errorDownloadNotification();
-                                Toast.makeText(context, context.getResources().getString(R.string.error_download), Toast.LENGTH_LONG).show();
-
+                                if (isEneableShowText(context))
+                                    Toast.makeText(context, context.getResources().getString(R.string.error_download), Toast.LENGTH_LONG).show();
                             }
                         });
                     }
@@ -334,7 +340,8 @@ public class MapManager extends Activity {
                 endProgress(null);
                 mapTitleExceeded(true);
                 errorDownloadNotification();
-                Toast.makeText(context, context.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
+                if (isEneableShowText(context))
+                    Toast.makeText(context, context.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
             }
         });
 
@@ -354,7 +361,8 @@ public class MapManager extends Activity {
                 // Check result. If no regions have been
                 // downloaded yet, notify user and return
                 if (offlineRegions == null || offlineRegions.length == 0) {
-                    Toast.makeText(context, context.getResources().getString(R.string.no_regions), Toast.LENGTH_SHORT).show();
+                    if (isEneableShowText(context))
+                        Toast.makeText(context, context.getResources().getString(R.string.no_regions), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 // Add all of the region names to a list
@@ -377,7 +385,8 @@ public class MapManager extends Activity {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
                                     setOnPosition = false;
-                                    Toast.makeText(context, items[regionSelected], Toast.LENGTH_LONG).show();
+                                    if (isEneableShowText(context))
+                                        Toast.makeText(context, items[regionSelected], Toast.LENGTH_LONG).show();
                                     // Get the region bounds and zoom
                                     LatLngBounds bounds = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getBounds();
                                     double regionZoom = ((OfflineTilePyramidRegionDefinition) offlineRegions[regionSelected].getDefinition()).getMinZoom();
@@ -395,7 +404,8 @@ public class MapManager extends Activity {
                                 offlineRegions[regionSelected].delete(new OfflineRegion.OfflineRegionDeleteCallback() {
                                     @Override
                                     public void onDelete() {
-                                        Toast.makeText(context, context.getResources().getString(R.string.region_delete), Toast.LENGTH_LONG).show();
+                                        if (isEneableShowText(context))
+                                            Toast.makeText(context, context.getResources().getString(R.string.region_delete), Toast.LENGTH_LONG).show();
                                         mapTitleExceeded(false); // zrušim prekročenie veľkosti databazy
 
                                     }
@@ -443,7 +453,8 @@ public class MapManager extends Activity {
     }
 
     private void startProgress() {
-        Toast.makeText(context, context.getResources().getString(R.string.download_start), Toast.LENGTH_LONG).show();
+        if (isEneableShowText(context))
+            Toast.makeText(context, context.getResources().getString(R.string.download_start), Toast.LENGTH_LONG).show();
         downloadNotification();
         isEndNotified = false;
     }
@@ -460,8 +471,10 @@ public class MapManager extends Activity {
 
         isEndNotified = true;
 
-        if (message != null)
-           Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        if (message != null) {
+            if (isEneableShowText(context))
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        }
     }
 
     private NotificationManager mNotifyManager = null;

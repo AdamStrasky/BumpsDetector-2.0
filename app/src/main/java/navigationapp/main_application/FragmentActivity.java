@@ -233,6 +233,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                             break;
                         }
                     } else {
+                        if (isEneableShowText(getActivity()))
                         Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.fnd_location), Toast.LENGTH_SHORT).show();
                         try {
                             Thread.sleep(1000);
