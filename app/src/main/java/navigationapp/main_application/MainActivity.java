@@ -69,7 +69,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
-import static navigationapp.main_application.FragmentActivity.lockZoznamDB;
 
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.MapManager.selectedName;
@@ -851,32 +850,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                     if (updatesLock.tryLock()) {
                                                         Log.d(TAG," save button updatesLock lock ");
                                                         try  {
-                                                            if (lockZoznamDB.tryLock()) {
-                                                                Log.d(TAG," save button lockZoznamDB lock ");
-                                                                try {
-                                                                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                                                    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                                                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
-                                                                    fragmentActivity.checkIntegrityDB(database);
-                                                                    Log.d(TAG," save button vlozil do db ");
-                                                                    database.beginTransaction();
-                                                                    ContentValues contentValues = new ContentValues();
-                                                                    contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                                                    contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                                                    contentValues.put(Provider.new_bumps.MANUAL, 1);
-                                                                    contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
-                                                                    database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                                                    database.setTransactionSuccessful();
-                                                                    database.endTransaction();
-                                                                    database.close();
-                                                                    databaseHelper.close();
-                                                                    fragmentActivity.checkCloseDb(database);
-                                                                }
-                                                                finally  {
-                                                                    Log.d(TAG," save button lockZoznamDB  unlock");
-                                                                    lockZoznamDB.unlock();
-                                                                }
-                                                            }
+                                                            fragmentActivity.checkIntegrityDB(database);
+                                                            Log.d(TAG," save button vlozil do db ");
+                                                            database.beginTransaction();
+                                                            ContentValues contentValues = new ContentValues();
+                                                            contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                                            contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                                            contentValues.put(Provider.new_bumps.MANUAL, 1);
+                                                            contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
+                                                            database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                                            database.setTransactionSuccessful();
+                                                            database.endTransaction();
+                                                            database.close();
+                                                            databaseHelper.close();
+                                                            fragmentActivity.checkCloseDb(database);
                                                         }
                                                         finally {
                                                             Log.d(TAG," save button updatesLock unlock");
@@ -982,7 +972,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
                     new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
                         public void run() {
-
                             fragmentActivity.detection.stop_collison_navigate();
                             fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
                         }

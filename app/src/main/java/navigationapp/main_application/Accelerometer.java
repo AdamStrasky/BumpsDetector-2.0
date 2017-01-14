@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static navigationapp.main_application.FragmentActivity.checkCloseDb;
 import static navigationapp.main_application.FragmentActivity.checkIntegrityDB;
@@ -36,32 +38,32 @@ import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_gps;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
-import static navigationapp.main_application.FragmentActivity.lockZoznamDB;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.MainActivity.round;
 
 public class Accelerometer extends Service implements SensorEventListener {
-
     private boolean flag = false;
-    private Context contexts;
-    private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
+    private Context contexts = null;
+    private SensorManager mSensorManager = null;
+    private Sensor mAccelerometer = null;
     private float THRESHOLD = 4.5f;
-    private ArrayList<HashMap<Location, Float>> possibleBumps;
-    private ArrayList <Integer> BumpsManual;
+    private ArrayList<HashMap<Location, Float>> possibleBumps = null;
+    private ArrayList <Integer> BumpsManual = null;
     private float priorityX = 0.0f;
     private float priorityY = 0.0f;
     private float priorityZ = 0.0f;
     private float[] values = new float[3]; // values is array of X,Y,Z
-    private ArrayList<AccData> LIFO;
+    private ArrayList<AccData> LIFO = null;
     private int LIFOsize = 60;
-    private float delta;
+    private float delta = 0;
     private boolean recalibrate = true;
     private boolean unlock = true;
-    public final String TAG = "Acceleromater";
-
+    public final String TAG = "Accelerometer";
     private  Timer timer = new Timer();
+    Lock calibrateLock = new ReentrantLock();
+
     public Accelerometer(){
+        Log.d(TAG, "initialization");
         this.contexts = fragment_context;
         LIFO = new ArrayList<>();
         flag = false;
@@ -72,20 +74,26 @@ public class Accelerometer extends Service implements SensorEventListener {
         possibleBumps = new ArrayList<>();
         BumpsManual = new ArrayList<>();
     }
-    private void startService() {  // spustenie pravidelneho rekalibrovania
+
+    private void startRecalibrate() {// spustenie pravidelneho rekalibrovania
+        Log.d(TAG, "startRecalibrate start");
         recalibrate=false;
-       // timer.scheduleAtFixedRate(new Recalibrate(), 0, 60000);
+        timer.scheduleAtFixedRate(new Recalibrate(), 0, 600000);
     }
 
     private class Recalibrate extends TimerTask {
         public void run() {
-            if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()== 0) {
-                Log.d(TAG, "sensor Accelerometer automatic re-calibrate");
-                calibrate();
-            }
-            else
-                Log.d(TAG, "sensor Accelerometer automatic re-calibrate no gps or speed > 0");
+            recalibrate();
         }
+    }
+     synchronized public void recalibrate() {
+        Log.d(TAG, "Recalibrate start");
+        if (global_gps != null && global_gps.getmCurrentLocation().getSpeed()== 0) {
+            Log.d(TAG, "sensor Accelerometer automatic re-calibrate");
+            calibrate();
+        }
+        else
+            Log.d(TAG, "sensor Accelerometer automatic re-calibrate no gps or speed > 0");
     }
 
     public ArrayList<HashMap<Location, Float>> getPossibleBumps() {
@@ -110,12 +118,13 @@ public class Accelerometer extends Service implements SensorEventListener {
     //pri zmene dat z akcelerometra nam metoda dava tieto data v premennej event.values[]
     public synchronized void onSensorChanged(SensorEvent event) {
         new SensorEventLoggerTask().execute(event);
+      //  Log.d(TAG, "onSensorChanged");
     }
 
     private class SensorEventLoggerTask extends AsyncTask<SensorEvent, Void, String> {
         @Override
         protected String doInBackground(SensorEvent... events) {
-            /////////////////   Log.d("ACC", "sensor Accelerometer running");
+            //Log.d(TAG, "sensor Accelerometer running");
             String result = null;
             SensorEvent event = events[0];
             float deltaZ = 0, deltaX = 0, deltaY = 0;
@@ -133,12 +142,10 @@ public class Accelerometer extends Service implements SensorEventListener {
                 currentData = new AccData(x, y, z);
                 //premenna LIFO je pole velkosti 60, obsahuje objekty AccData
                 LIFO.add(currentData);
-                Log.d("ACC", "sensor Accelerometer toto by malo byt iba raz");
+                Log.d(TAG, " pridanie 1.hodnoty, vykoná sa len raz ");
             } else {
-
                 currentData = new AccData(x, y, z);
                 if (global_gps != null) {
-                    /////////////////       Log.d("ACC", "sensor Accelerometer mam aj gps");
                     final Location location = global_gps.getmCurrentLocation();
                     //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
                     for (AccData temp : LIFO) {
@@ -147,12 +154,29 @@ public class Accelerometer extends Service implements SensorEventListener {
                         deltaY = Math.abs(temp.getY() - currentData.getY());
                         deltaZ = Math.abs(temp.getZ() - currentData.getZ());
                         //na zaklade priorit jednotlivych osi sa vypocita celkova zmena zrychlenia
-                        delta = priorityX * deltaX + priorityY * deltaY + priorityZ * deltaZ;
+                        if (calibrateLock.tryLock()) {
+                            try {
+                                delta = priorityX * deltaX + priorityY * deltaY + priorityZ * deltaZ;
+                                //Log.d(TAG, "hodnoty "+priorityX +" "+deltaX+" "+priorityY+" "+deltaY+" "+priorityZ+" "+deltaZ);
+                           } finally {
+                                calibrateLock.unlock();
+                           }
+                        }else {
+                           // Log.d(TAG, " calibrateLock  lock");
+                            return null;
+                        }
+                        if (String.valueOf(delta).equals("NaN")) {
+                            Log.d(TAG, "NaN hodnota !!!!! ");
+                            recalibrate();
+                        }
                         //ak je zmena vacsia ako THRESHOLD 4,5
                         if (delta > THRESHOLD) {
+                          //  Log.d(TAG, " THRESHOLD je  väčší  delta - " +delta +" THRESHOLD " +THRESHOLD);
                             //staci ak zmena zrychlenia prekrocila THRESHOLD raz, je to vytlk
                             isBump = true;
                             break;
+                        } else {
+                            //  Log.d(TAG, " THRESHOLD je  menší  delta - " +delta +" THRESHOLD " +THRESHOLD);
                         }
                     }
                     if (isBump) {
@@ -160,29 +184,31 @@ public class Accelerometer extends Service implements SensorEventListener {
                         final Float data = new Float(delta);
                         if (location != null && data != null) {
                             //pokial je znama aktualna pozicia a intenzita otrasu
+                            Log.d(TAG, " mam data aj polohu ");
                             if (unlock) {
-                                //////////////////            Log.d("ACC", "sensor Accelerometer detect bump");
+                                Log.d(TAG, " volám detect a lockujem ho ");
                                 unlock = false;
                                 result = detect(location, data);
                                 unlock = true;
+                                Log.d(TAG, " unlock detect ");
                             }
                         }
                     }
                     else
-                        //    Log.d("ACC", "sensor Accelerometer no detect bump");
+                       // Log.d(TAG, " no detect bump");
                         //najstarsi prvok z LIFO sa vymaze a ulozi sa na koniec najnovsi
                         if (LIFO.size() >= LIFOsize) {
                             LIFO.remove(0);
                         }
                     LIFO.add(currentData);
-                }
+                }else
+                    Log.d(TAG, "no gps for bump");
             }
-
             return result;
         }
 
         protected void onPostExecute(final String result) {
-            //   Log.d("ACC", "sensor Accelerometer result" + result);
+             // Log.d(TAG, "sensor Accelerometer result " + result);
             if (result != null) {
                 if (isEneableShowText()) {
                     Handler handler = new Handler(Looper.getMainLooper());
@@ -190,108 +216,96 @@ public class Accelerometer extends Service implements SensorEventListener {
                         @Override
                         public void run() {
                             Toast.makeText(getApplicationContext(), result,Toast.LENGTH_SHORT).show();
-
                         }
                     });
-
                 }
             }
         }
     }
 
-
-
-    public void calibrate () {
+    public  synchronized void calibrate () {
+        Log.d(TAG, "calibrate start");
         if (recalibrate)
-            startService();
+            startRecalibrate();
         //values[0], values[1], values[2] = data z akcelerometra pre osi X,Y,Z
         //vypocita sa percentualne rozlozenie gravitacneho zrychlenia
         //na jednotlive osi X,Y,Z
-        float sum = values[0] + values[1] + values[2];
-        priorityX = Math.abs(values[0]/ sum);
-        priorityY = Math.abs(values[1]/ sum);
-        priorityZ = Math.abs(values[2]/ sum);
-        //normalizacia
-        sum = priorityX + priorityY + priorityZ;
-        priorityX = priorityX/sum;
-        priorityY = priorityY/sum;
-        priorityZ = priorityZ/sum;
-
+        new Thread() {
+            public void run() {
+                Looper.prepare();
+                while (true) {
+                    if (calibrateLock.tryLock()) {
+                        try {
+                            float sum = values[0] + values[1] + values[2];
+                            priorityX = Math.abs(values[0] / sum);
+                            priorityY = Math.abs(values[1] / sum);
+                            priorityZ = Math.abs(values[2] / sum);
+                            //normalizacia
+                            sum = priorityX + priorityY + priorityZ;
+                            priorityX = priorityX / sum;
+                            priorityY = priorityY / sum;
+                            priorityZ = priorityZ / sum;
+                        } finally {
+                            calibrateLock.unlock();
+                            break;
+                        }
+                    }else {
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException e) {
+                            e.getMessage();
+                        }
+                    }
+                }
+                Looper.loop();
+            }
+        }.start();
     }
 
     public synchronized String detect (Location location, Float data) {
         String result = null;
         boolean isToClose = false;
-
-
-
-        if (lockAdd.tryLock())
-        {
-            // Got the lock
-            try
-            {
-                if (lockZoznam.tryLock())
-                {
-                    // Got the lock
-                    try
-                    {
+        Log.d(TAG, "detect start");
+        if (lockAdd.tryLock()) {
+            try {
+                if (lockZoznam.tryLock()) {
+                    try {
+                        Log.d(TAG, "detect over lock");
                         for (HashMap<Location, Float> bump : possibleBumps) {
-
                             Iterator it = bump.entrySet().iterator();
                             while (it.hasNext()) {
                                 HashMap.Entry pair = (HashMap.Entry)it.next();
                                 Location hashLocation = (Location) pair.getKey();
-                                //ak je location je rovnaka, neprida sa vytlk
+                                //ak je location rovnaka, neprida sa vytlk
                                 if ((location.getLatitude() == hashLocation.getLatitude()) && (location.getLongitude() == hashLocation.getLongitude())) {
                                     if (data > (Float) pair.getValue()) {
                                         pair.setValue(data);
-                                        Log.d("DETECT", "same location");
-                                        if (updatesLock.tryLock())
-                                        {
-                                            // Got the lock
-                                            try
-                                            {
-                                                Log.d("Acccelerometer", "updatesLock llllllll ");
-                                                if (lockZoznamDB.tryLock())
-                                                {
-                                                    // Got the lock
-                                                    try
-                                                    {
-                                                        DatabaseOpenHelper databaseHelper =null;
-                                                        SQLiteDatabase database = null;
-                                                        try {
-                                                            databaseHelper = new DatabaseOpenHelper(this);
-                                                            database = databaseHelper.getWritableDatabase();
-                                                            checkIntegrityDB(database);
-                                                            database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
-                                                        }
-                                                        finally {
-                                                            database.close();
-                                                            databaseHelper.close();
-                                                        }
-                                                        checkCloseDb(database);
-
-                                                    }
-                                                    finally
-                                                    {
-                                                        // Make sure to unlock so that we don't cause a deadlock
-                                                        lockZoznamDB.unlock();
-                                                    }
+                                        Log.d(TAG, "detect - same location, bigger data");
+                                        if (updatesLock.tryLock()) {
+                                            try {
+                                                Log.d(TAG, "detect - same location write DB");
+                                                DatabaseOpenHelper databaseHelper =null;
+                                                SQLiteDatabase database = null;
+                                                try {
+                                                    databaseHelper = new DatabaseOpenHelper(this);
+                                                    database = databaseHelper.getWritableDatabase();
+                                                    checkIntegrityDB(database);
+                                                    database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
                                                 }
+                                                finally {
+                                                    database.close();
+                                                    databaseHelper.close();
+                                                }
+                                                checkCloseDb(database);
                                             }
-                                            finally
-                                            {
-                                                // Make sure to unlock so that we don't cause a deadlock
+                                            finally {
                                                 updatesLock.unlock();
                                             }
                                         }
-
-
-
-
-
                                         result =  fragment_context.getResources().getString(R.string.same_bump);
                                     }
+                                    else
+                                        Log.d(TAG, "detect - same location, lower data");
                                     isToClose = true;
                                 }
                                 else {
@@ -301,53 +315,29 @@ public class Accelerometer extends Service implements SensorEventListener {
                                     if (distance < 2000.0) {
                                         //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
                                         if (data > (Float) pair.getValue()) {
-                                            Log.d("DETECT", "under 2 meters ");
+                                            Log.d(TAG, "detect - under 2 meters ");
                                             pair.setValue(data);
-
-                                            if (updatesLock.tryLock())
-                                            {
-                                                // Got the lock
-                                                try
-                                                {
-                                                    Log.d("Acccelerometer", "updatesLock qqqqqqqq  ");
-                                                    if (lockZoznamDB.tryLock())
-                                                    {
-                                                        // Got the lock
-                                                        try
-                                                        {
-                                                            DatabaseOpenHelper databaseHelper =null;
-                                                            SQLiteDatabase database = null;
-                                                            try {
-                                                                 databaseHelper = new DatabaseOpenHelper(this);
-                                                                 database = databaseHelper.getWritableDatabase();
-
-                                                                checkIntegrityDB(database);
-                                                                database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
-                                                            }
-                                                            finally {
-                                                                database.close();
-                                                                databaseHelper.close();
-                                                            }
-                                                            checkCloseDb(database);
-
-                                                        }
-                                                        finally
-                                                        {
-                                                            // Make sure to unlock so that we don't cause a deadlock
-                                                            lockZoznamDB.unlock();
-                                                        }
+                                            if (updatesLock.tryLock()) {
+                                                try {
+                                                    Log.d(TAG, "detect - under write DB");
+                                                    DatabaseOpenHelper databaseHelper =null;
+                                                    SQLiteDatabase database = null;
+                                                    try {
+                                                        databaseHelper = new DatabaseOpenHelper(this);
+                                                        database = databaseHelper.getWritableDatabase();
+                                                        checkIntegrityDB(database);
+                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
                                                     }
+                                                    finally {
+                                                        database.close();
+                                                        databaseHelper.close();
+                                                    }
+                                                    checkCloseDb(database);
                                                 }
-                                                finally
-                                                {
-                                                    // Make sure to unlock so that we don't cause a deadlock
-                                                    updatesLock.unlock();
+                                                finally {
+                                                   updatesLock.unlock();
                                                 }
                                             }
-
-
-
-
                                             result = fragment_context.getResources().getString(R.string.under_bump);
                                         }
                                         isToClose = true;
@@ -357,92 +347,60 @@ public class Accelerometer extends Service implements SensorEventListener {
 
                         }
                     }
-                    finally
-                    {
-                        // Make sure to unlock so that we don't cause a deadlock
-                        lockZoznam.unlock();
+                    finally {
+                       lockZoznam.unlock();
                     }
                 }
-
                 if (!isToClose) {
-                    Log.d("DETECT", "new dump");
+                    Log.d(TAG, "detect - new dump");
                     result = fragment_context.getResources().getString(R.string.new_bump);
-                    System.out.println("lat: "+ location.getLatitude() + ",lng: "+ location.getLongitude() + ",data: " + data);
                     HashMap<Location, Float> hashToArray = new HashMap();
                     location.setLatitude(round(location.getLatitude(),7));
                     location.setLongitude(round(location.getLongitude(),7));
                     hashToArray.put(location,data);
                     //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
-
-                    if (lockZoznam.tryLock())
-                    {
-                        // Got the lock
-                        try
-                        {
+                    if (lockZoznam.tryLock()) {
+                        try {
+                            Log.d(TAG, "detect - add to list new dump");
                             possibleBumps.add(hashToArray);
                             BumpsManual.add(0);
                         }
-                        finally
-                        {
-                            // Make sure to unlock so that we don't cause a deadlock
+                        finally {
                             lockZoznam.unlock();
                         }
                     }
-                    if (updatesLock.tryLock())
-                    {
-                        // Got the lock
-                        try
-                        {
-                            Log.d("Acccelerometer", "updatesLock pppppp ");
-                            if (lockZoznamDB.tryLock())
-                            {
-                                // Got the lock
-                                try
-                                {
-                                    DatabaseOpenHelper databaseHelper =null;
-                                    SQLiteDatabase database = null;
-                                    try {
-                                         databaseHelper = new DatabaseOpenHelper(this);
-                                         database = databaseHelper.getWritableDatabase();
-
-                                        checkIntegrityDB(database);
-                                        BigDecimal bd = new BigDecimal(Float.toString(data));
-                                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                                        hashToArray.put(location, data);
-                                        ContentValues contentValues = new ContentValues();
-                                        contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                        contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                        contentValues.put(Provider.new_bumps.MANUAL, 0);
-                                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                                        database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                    }
-                                    finally {
-                                        database.close();
-                                        databaseHelper.close();
-                                    }
-                                    checkCloseDb(database);
-
-                                }
-                                finally
-                                {
-                                    // Make sure to unlock so that we don't cause a deadlock
-                                    lockZoznamDB.unlock();
-                                }
+                    if (updatesLock.tryLock())  {
+                        try {
+                            Log.d(TAG, "detect - add to DB new dump");
+                            DatabaseOpenHelper databaseHelper =null;
+                            SQLiteDatabase database = null;
+                            try {
+                                databaseHelper = new DatabaseOpenHelper(this);
+                                database = databaseHelper.getWritableDatabase();
+                                checkIntegrityDB(database);
+                                BigDecimal bd = new BigDecimal(Float.toString(data));
+                                bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                                hashToArray.put(location, data);
+                                ContentValues contentValues = new ContentValues();
+                                contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                contentValues.put(Provider.new_bumps.MANUAL, 0);
+                                contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                             }
+                            finally {
+                                database.close();
+                                databaseHelper.close();
+                            }
+                            checkCloseDb(database);
                         }
-                        finally
-                        {
-                            // Make sure to unlock so that we don't cause a deadlock
+                        finally {
                             updatesLock.unlock();
                         }
                     }
-
                 }
-
             }
-            finally
-            {
-                // Make sure to unlock so that we don't cause a deadlock
+            finally {
                 lockAdd.unlock();
             }
         }
@@ -463,7 +421,7 @@ public class Accelerometer extends Service implements SensorEventListener {
         double t2 = Math.cos(a1)*Math.sin(a2)*Math.cos(b1)*Math.sin(b2);
         double t3 = Math.sin(a1)*Math.sin(b1);
         double tt = Math.acos(t1 + t2 + t3);
-
+        Log.d("Accelerometer", "getDistance bump - "+ 6366000*tt);
         return 6366000*tt;
     }
 
@@ -479,7 +437,6 @@ public class Accelerometer extends Service implements SensorEventListener {
 
     private final IBinder mBinder = new LocalBinder();
     public class LocalBinder extends Binder {
-
         public Accelerometer getService() {
             Log.d("BIND_ACC", "Accelerometer service getService");
             return Accelerometer.this;
@@ -494,12 +451,7 @@ public class Accelerometer extends Service implements SensorEventListener {
     public  boolean isEneableShowText() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Boolean alarm = prefs.getBoolean("alarm", Boolean.parseBoolean(null));
-        if ((alarm) || (!alarm && MainActivity.isActivityVisible())) {
-            return true;
-        }
-        else
-            return false;
+        Log.d(TAG, "isEneableShowText stav - " + ((alarm) || (!alarm && MainActivity.isActivityVisible())));
+        return ((alarm) || (!alarm && MainActivity.isActivityVisible()));
     }
-
-
 }

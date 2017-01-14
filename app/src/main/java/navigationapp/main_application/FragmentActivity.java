@@ -53,7 +53,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     navigationapp.main_application.Location detection = null;  //hľadanie blízkych výtlkov
 
     static Lock lockZoznam = new ReentrantLock();  // zámok na zoznam
-    static Lock lockZoznamDB = new ReentrantLock();
     static Lock lockAdd = new ReentrantLock();  // zámok na odosielanie na server
     static Lock updatesLock = new ReentrantLock();  // zámok na databazu
     public static Activity fragment_context  =null;
