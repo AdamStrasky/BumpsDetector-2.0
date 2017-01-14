@@ -9,7 +9,8 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.monikas.navigationapp.R;
+import navigationapp.error.ExceptionHandler;
+import navigationapp.R;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -63,6 +64,7 @@ public class MapLayer {
     public MapLayer ( Accelerometer acc, Context context) {
         accelerometer =acc;
         this.context = context;
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     synchronized public void getAllBumps(final Double latitude, final Double longitude) {

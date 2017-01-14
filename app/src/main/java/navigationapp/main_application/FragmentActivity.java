@@ -23,7 +23,9 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
-import com.example.monikas.navigationapp.R;
+
+import navigationapp.error.ExceptionHandler;
+import navigationapp.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -64,7 +66,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         if (!isNetworkAvailable(getActivity())) {  // kontrola internetu
             if (isEneableShowText(getActivity()))
                 Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.offline_mode), Toast.LENGTH_SHORT).show();

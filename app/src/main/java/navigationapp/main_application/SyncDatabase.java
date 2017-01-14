@@ -16,7 +16,8 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.monikas.navigationapp.R;
+import navigationapp.error.ExceptionHandler;
+import navigationapp.R;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
@@ -65,6 +66,7 @@ public class SyncDatabase {
         this.context = context;
         this.mapLayer =mapLayer;
         regular_update = true;
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         get_loaded_index(); // vytiahnutie maximálneho indexu z databázy
         loadSaveDB(); // načítanie uložených výtlkov , ktoré neboli odoslané na server
         startGPS();

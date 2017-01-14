@@ -12,6 +12,8 @@ import android.util.Log;
 import android.location.LocationListener;
 import android.location.LocationManager;
 
+import navigationapp.error.ExceptionHandler;
+
 public class GPSPosition extends Service implements LocationListener {
 
     private Context mContext= null;
@@ -24,8 +26,13 @@ public class GPSPosition extends Service implements LocationListener {
     protected LocationManager locationManager;
     private final String TAG = "GPSPosition";
 
+    public GPSPosition( ) {
+
+    }
+
     public GPSPosition(Context context) {
         this.mContext = context;
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         getLocation();
     }
 

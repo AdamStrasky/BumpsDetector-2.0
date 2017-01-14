@@ -12,15 +12,14 @@ import android.util.Log;
 import android.widget.Toast;
 import android.speech.tts.TextToSpeech;
 
-import com.example.monikas.navigationapp.R;
+import navigationapp.R;
 
+import navigationapp.error.ExceptionHandler;
 import navigationapp.main_application.Bump;
 import navigationapp.main_application.CallBackReturn;
 import navigationapp.main_application.DatabaseOpenHelper;
 import navigationapp.main_application.Provider;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 public class VoiceMainActivity extends Activity  {
@@ -35,6 +34,7 @@ public class VoiceMainActivity extends Activity  {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         String query= "";
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);

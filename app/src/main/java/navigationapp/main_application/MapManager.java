@@ -20,10 +20,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.monikas.navigationapp.R;
+import navigationapp.error.ExceptionHandler;
+import navigationapp.R;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -65,6 +65,7 @@ public class MapManager extends Activity {
     public MapManager(Context context) {
         offlineManager = getInstance(context);
         this.context = context;
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     public void downloadRegionDialog() {

@@ -10,7 +10,8 @@ import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.monikas.navigationapp.R;
+import navigationapp.error.ExceptionHandler;
+import navigationapp.R;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.w3c.dom.Document;
@@ -57,6 +58,7 @@ public class Location {
     public  final String TAG = "Location";
     public Location(Activity context) {
         this.context= context;
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         select_road = new  ArrayList<LatLng>();
         LIFO = new ArrayList<Position>();
         tts=new TextToSpeech(context, new TextToSpeech.OnInitListener() {

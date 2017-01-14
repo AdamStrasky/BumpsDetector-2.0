@@ -24,6 +24,8 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 
 import java.util.List;
 
+import navigationapp.error.ExceptionHandler;
+
 import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
 import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
 import static navigationapp.main_application.MainActivity.mapbox;
@@ -39,6 +41,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public GPSLocator () {
         this.mGoogleApiClient = global_mGoogleApiClient;
         startLocationUpdates();
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     //vykresli cestu

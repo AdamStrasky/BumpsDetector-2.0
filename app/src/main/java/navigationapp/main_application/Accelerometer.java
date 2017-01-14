@@ -4,7 +4,6 @@ import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -17,11 +16,11 @@ import android.os.Handler;
 import android.os.IBinder;
 
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.monikas.navigationapp.R;
+import navigationapp.error.ExceptionHandler;
+import navigationapp.R;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -74,6 +73,7 @@ public class Accelerometer extends Service implements SensorEventListener {
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         possibleBumps = new ArrayList<>();
         BumpsManual = new ArrayList<>();
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     private void startRecalibrate() {// spustenie pravidelneho rekalibrovania
@@ -148,7 +148,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                 currentData = new AccData(x, y, z);
                 if (global_gps != null) {
                     if (global_gps.getmCurrentLocation()!=null) {
-                        Log.d(TAG, " rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
+                      //  Log.d(TAG, " rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
                         if (global_gps.getmCurrentLocation().getSpeed() > 3) {
                             Log.d(TAG, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
                             Toast.makeText(contexts, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed(), Toast.LENGTH_SHORT).show();
