@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.ParseException;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -758,6 +759,7 @@ public class SyncDatabase {
                                                     Log.d(TAG, "Max_Collision_Number c_id - " + c_id);
                                                     Log.d(TAG, "Max_Collision_Number b_id - " + b_id);
                                                     Log.d(TAG, "Max_Collision_Number intensity - " + intensity);
+                                                    Log.d(TAG, "Max_Collision_Number created_at - " + created_at);
 
                                                     // ak nove collision updatuju stare  vytlky
                                                     if (b_id <= loaded_index) {
@@ -769,7 +771,7 @@ public class SyncDatabase {
                                                             rating = 2;
                                                         if (isBetween((float) intensity, 10, 10000))
                                                             rating = 3;
-                                                        database.execSQL("UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1 WHERE b_id_bumps=" + b_id);
+                                                        database.execSQL("UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id);
                                                     }
 
                                                     /* ak nastala chyba v transakcii,  musím upraviť udaje
@@ -793,11 +795,11 @@ public class SyncDatabase {
                                                             if (cursor.getCount() > 0) {
                                                                 Log.d(TAG, "Max_Collision_Number viac b_id");
                                                                 //  ak ich bolo viac pripičítam
-                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1 WHERE b_id_bumps=" + b_id;
+                                                            sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id;
                                                             } else {
                                                                 Log.d(TAG, "Max_Collision_Number prvý nový b_id");
                                                                 // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
-                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1 WHERE b_id_bumps=" + b_id;
+                                                            sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1, last_modified='"+created_at+"'  WHERE b_id_bumps=" + b_id;
                                                             }
                                                             database.execSQL(sql);
                                                         } finally {
