@@ -57,7 +57,7 @@ public class MapLayer {
 
     boolean deleteMap = false;  // flag na mazanie mapy
     boolean clear = true; // flag či mazať celu mapu
-
+    Marker marker = null;
     public final String TAG = "MapLayer";
 
     public MapLayer ( Accelerometer acc, Context context) {
@@ -263,9 +263,10 @@ public class MapLayer {
 
         Log.d(TAG, "deleteOldMarker start");
         try {
-            if (isClear() && mapbox != null) {
+            if ( mapbox != null) {
                 List<Marker> markers = mapbox.getMarkers();
                 for (int i = 0; i < markers.size(); i++) {
+                    if (markers.get(i)!=marker )
                     mapbox.removeMarker(markers.get(i));
                 }
             }
@@ -443,11 +444,11 @@ public class MapLayer {
 
     }
 
-    public boolean isClear() {
-        return clear;
-    }
+   // public boolean isClear() {
+     //   return clear;
+   // }
 
-    public void setClear(boolean clear) {
-        this.clear = clear;
+    public void setClear(Marker marker) {
+        this.marker = marker;
     }
 }

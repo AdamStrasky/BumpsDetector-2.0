@@ -364,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                            fragmentActivity.mapLayer.setClear(false);
+                                            fragmentActivity.mapLayer.setClear(featureMarker);
                                         fragmentActivity.mapLayer.getAllBumps(lightBumps.latitude, lightBumps.longitude);
                                         break;
 
@@ -372,14 +372,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                                         LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                            fragmentActivity.mapLayer.setClear(false);
+                                            fragmentActivity.mapLayer.setClear(featureMarker);
                                         fragmentActivity.mapLayer.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
                                         LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
                                         if (featureMarker!=null)
-                                            fragmentActivity.mapLayer.setClear(false);;
+                                            fragmentActivity.mapLayer.setClear(featureMarker);
                                         fragmentActivity.mapLayer.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
 
                                         break;
@@ -431,7 +431,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                 fragmentActivity.mapLayer.level = ALL_BUMPS;
                                                 LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
-                                                    fragmentActivity.mapLayer.setClear(false);;
+                                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
                                             }
                                         }.start();
@@ -443,7 +443,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                 fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
                                                 LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
-                                                    fragmentActivity.mapLayer.setClear(false);;
+                                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
 
                                             }
@@ -455,7 +455,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                 fragmentActivity.mapLayer.level = LARGE_BUMPS;
                                                 LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
-                                                    fragmentActivity.mapLayer.setClear(false);;
+                                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
                                             }
                                         }.start();
@@ -497,7 +497,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 close();
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     if (featureMarker!=null)
-                        fragmentActivity.mapLayer.setClear(false);;
+                        fragmentActivity.mapLayer.setClear(featureMarker);
                     fragmentActivity.gps.remove_draw_road();
                     fragmentActivity.mapLayer.deleteOldMarker();
 
@@ -551,7 +551,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 save(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.mapLayer.setClear(true);
+               fragmentActivity.mapLayer.setClear(featureMarker);
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 if ( mapManager!=null && !mapManager.isEndNotified()) {
@@ -580,7 +580,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);  //  schovanie tlačidiel
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.mapLayer.setClear(true);
+               fragmentActivity.mapLayer.setClear(featureMarker);
                 navig_on.setVisibility(View.INVISIBLE);
                 if (mapManager!=null && !mapManager.isEndNotified()) {
                     if (isEneableShowText())
@@ -847,7 +847,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 allow_click=true;
                                 confirm.setVisibility(View.VISIBLE);
                                 if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
-                                    fragmentActivity.mapLayer.setClear(false);
+                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                 add_button.setVisibility(View.INVISIBLE);
 
                             }
@@ -859,7 +859,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
                 if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
-                fragmentActivity.mapLayer.setClear(true);
+                    fragmentActivity.mapLayer.setClear(null);
                 save(true);
                 if (convert_location != null) {
                     if (isEneableShowText())
@@ -951,7 +951,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 save(false);
                 convert_location  =null;
                 if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
-                fragmentActivity.mapLayer.setClear(true);  // mapa už bude mazať aj marker
+                    fragmentActivity.mapLayer.setClear(null);  // mapa už bude mazať aj marker
                 break;
             case R.id.backMap_btn:
                 setOnPosition = true;
