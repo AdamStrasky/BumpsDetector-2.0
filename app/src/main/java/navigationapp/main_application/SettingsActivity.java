@@ -14,7 +14,6 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.WindowManager;
 
-import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 
 import static navigationapp.R.xml.settings;
@@ -27,10 +26,10 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         addPreferencesFromResource(settings);
         initializeSummaries();
         lang = getLanguage(); // uložím jazyk, aby som vedel či ho mením
+
     }
 
     private void initializeSummaries() {

@@ -50,22 +50,21 @@ import static navigationapp.main_application.MainActivity.navig_on;
 public class MapManager extends Activity {
 
     public static String selectedName = null;
-    private OfflineManager offlineManager;
-    private OfflineRegion offlineRegion;
+    private OfflineManager offlineManager = null;
+    private OfflineRegion offlineRegion = null;
     private final  String TAG = "MapManager";
     public final double minZoomDownloadMap = 12;
     public final double maxZoomDownloadMap = 16;
     public static boolean setOnPosition = true;
-    private int regionSelected;
+    private int regionSelected = 0;
     private boolean isEndNotified = true;
-    Context context;
+    Context context = null;
     public final String JSON_CHARSET = "UTF-8";
     public final String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
 
     public MapManager(Context context) {
         offlineManager = getInstance(context);
         this.context = context;
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     public void downloadRegionDialog() {
@@ -78,7 +77,6 @@ public class MapManager extends Activity {
         selectedName = null;
         // zobrazenie dialogu na vyber aktualnej mapy alebo zvolenej
         AlertDialog.Builder alert = new AlertDialog.Builder(context);
-        alert.setIcon(R.drawable.ic_launcher);
         alert.setTitle(context.getResources().getString(R.string.map_download));
         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                 context,android.R.layout.select_dialog_singlechoice);
@@ -108,7 +106,7 @@ public class MapManager extends Activity {
         alert.show();
     }
 
-    public void alertSelectRegion(String region, int which) {
+    public void alertSelectRegion(final String region,final int which) {
         Log.d(TAG, "alertSelectRegion start");
         String strName = context.getResources().getString(R.string.map_for_download);
         // ktorá možnosť bola zvolená - currnet/ select

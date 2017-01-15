@@ -9,7 +9,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -64,7 +63,6 @@ public class MapLayer {
     public MapLayer ( Accelerometer acc, Context context) {
         accelerometer =acc;
         this.context = context;
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     synchronized public void getAllBumps(final Double latitude, final Double longitude) {
@@ -414,7 +412,7 @@ public class MapLayer {
                     if (isBetween(data, 10, 10000)) rating = 2.5f;
                     if (rating >= level) {
                         if (bumpsManual.get(i) == 0) {
-                            if (autoMarkerCoordinates.size() == autoSeq) {
+                          if (autoMarkerCoordinates.size() == autoSeq) {
                                 autoMarkerCoordinates.add(Feature.fromGeometry(
                                         Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                                 );
@@ -423,10 +421,10 @@ public class MapLayer {
                                         context.getResources().getString(R.string.number_bump) + "1\n" +
                                         context.getResources().getString(R.string.modif) + " " + now_formated);
                                 autoSeq++;
-                            }
+                          }
 
                         } else
-                            if (manualMarkerCoordinates.size() == manulSeq) {
+                           if (manualMarkerCoordinates.size() == manulSeq) {
                             manualMarkerCoordinates.add(Feature.fromGeometry(
                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                             );

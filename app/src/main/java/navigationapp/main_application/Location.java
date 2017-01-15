@@ -58,7 +58,6 @@ public class Location {
     public  final String TAG = "Location";
     public Location(Activity context) {
         this.context= context;
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         select_road = new  ArrayList<LatLng>();
         LIFO = new ArrayList<Position>();
         tts=new TextToSpeech(context, new TextToSpeech.OnInitListener() {

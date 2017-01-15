@@ -8,6 +8,7 @@ package navigationapp.main_application;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.DoubleBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -52,25 +53,40 @@ public class Route {
     }
 
 
-    public static Address findLocality(String location, Context context) throws IOException {
 
-        Geocoder g = new Geocoder(context);
-        if (g == null) {
+    public static Address findLocality(final String location, Context contexts) throws IOException {
+       try {
+            return new SensorEventLoggerTask().execute(location,contexts).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        } catch (ExecutionException e) {
+            e.printStackTrace();
             return null;
         }
-        else {
-            List<Address> list;
-            try {
-                list = g.getFromLocationName(location, 1); //1 znamena, ze najde iba prvy vysledok
-                return list.get(0);
-            }catch (Exception e) {
+    }
+
+    private static class SensorEventLoggerTask extends AsyncTask<Object, Void, Address> {
+
+        @Override
+        protected Address doInBackground(Object... events) {
+            Geocoder g = new Geocoder((Context) events[1]);
+            if (g == null) {
                 return null;
+            }
+            else {
+                List<Address> list;
+                try {
+                    list = g.getFromLocationName((String) events[0], 1); //1 znamena, ze najde iba prvy vysledok
+                    return list.get(0);
+                }catch (Exception e) {
+                    return null;
+                }
             }
         }
     }
 
     private class HTTPrequest extends AsyncTask<String, Void, Document> {
-
         @Override
         protected Document doInBackground(String... URL) {
             try {

@@ -124,7 +124,7 @@
     <string name="error_download">Error, download of map was interrupted</string>
     <string name="map_exceeded">The allowed amount of downloaded maps have been exceeded. Please delete old map for download new</string>
 
-
+    <string name="error">Error</string>
 
 
 

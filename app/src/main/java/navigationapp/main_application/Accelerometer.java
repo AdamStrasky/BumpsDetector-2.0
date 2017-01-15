@@ -19,7 +19,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 
 import java.math.BigDecimal;
@@ -73,13 +72,12 @@ public class Accelerometer extends Service implements SensorEventListener {
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         possibleBumps = new ArrayList<>();
         BumpsManual = new ArrayList<>();
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     private void startRecalibrate() {// spustenie pravidelneho rekalibrovania
         Log.d(TAG, "startRecalibrate start");
         recalibrate=false;
-        timer.scheduleAtFixedRate(new Recalibrate(), 0, 600000);
+        timer.scheduleAtFixedRate(new Recalibrate(), 60000, 600000);
     }
 
     private class Recalibrate extends TimerTask {
@@ -87,7 +85,8 @@ public class Accelerometer extends Service implements SensorEventListener {
             recalibrate();
         }
     }
-     synchronized public void recalibrate() {
+
+    synchronized public void recalibrate() {
         Log.d(TAG, "Recalibrate start");
         if (global_gps != null && global_gps.getmCurrentLocation()!=null && global_gps.getmCurrentLocation().getSpeed()== 0) {
             Log.d(TAG, "sensor Accelerometer automatic re-calibrate");
@@ -119,7 +118,7 @@ public class Accelerometer extends Service implements SensorEventListener {
     //pri zmene dat z akcelerometra nam metoda dava tieto data v premennej event.values[]
     public synchronized void onSensorChanged(SensorEvent event) {
         new SensorEventLoggerTask().execute(event);
-      //  Log.d(TAG, "onSensorChanged");
+        // Log.d(TAG, "onSensorChanged");
     }
 
     private class SensorEventLoggerTask extends AsyncTask<SensorEvent, Void, String> {
@@ -146,14 +145,12 @@ public class Accelerometer extends Service implements SensorEventListener {
                 Log.d(TAG, " pridanie 1.hodnoty, vykoná sa len raz ");
             } else {
                 currentData = new AccData(x, y, z);
-                if (global_gps != null) {
-                    if (global_gps.getmCurrentLocation()!=null) {
-                      //  Log.d(TAG, " rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
+                if (global_gps != null && global_gps.getmCurrentLocation()!=null) {
+                        //  Log.d(TAG, " rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
                         if (global_gps.getmCurrentLocation().getSpeed() > 3) {
                             Log.d(TAG, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
                             Toast.makeText(contexts, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed(), Toast.LENGTH_SHORT).show();
                         }
-                    }
                     final Location location = global_gps.getmCurrentLocation();
                     //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
                     for (AccData temp : LIFO) {
@@ -192,13 +189,13 @@ public class Accelerometer extends Service implements SensorEventListener {
                         final Float data = new Float(delta);
                         if (location != null && data != null) {
                             //pokial je znama aktualna pozicia a intenzita otrasu
-                            Log.d(TAG, " mam data aj polohu ");
+                            // Log.d(TAG, " mam data aj polohu ");
                             if (unlock) {
-                                Log.d(TAG, " volám detect a lockujem ho ");
+                                // Log.d(TAG, " volám detect a lockujem ho ");
                                 unlock = false;
                                 result = detect(location, data);
                                 unlock = true;
-                                Log.d(TAG, " unlock detect ");
+                                //Log.d(TAG, " unlock detect ");
                             }
                         }
                     }
@@ -273,12 +270,12 @@ public class Accelerometer extends Service implements SensorEventListener {
     public synchronized String detect (Location location, Float data) {
         String result = null;
         boolean isToClose = false;
-        Log.d(TAG, "detect start");
+      //  Log.d(TAG, "detect start");
         if (lockAdd.tryLock()) {
             try {
                 if (lockZoznam.tryLock()) {
                     try {
-                        Log.d(TAG, "detect over lock");
+                     //   Log.d(TAG, "detect over lock");
                         for (HashMap<Location, Float> bump : possibleBumps) {
                             Iterator it = bump.entrySet().iterator();
                             while (it.hasNext()) {
@@ -312,8 +309,9 @@ public class Accelerometer extends Service implements SensorEventListener {
                                         }
                                         result =  fragment_context.getResources().getString(R.string.same_bump);
                                     }
-                                    else
-                                        Log.d(TAG, "detect - same location, lower data new-" +data+ " old "+(Float) pair.getValue());
+                                    else {
+                                        // Log.d(TAG, "detect - same location, lower data new-" +data+ " old "+(Float) pair.getValue());
+                                    }
                                     isToClose = true;
                                 }
                                 else {
@@ -347,8 +345,9 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                 }
                                             }
                                             result = fragment_context.getResources().getString(R.string.under_bump);
-                                        } else
-                                            Log.d(TAG, "detect - under 2 meters, lower data new-" +data+ " old "+(Float) pair.getValue());
+                                        } else {
+                                            //Log.d(TAG, "detect - under 2 meters, lower data new-" +data+ " old "+(Float) pair.getValue());
+                                        }
                                         isToClose = true;
                                     }
                                 }
@@ -430,7 +429,7 @@ public class Accelerometer extends Service implements SensorEventListener {
         double t2 = Math.cos(a1)*Math.sin(a2)*Math.cos(b1)*Math.sin(b2);
         double t3 = Math.sin(a1)*Math.sin(b1);
         double tt = Math.acos(t1 + t2 + t3);
-        Log.d("Accelerometer", "getDistance bump - "+ 6366000*tt);
+        //Log.d("Accelerometer", "getDistance bump - "+ 6366000*tt);
         return 6366000*tt;
     }
 

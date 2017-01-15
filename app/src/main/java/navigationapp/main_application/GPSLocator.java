@@ -41,7 +41,6 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     public GPSLocator () {
         this.mGoogleApiClient = global_mGoogleApiClient;
         startLocationUpdates();
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     }
 
     //vykresli cestu

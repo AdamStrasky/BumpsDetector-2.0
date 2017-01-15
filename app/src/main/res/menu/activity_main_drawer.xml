@@ -20,6 +20,10 @@
     </group>
 
     <group android:checkableBehavior="single">
+        <item android:id="@+id/error" android:title="@string/error"></item>
+    </group>
+
+    <group android:checkableBehavior="single">
         <item android:id="@+id/exit" android:title="@string/menu_exit"></item>
     </group>
 

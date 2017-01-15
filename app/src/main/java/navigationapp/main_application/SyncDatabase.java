@@ -16,7 +16,6 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
-import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -66,11 +65,10 @@ public class SyncDatabase {
         this.context = context;
         this.mapLayer =mapLayer;
         regular_update = true;
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         get_loaded_index(); // vytiahnutie maximálneho indexu z databázy
         loadSaveDB(); // načítanie uložených výtlkov , ktoré neboli odoslané na server
         startGPS();
-        new Timer().schedule(new Regular_upgrade(), 180000, 180000);// 3600000   // pravidelný update ak nemám povolený internet
+        new Timer().schedule(new Regular_upgrade(), 360000000, 360000000);// 1 hodina == 360 000 000    // pravidelný update ak nemám povolený internet
     }
 
     private void get_loaded_index() {
@@ -78,11 +76,13 @@ public class SyncDatabase {
         SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
         if (sharedPref.contains("save")) {
             loaded_index = sharedPref.getInt("save", 0);
+            max_number = loaded_index;
             Log.d(TAG, "get_loaded_index - "+ loaded_index);
         }
         else {
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putInt("save", 0);
+            max_number = 0;
             loaded_index = 0;
             editor.commit();
         }
@@ -100,12 +100,12 @@ public class SyncDatabase {
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
                             checkIntegrityDB(database);
+                            database.beginTransaction();
                             Cursor cursor = database.rawQuery(selectQuery, null);
                             ArrayList<HashMap< android.location.Location , Float>> hashToArray = new ArrayList<HashMap< android.location.Location , Float>>();
                             ArrayList<Integer> listA = new ArrayList<Integer>();
                             long date = new Date().getTime();
                             if (cursor != null && cursor.moveToFirst()) {
-                                database.beginTransaction();
                                 do {
                                     if (!cursor.isNull(0) && !cursor.isNull(1) & !cursor.isNull(2) && !cursor.isNull(3)) {
                                         android.location.Location  location = new android.location.Location ("new");
@@ -165,6 +165,7 @@ public class SyncDatabase {
                             int x = ran.nextInt(20) + 1;
                             Thread.sleep(x);
                         } catch (InterruptedException e) {
+                            e.getMessage();
                         }
                     }
                 }
@@ -437,7 +438,15 @@ public class SyncDatabase {
             try {
                 if (array.get(0).equals("error")) {
                     Log.d(TAG, "Max_Bump_Number onPostExecute - error");
-                    return;
+                        if (gps != null && gps.getCurrentLatLng() != null) {
+                            context.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                            }
+                        });
+                        return;
+                    }
                 } else if (array.get(0).equals("update")) { // mam nove data, zistit aj collision a potom upozorni uživatela
                     Log.d(TAG, "Max_Bump_Number onPostExecute - update");
                     get_max_collision(lang_database, longt_database, 1);
@@ -467,7 +476,7 @@ public class SyncDatabase {
                                             int count = 0, b_id = 0, rating = 0, manual = 0;
                                             String last_modified = null;
                                             if (data != null) {
-                                                try {   // zaznamen8m do databazy
+                                                try {   // zaznamenam do databazy
                                                     latitude = data.getDouble("latitude");
                                                     longitude = data.getDouble("longitude");
                                                     Log.d(TAG, "Max_Bump_Number latitude " + latitude);
@@ -503,12 +512,12 @@ public class SyncDatabase {
                                             checkCloseDb(database);
                                             Log.d(TAG, "Max_Bump_Number no error");
                                         } else { // nastala chyba, načitaj uložene vytlky
-                                            database.endTransaction();
-                                            database.close();
-                                            databaseHelper.close();
-                                            checkCloseDb(database);
                                             Log.d(TAG, "Max_Bump_Number  error");
                                         }
+                                        database.endTransaction();
+                                        database.close();
+                                        databaseHelper.close();
+                                        checkCloseDb(database);
                                    } finally {
                                         updatesLock.unlock();
                                         break;
@@ -960,7 +969,7 @@ public class SyncDatabase {
                     if (lock) {
                         if (!listHelp.isEmpty() && listHelp.size() > poradie) {
                             Iterator it = listHelp.get(poradie).entrySet().iterator();
-                            HashMap.Entry pair = (HashMap.Entry) it.next();    //next
+                            HashMap.Entry pair = (HashMap.Entry) it.next();
                             final  android.location.Location  loc = ( android.location.Location) pair.getKey();
                             final float data = (float) pair.getValue();
                             Handler = new Bump(loc, data, bumpsManualHelp.get(poradie));

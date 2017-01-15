@@ -24,7 +24,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -66,7 +65,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         if (!isNetworkAvailable(getActivity())) {  // kontrola internetu
             if (isEneableShowText(getActivity()))
                 Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.offline_mode), Toast.LENGTH_SHORT).show();
@@ -228,6 +226,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                 Looper.prepare();
                 while (true) {
                     gps = mLocnServGPS;
+                    global_gps = mLocnServGPS;
                     if (gps != null && init) {
                         LatLng convert_location = gps.getCurrentLatLng();
                         if (convert_location != null) {

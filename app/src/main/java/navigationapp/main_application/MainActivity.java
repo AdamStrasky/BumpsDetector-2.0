@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
     private Float intensity = null;
-    LinearLayout confirm;
+    LinearLayout confirm = null;
     Button  save_button, delete_button,downloand_button,back_button;
     public  static MapView mapView = null;
     public static LinearLayout mapConfirm;
@@ -97,12 +97,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static MapboxAccountManager manager;
     private boolean markerSelectedAuto = false;
     private boolean markerSelectedManual = false;
-    private Marker featureMarker;
+    private Marker featureMarker =  null ;
     boolean allow_click= false;
     com.mapbox.mapboxsdk.geometry.LatLng  convert_location  =null;
     private ActionBarDrawerToggle drawerToggle;
-    private DrawerLayout drawerLayout;
-    private MapManager mapManager;
+    private DrawerLayout drawerLayout = null;
+    private MapManager mapManager = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -494,7 +494,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
            case R.id.clear_map:  // vyčistí mapu
-
                 close();
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     if (featureMarker!=null)
@@ -529,7 +528,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
            case R.id.download:
 
-                if (fragmentActivity!=null) {
+                if (fragmentActivity!=null &&  mapManager!=null) {
                     if (mapManager.isMapTitleExceeded()) {  // upozornenie na prekročenie kapacity map
                         if (isEneableShowText())
                             Toast.makeText(this, this.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
@@ -544,7 +543,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.makeText(this,this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
-                if ( mapbox==null) { // nieje načítana mapa
+                if ( mapbox==null || fragmentActivity.mapLayer==null) { // nieje načítana mapa
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
@@ -565,8 +564,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
            case R.id.list:
                 close();
+
+               if ( fragmentActivity.mapLayer==null) { // nieje načítana mapa
+                   if (isEneableShowText())
+                       Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                   return true;
+               }
+
                 save(false);
-                if ( mapbox==null) {
+                if ( mapbox==null ) {
                     if (isEneableShowText())
                         Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
@@ -583,6 +589,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 else
                     mapManager.downloadedRegionList();
                 return true;
+
+           case R.id.error:
+               int number = Integer.parseInt("number");
+               return true;
 
             case R.id.exit:
                 close();
@@ -982,6 +992,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void onClick_Search(View v) throws IOException {
+        if ( fragmentActivity==null || fragmentActivity.detection==null) { // nieje načítana mapa
+            if (isEneableShowText())
+                Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+            return ;
+        }
         Address address = null;
         EditText text = (EditText) findViewById(R.id.location);
         if (isEneableShowText())
@@ -1013,7 +1028,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         else {
             if (isEneableShowText())
-                Toast.makeText(this, "Unable to find location! Please, connect to network.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, this.getResources().getString(R.string.unable_find_net), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -1035,7 +1050,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void SetUpCamera(){
         if (fragmentActivity.gps !=null && fragmentActivity.gps.getmCurrentLocation()!= null) {
             LatLng myPosition = new LatLng(fragmentActivity.gps.getmCurrentLocation().getLatitude(), fragmentActivity.gps.getmCurrentLocation().getLongitude());
-            if (myPosition!=null && setOnPosition &&  MainActivity.isActivityVisible()) {
+            if (myPosition!=null && setOnPosition &&  MainActivity.isActivityVisible() && mapbox!=null) {
                 try {
                     mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(myPosition.latitude, myPosition.longitude)));
                 } catch  (NullPointerException e) {
