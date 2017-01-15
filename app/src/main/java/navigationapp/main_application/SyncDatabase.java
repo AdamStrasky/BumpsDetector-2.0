@@ -69,7 +69,7 @@ public class SyncDatabase {
         get_loaded_index(); // vytiahnutie maximálneho indexu z databázy
         loadSaveDB(); // načítanie uložených výtlkov , ktoré neboli odoslané na server
         startGPS();
-        new Timer().schedule(new Regular_upgrade(), 360000000, 360000000);// 1 hodina == 360 000 000    // pravidelný update ak nemám povolený internet
+        new Timer().schedule(new Regular_upgrade(),60000, 3600000);// 1 hodina == 3600000    // pravidelný update ak nemám povolený internet
     }
 
     private void get_loaded_index() {
