@@ -35,6 +35,7 @@ import static navigationapp.main_application.FragmentActivity.global_gps;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
 import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.MainActivity.round;
 
 public class Location {
 
@@ -203,7 +204,7 @@ public class Location {
 
     public void bumps_on_position(FragmentActivity fragmentActivity, final LatLng to_position) {
         activity = fragmentActivity;
-        new Thread() {
+        Thread t = new Thread() {
             public void run() {
                 Looper.prepare();
                 while (true) {
@@ -211,9 +212,6 @@ public class Location {
                         road = true;
                         Log.d(TAG, "bumps_on_position start ");
                         position = to_position;
-                        collision_places();
-                        Log.d(TAG, "bumps_on_position collision_thread start ");
-                        collision_thread.start();
                         break;
                     }
                     try {
@@ -224,7 +222,16 @@ public class Location {
                     Log.d(TAG, "bumps_on_position  try lock ");
                 }
             }
-        }.start();
+        };
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        collision_places();
+        Log.d(TAG, "bumps_on_position collision_thread start ");
+        collision_thread.start();
     }
 
     public void collision_places() {
@@ -508,7 +515,7 @@ public class Location {
                                     throw new InterruptedException("");
                                 }
                                     if (!isEneableVoice()) {
-                                    final double i =  actual_distance;
+                                    final double i =  round (actual_distance,0);
                                     while (tts.isSpeaking()){ }
                                     context.runOnUiThread(new Runnable() {
                                         public void run() {

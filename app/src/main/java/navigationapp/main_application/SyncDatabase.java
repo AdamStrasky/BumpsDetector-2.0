@@ -92,7 +92,6 @@ public class SyncDatabase {
         Log.d(TAG, "loadSaveDB start");
         new Thread() {
             public void run() {
-
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {   // načítam všetky uložené výtlky ktoré neboli synchronizovane zo serverom
@@ -186,9 +185,10 @@ public class SyncDatabase {
             regular_update = true;
         }
     }
+    ArrayList<HashMap<android.location.Location, Float>> bumpsQQ = new ArrayList<HashMap<android.location.Location, Float>>();
+    ArrayList<Integer> bumpsManualQQ = new ArrayList<Integer>();
 
     private class SyncDb extends TimerTask {
-
         @Override
         public void run() {
             context.runOnUiThread(new Runnable() {
@@ -205,16 +205,13 @@ public class SyncDatabase {
                                 if (!list.isEmpty()) {
                                     Log.d(TAG, "SyncDb zoznam nie je prázdny ");
                                     regularUpdatesLock = false;
-                                    new Thread() {
+                                    Thread t = new Thread() {
                                         public void run() {
-
-                                            ArrayList<HashMap<android.location.Location, Float>> bumps = new ArrayList<HashMap<android.location.Location, Float>>();
-                                            ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
                                             while (true) {
                                                 if (lockZoznam.tryLock()) {
                                                     try {
-                                                        bumps.addAll(accelerometer.getPossibleBumps());
-                                                        bumpsManual.addAll(accelerometer.getBumpsManual());
+                                                        bumpsQQ.addAll(accelerometer.getPossibleBumps());
+                                                        bumpsManualQQ.addAll(accelerometer.getBumpsManual());
                                                         accelerometer.getPossibleBumps().clear();
                                                         accelerometer.getBumpsManual().clear();
                                                     } finally {
@@ -230,14 +227,19 @@ public class SyncDatabase {
                                                         Thread.sleep(x);
                                                     } catch (InterruptedException e) {
                                                         e.getMessage();
-                                                        }
+                                                    }
                                                 }
                                             }
-                                            saveBump(bumps, bumpsManual, 0);
-
-                                            }
-                                        }.start();
-                                 } else {
+                                        }
+                                    };
+                                    t.start();
+                                    try {
+                                        t.join();
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    saveBump(bumpsQQ, bumpsManualQQ, 0);
+                                } else {
                                     Log.d(TAG, "SyncDb zoznam je prázdny ");
                                     getBumpsWithLevel();
                                 }
@@ -306,9 +308,8 @@ public class SyncDatabase {
 
     public void get_max_bumps(final Double langtitude, final Double longtitude, final Integer nets) {
         Log.d(TAG, "get_max_bumps start ");
-        new Thread() {
+        Thread t =   new Thread() {
             public void run() {
-
                 while (true) {
                     if (updatesLock.tryLock()) {
                        try {
@@ -322,7 +323,7 @@ public class SyncDatabase {
                             String ago_formated = ago.format(cal.getTime());
                             DatabaseOpenHelper databaseHelper =null;
                             SQLiteDatabase database = null;
-                           try {
+                            try {
                                databaseHelper = new DatabaseOpenHelper(context);
                                database = databaseHelper.getReadableDatabase();
                                checkIntegrityDB(database);
@@ -347,20 +348,19 @@ public class SyncDatabase {
                                }
                                database.setTransactionSuccessful();
                                database.endTransaction();
-                           } finally {
+                            } finally {
                                if (database!=null) {
                                    database.close();
                                    databaseHelper.close();
                                }
-                           }
-                           checkCloseDb(database);
+                            }
+                            checkCloseDb(database);
                        } finally {
                            Log.d(TAG, "get_max_bumps unlock ");
                            updatesLock.unlock();
                            break;
                        }
                     } else {
-
                         Log.d(TAG, "get_max_bumps try lock ");
                         try {
                             Random ran = new Random();
@@ -375,10 +375,15 @@ public class SyncDatabase {
                 lang_database = langtitude; // ukladam pozície, aby som všade pracoval s rovnakými
                 longt_database = longtitude;
                 Log.d(TAG, "get_max_bumps končí ");
-                new Max_Bump_Number().execute();
-
             }
-        }.start();
+        };
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        new Max_Bump_Number().execute();
     }
 
     class Max_Bump_Number extends AsyncTask<String, Void, JSONArray> {
@@ -429,7 +434,7 @@ public class SyncDatabase {
                 return response;
             }
         }
-
+       // Boolean errorQ = false;
         protected void onPostExecute(JSONArray array) {
             if (array == null) { // žiadne nové data v bumps, zisti collisons
                 Log.d(TAG, "Max_Bump_Number onPostExecute - no data");
@@ -454,13 +459,14 @@ public class SyncDatabase {
                     get_max_collision(lang_database, longt_database, 1);
                 } else {
                     Log.d(TAG, "Max_Bump_Number onPostExecute - new data, update databazu");
+
                     Thread t = new Thread() {    // insertujem nove data do databazy
                         public void run() {
 
                             Boolean error = false;
                             while (true) {
                                 if (updatesLock.tryLock()) {
-                                   try {
+                                    try {
                                         DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
                                         checkIntegrityDB(database);
@@ -520,10 +526,10 @@ public class SyncDatabase {
                                         database.close();
                                         databaseHelper.close();
                                         checkCloseDb(database);
-                                   } finally {
+                                    } finally {
                                         updatesLock.unlock();
                                         break;
-                                   }
+                                    }
                                 } else {
                                     Log.d(TAG, "Max_Bump_Number try lock");
                                     try {
@@ -539,9 +545,9 @@ public class SyncDatabase {
                             if (!error) {
                                 get_max_collision(lang_database, longt_database, 0);
 
-                                } else {  // nastala chyba, načitaj uložene vytlky
-                                    if (gps != null && gps.getCurrentLatLng() != null) {
-                                        context.runOnUiThread(new Runnable() {
+                            } else {  // nastala chyba, načitaj uložene vytlky
+                                if (gps != null && gps.getCurrentLatLng() != null) {
+                                    context.runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
                                             mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
@@ -563,9 +569,8 @@ public class SyncDatabase {
 
     private void get_max_collision(final Double latitude, final Double longtitude, final Integer update) {
         Log.d(TAG, "get_max_collision start");
-        new Thread() {
+        Thread t = new Thread() {
             public void run() {
-
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {
@@ -628,10 +633,16 @@ public class SyncDatabase {
                     }
                 }
                 updates = update;
-                new Max_Collision_Number().execute();  // odošlem dáta najdenie nových
                 Log.d(TAG, "get_max_collision finish");
             }
-        }.start();
+        };
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        new Max_Collision_Number().execute();  // odošlem dáta najdenie nových
     }
 
     class Max_Collision_Number extends AsyncTask<String, Void, JSONArray> {
@@ -797,11 +808,11 @@ public class SyncDatabase {
                                                             if (cursor.getCount() > 0) {
                                                                 Log.d(TAG, "Max_Collision_Number viac b_id");
                                                                 //  ak ich bolo viac pripičítam
-                                                            sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id;
+                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id;
                                                             } else {
                                                                 Log.d(TAG, "Max_Collision_Number prvý nový b_id");
                                                                 // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
-                                                            sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1, last_modified='"+created_at+"'  WHERE b_id_bumps=" + b_id;
+                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1, last_modified='"+created_at+"'  WHERE b_id_bumps=" + b_id;
                                                             }
                                                             database.execSQL(sql);
                                                         } finally {
@@ -869,7 +880,7 @@ public class SyncDatabase {
                                 context.runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                    mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                                        mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
                                     }
                                 });
                             }
@@ -877,6 +888,7 @@ public class SyncDatabase {
 
                         }
                     }.start();
+
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -896,16 +908,13 @@ public class SyncDatabase {
                         dialog.cancel();
                         if (regularUpdatesLock) {
                             lockHandler = false;
-                            new Thread() {
+                           Thread t = new Thread() {
                                 public void run() {
-
-                                    ArrayList<HashMap<android.location.Location, Float>> bumps = new ArrayList<HashMap<android.location.Location, Float>>();
-                                    ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
-                                    while (true) {
+                                        while (true) {
                                         if (lockZoznam.tryLock()) {
                                             try {
-                                                bumps.addAll(accelerometer.getPossibleBumps());
-                                                bumpsManual.addAll(accelerometer.getBumpsManual());
+                                                bumpsQQ.addAll(accelerometer.getPossibleBumps());
+                                                bumpsManualQQ.addAll(accelerometer.getBumpsManual());
                                                 accelerometer.getPossibleBumps().clear();
                                                 accelerometer.getBumpsManual().clear();
                                             } finally {
@@ -924,10 +933,17 @@ public class SyncDatabase {
                                             }
                                         }
                                     }
-                                    saveBump(bumps, bumpsManual, 0);
+
 
                                 }
-                            }.start();
+                            };
+                            t.start();
+                            try {
+                                t.join();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            saveBump(bumpsQQ, bumpsManualQQ, 0);
                         } else if (updates == 1) {
                             Log.d(TAG, "GetUpdateAction updates == 1 v getupdate" );
                             updates = 0;
