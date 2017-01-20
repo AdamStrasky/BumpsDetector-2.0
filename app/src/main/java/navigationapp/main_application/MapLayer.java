@@ -73,7 +73,7 @@ public class MapLayer {
         }
         new Thread() {
             public void run() {
-                Looper.prepare();
+
                 Log.d(TAG, " gettAllBump zobrazenie markerov  spustene ");
                 int autoBumpSequence = 0, manualBumpSequence = 0;
                 autoMarkerCoordinates = new ArrayList<>();
@@ -212,7 +212,7 @@ public class MapLayer {
                 if (mapbox != null)
                     showNewMarker(); // zobrazenie markerov
                 deleteMap = true;
-                Looper.loop();
+
 
             }
         }.start();
@@ -443,10 +443,6 @@ public class MapLayer {
         Log.d(TAG, "notSendBumps koniec");
 
     }
-
-   // public boolean isClear() {
-     //   return clear;
-   // }
 
     public void setClear(Marker marker) {
         this.marker = marker;

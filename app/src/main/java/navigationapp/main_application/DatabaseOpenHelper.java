@@ -3,6 +3,7 @@ package navigationapp.main_application;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import static android.provider.BaseColumns._ID;
 import static  navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
@@ -22,21 +23,24 @@ import static  navigationapp.main_application.Provider.bumps_collision.CRETED_AT
 import static  navigationapp.main_application.Provider.new_bumps.TABLE_NAME_NEW_BUMPS;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
-
+        public final String TAG = "DatabaseOpenHelper";
         public static final String DATABASE_NAME = "bump";
         public static final int DATABASE_VERSION = 1;
         public DatabaseOpenHelper(Context context) {
-             super(context, DATABASE_NAME, null,DATABASE_VERSION);
+           super(context, DATABASE_NAME, null,DATABASE_VERSION);
+            Log.d(TAG, "DatabaseOpenHelper constructor");
         }
 
         @Override
         public void onCreate(SQLiteDatabase db) {
+            Log.d(TAG, "onCreate SQLiteDatabase");
             db.execSQL(createTableSqlBumps());
             db.execSQL(createTableSqlCollisions());
             db.execSQL(createTableSqlNewBump());
          }
 
         private String createTableSqlBumps() {
+            Log.d(TAG, "onCreate createTableSqlBumps");
             String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
                     + "%s INTEGER PRIMARY KEY ,"
                     + "%s INTEGER,"

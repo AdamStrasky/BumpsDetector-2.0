@@ -426,39 +426,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             public void onClick(DialogInterface dialog, int select) {
                                 switch (select) {
                                     case 0:
-                                        new Thread() {
-                                            public void run() {
+
                                                 fragmentActivity.mapLayer.level = ALL_BUMPS;
                                                 LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
                                                     fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
-                                            }
-                                        }.start();
+
                                         break;
 
                                     case 1:
-                                        new Thread() {
-                                            public void run() {
+
                                                 fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
                                                 LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
                                                     fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
 
-                                            }
-                                        }.start();
                                         break;
                                     case 2:
-                                        new Thread() {
-                                            public void run() {
+
                                                 fragmentActivity.mapLayer.level = LARGE_BUMPS;
                                                 LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
                                                 if (featureMarker!=null)
                                                     fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
-                                            }
-                                        }.start();
+
                                         break;
                                 }
                             }
@@ -510,13 +503,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 text.setText(this.getResources().getString(R.string.navig));
                 if ( fragmentActivity.gps!=null) {
-                    new Thread() {
-                        public void run() {
+
                             fragmentActivity.gps.remove_draw_road();
                             fragmentActivity.detection.setRoad(false);
                             fragmentActivity.detection.stop_collison_navigate();
-                        }
-                    }.start();
+
                 }
                 return true;
 

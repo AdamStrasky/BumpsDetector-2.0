@@ -20,7 +20,7 @@
         android:defaultValue="true"/>
     <CheckBoxPreference android:key="net"
         android:title="@string/setting_bumps_download"
-        android:defaultValue="false"/>
+        android:defaultValue="true"/>
     <CheckBoxPreference android:key="map"
         android:title="@string/setting_map"
         android:defaultValue="false"/>

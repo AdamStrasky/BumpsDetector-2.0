@@ -9,7 +9,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.ParseException;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -69,7 +68,7 @@ public class SyncDatabase {
         get_loaded_index(); // vytiahnutie maximálneho indexu z databázy
         loadSaveDB(); // načítanie uložených výtlkov , ktoré neboli odoslané na server
         startGPS();
-        new Timer().schedule(new Regular_upgrade(),60000, 3600000);// 1 hodina == 3600000    // pravidelný update ak nemám povolený internet
+        new Timer().schedule(new Regular_upgrade(),60000, 60000);// 1 hodina == 3600000    // pravidelný update ak nemám povolený internet
     }
 
     private void get_loaded_index() {
@@ -93,7 +92,7 @@ public class SyncDatabase {
         Log.d(TAG, "loadSaveDB start");
         new Thread() {
             public void run() {
-                Looper.prepare();
+
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {   // načítam všetky uložené výtlky ktoré neboli synchronizovane zo serverom
@@ -170,7 +169,7 @@ public class SyncDatabase {
                         }
                     }
                 }
-                Looper.loop();
+
             }
         }.start();
     }
@@ -208,7 +207,7 @@ public class SyncDatabase {
                                     regularUpdatesLock = false;
                                     new Thread() {
                                         public void run() {
-                                            Looper.prepare();
+
                                             ArrayList<HashMap<android.location.Location, Float>> bumps = new ArrayList<HashMap<android.location.Location, Float>>();
                                             ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
                                             while (true) {
@@ -235,7 +234,7 @@ public class SyncDatabase {
                                                 }
                                             }
                                             saveBump(bumps, bumpsManual, 0);
-                                            Looper.loop();
+
                                             }
                                         }.start();
                                  } else {
@@ -309,7 +308,7 @@ public class SyncDatabase {
         Log.d(TAG, "get_max_bumps start ");
         new Thread() {
             public void run() {
-                Looper.prepare();
+
                 while (true) {
                     if (updatesLock.tryLock()) {
                        try {
@@ -349,8 +348,10 @@ public class SyncDatabase {
                                database.setTransactionSuccessful();
                                database.endTransaction();
                            } finally {
-                               database.close();
-                               databaseHelper.close();
+                               if (database!=null) {
+                                   database.close();
+                                   databaseHelper.close();
+                               }
                            }
                            checkCloseDb(database);
                        } finally {
@@ -375,7 +376,7 @@ public class SyncDatabase {
                 longt_database = longtitude;
                 Log.d(TAG, "get_max_bumps končí ");
                 new Max_Bump_Number().execute();
-                Looper.loop();
+
             }
         }.start();
     }
@@ -455,7 +456,7 @@ public class SyncDatabase {
                     Log.d(TAG, "Max_Bump_Number onPostExecute - new data, update databazu");
                     Thread t = new Thread() {    // insertujem nove data do databazy
                         public void run() {
-                            Looper.prepare();
+
                             Boolean error = false;
                             while (true) {
                                 if (updatesLock.tryLock()) {
@@ -537,7 +538,7 @@ public class SyncDatabase {
 
                             if (!error) {
                                 get_max_collision(lang_database, longt_database, 0);
-                                Looper.loop();
+
                                 } else {  // nastala chyba, načitaj uložene vytlky
                                     if (gps != null && gps.getCurrentLatLng() != null) {
                                         context.runOnUiThread(new Runnable() {
@@ -547,7 +548,7 @@ public class SyncDatabase {
                                         }
                                     });
                                 }
-                                Looper.loop();
+
                             }
                             Log.d(TAG, "Max_Bump_Number končí");
                         }
@@ -564,7 +565,7 @@ public class SyncDatabase {
         Log.d(TAG, "get_max_collision start");
         new Thread() {
             public void run() {
-                Looper.prepare();
+
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {
@@ -604,8 +605,10 @@ public class SyncDatabase {
                                 database.setTransactionSuccessful();
                                 database.endTransaction();
                             } finally {
-                                database.close();
-                                databaseHelper.close();
+                                if (database!=null) {
+                                    database.close();
+                                    databaseHelper.close();
+                                }
                             }
                             checkCloseDb(database);
                         } finally {
@@ -626,7 +629,6 @@ public class SyncDatabase {
                 }
                 updates = update;
                 new Max_Collision_Number().execute();  // odošlem dáta najdenie nových
-                Looper.loop();
                 Log.d(TAG, "get_max_collision finish");
             }
         }.start();
@@ -728,7 +730,7 @@ public class SyncDatabase {
                     new Thread() {
                         public void run() {
                             Log.d(TAG, "Max_Collision_Number onPostExecute -  updata DB");
-                            Looper.prepare();
+
                             Boolean error = false;
                             while (true) {
                                 if (updatesLock.tryLock()) {
@@ -872,7 +874,7 @@ public class SyncDatabase {
                                 });
                             }
                             Log.d(TAG, "Max_Collision_Number  končí " );
-                            Looper.loop();
+
                         }
                     }.start();
                 }
@@ -896,7 +898,7 @@ public class SyncDatabase {
                             lockHandler = false;
                             new Thread() {
                                 public void run() {
-                                    Looper.prepare();
+
                                     ArrayList<HashMap<android.location.Location, Float>> bumps = new ArrayList<HashMap<android.location.Location, Float>>();
                                     ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
                                     while (true) {
@@ -923,7 +925,7 @@ public class SyncDatabase {
                                         }
                                     }
                                     saveBump(bumps, bumpsManual, 0);
-                                    Looper.loop();
+
                                 }
                             }.start();
                         } else if (updates == 1) {
@@ -955,9 +957,9 @@ public class SyncDatabase {
 
     private Bump Handler;
     private boolean lock = true;
-    private ArrayList<HashMap< android.location.Location, Float>> listHelp;
-    private ArrayList<Integer> bumpsManualHelp;
-    private Integer poradie;
+    private ArrayList<HashMap< android.location.Location, Float>> listHelp = null;
+    private ArrayList<Integer> bumpsManualHelp = null;
+    private Integer poradie = 0;
 
     public void saveBump(ArrayList<HashMap< android.location.Location, Float>> list, ArrayList<Integer> bumpsManual, Integer sequel) {
         Log.d(TAG, "saveBump start" );
@@ -969,7 +971,7 @@ public class SyncDatabase {
                 Looper.prepare();
                 while (true) {
                     if (lock) {
-                        if (!listHelp.isEmpty() && listHelp.size() > poradie) {
+                        if (listHelp!=null && !listHelp.isEmpty() && listHelp.size() > poradie) {
                             Iterator it = listHelp.get(poradie).entrySet().iterator();
                             HashMap.Entry pair = (HashMap.Entry) it.next();
                             final  android.location.Location  loc = ( android.location.Location) pair.getKey();
@@ -1003,8 +1005,10 @@ public class SyncDatabase {
                                                         database.endTransaction();
                                                     }
                                                     finally {
-                                                        database.close();
-                                                        databaseHelper.close();
+                                                        if (database!=null) {
+                                                            database.close();
+                                                            databaseHelper.close();
+                                                        }
                                                     }
                                                     checkCloseDb(database);
 
@@ -1047,7 +1051,7 @@ public class SyncDatabase {
                         try {
                             while (true) {
                                 if (updatesLock.tryLock()) {
-                                   try {
+                                    try {
                                         if (listHelp.size() > 0 && accelerometer.getPossibleBumps().size() > 0) {
                                             Log.d(TAG, "saveBump aktualizujem zoznam" );
                                             int i = 0;
@@ -1096,10 +1100,10 @@ public class SyncDatabase {
                                             accelerometer.getPossibleBumps().addAll(listHelp);
                                             accelerometer.getBumpsManual().addAll(bumpsManualHelp);
                                         }
-                                   } finally {
+                                    } finally {
                                         updatesLock.unlock();
                                         break;
-                                   }
+                                    }
                                 } else {
                                     Log.d(TAG, "saveBump db try lock" );
                                     try {

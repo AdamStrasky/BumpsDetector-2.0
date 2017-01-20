@@ -149,7 +149,8 @@ public class Accelerometer extends Service implements SensorEventListener {
                         //  Log.d(TAG, " rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
                         if (global_gps.getmCurrentLocation().getSpeed() > 3) {
                             Log.d(TAG, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed());
-                            Toast.makeText(contexts, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed(), Toast.LENGTH_SHORT).show();
+                            // loo.prepare použiť ak chcem Toast make použiť
+                           // Toast.makeText(contexts, "dostatočná  rýchlosť " + global_gps.getmCurrentLocation().getSpeed(), Toast.LENGTH_SHORT).show();
                         }
                     final Location location = global_gps.getmCurrentLocation();
                     //prechadza sa cele LIFO, kontroluje sa, ci zmena zrychlenia neprekrocila THRESHOLD
@@ -298,8 +299,10 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                     database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
                                                 }
                                                 finally {
-                                                    database.close();
-                                                    databaseHelper.close();
+                                                    if (database!=null) {
+                                                        database.close();
+                                                        databaseHelper.close();
+                                                    }
                                                 }
                                                 checkCloseDb(database);
                                             }
@@ -335,8 +338,10 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                         database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
                                                     }
                                                     finally {
-                                                        database.close();
-                                                        databaseHelper.close();
+                                                        if (database!=null) {
+                                                            database.close();
+                                                            databaseHelper.close();
+                                                        }
                                                     }
                                                     checkCloseDb(database);
                                                 }
@@ -397,8 +402,10 @@ public class Accelerometer extends Service implements SensorEventListener {
                                 database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                             }
                             finally {
-                                database.close();
-                                databaseHelper.close();
+                                if (database!=null) {
+                                    database.close();
+                                    databaseHelper.close();
+                                }
                             }
                             checkCloseDb(database);
                         }
