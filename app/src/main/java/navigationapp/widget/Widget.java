@@ -50,7 +50,7 @@ public class Widget extends AppWidgetProvider {
 
         private RemoteViews buildUpdate(Context context,Boolean flag) {
 
-           RemoteViews updateViews=new RemoteViews(context.getPackageName(), R.layout.new_app_widget);
+           RemoteViews updateViews=new RemoteViews(context.getPackageName(), R.layout.widget);
            if (flag) {
                Click a = new Click(getApplicationContext());
             }
