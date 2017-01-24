@@ -1,6 +1,7 @@
 package navigationapp.voice_application;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -16,17 +17,17 @@ import navigationapp.error.ExceptionHandler;
 
 public class GPSPosition extends Service implements LocationListener {
 
-    private Context mContext= null;
+    private Context mContext = null;
     boolean isGPSEnabled = false;
     boolean isNetworkEnabled = false;
     boolean canGetLocation = false;
     android.location.Location location = null;
-    double latitude;
-    double longitude;
-    protected LocationManager locationManager;
+    double latitude = 0;
+    double longitude = 0;
+    protected LocationManager locationManager = null;
     private final String TAG = "GPSPosition";
 
-    public GPSPosition( ) {
+    public GPSPosition() {
 
     }
 
@@ -43,12 +44,12 @@ public class GPSPosition extends Service implements LocationListener {
             isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
-               Log.d(TAG," no gps");
+                Log.d(TAG, " no gps");
             } else {
                 this.canGetLocation = true;
                 if (isNetworkEnabled) {
                     locationManager.requestLocationUpdates(
-                            LocationManager.NETWORK_PROVIDER,60000,10, this);
+                            LocationManager.NETWORK_PROVIDER, 60000, 10, this);
                     if (locationManager != null) {
                         location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                         if (location != null) {
@@ -58,13 +59,13 @@ public class GPSPosition extends Service implements LocationListener {
                     }
                 }
 
-              if (isGPSEnabled) {
+                if (isGPSEnabled) {
                     if (location == null) {
                         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                             return null;
                         }
                         locationManager.requestLocationUpdates(
-                                LocationManager.GPS_PROVIDER,60000,10, this);
+                                LocationManager.GPS_PROVIDER, 60000, 10, this);
                         Log.d(TAG, "GPS Enabled");
                         if (locationManager != null) {
                             location = locationManager
@@ -85,21 +86,29 @@ public class GPSPosition extends Service implements LocationListener {
         return location;
     }
 
-    public double getLatitude(){
-        if(location != null){
+    public double getLatitude() {
+        if (location != null) {
             latitude = location.getLatitude();
         }
-         return latitude;
+        return latitude;
     }
 
-    public double getLongitude(){
-        if(location != null){
+    public double getLongitude() {
+        if (location != null) {
             longitude = location.getLongitude();
         }
         return longitude;
     }
+
     public boolean canGetLocation() {
         return this.canGetLocation;
+    }
+
+    public void stopUsingGPS() {
+        if (locationManager != null) {
+          //  locationManager.removeUpdates(this);
+
+        }
     }
 
     @Override

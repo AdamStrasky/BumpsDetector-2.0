@@ -10,15 +10,15 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <uses-feature
         android:glEsVersion="0x00020000"
-        android:required="true"
-    />
+        android:required="true" />
 
     <application
-        android:configChanges="orientation|screenSize"
-        android:allowClearUserData="true"
         android:allowBackup="true"
+        android:allowClearUserData="true"
+        android:configChanges="orientation|screenSize"
         android:hardwareAccelerated="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -31,49 +31,60 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name="navigationapp.main_application.MainActivity"
+            android:name=".main_application.MainActivity"
             android:label="@string/title_activity_main"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <service
-            android:priority="1000"
-            android:launchMode="singleTop"
-            android:name="navigationapp.main_application.Accelerometer"
+            android:name=".main_application.Accelerometer"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:priority="1000" />
         <service
-            android:priority="1000"
-            android:launchMode="singleTop"
-            android:name="navigationapp.main_application.GPSLocator"
+            android:name=".main_application.GPSLocator"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:priority="1000" />
         <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
 
-        <activity android:name="navigationapp.main_application.SettingsActivity">
+        <activity android:name=".main_application.SettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />
-
             </intent-filter>
         </activity>
-        <activity android:name="navigationapp.voice_application.VoiceMainActivity">
+
+        <activity android:name=".voice_application.VoiceMainActivity">
             <intent-filter>
                 <action android:name="com.google.android.gms.actions.SEARCH_ACTION" />
-
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <category android:name="android.intent.category.DEFAULT" />
-
             </intent-filter>
         </activity>
 
         <service
             android:name=".voice_application.GPSPosition"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+        <service android:name=".widget.Widget$UpdateService" />
+
+        <receiver android:name=".widget.Widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/new_app_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>

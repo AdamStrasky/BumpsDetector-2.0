@@ -22,7 +22,7 @@ import navigationapp.main_application.Provider;
 import java.math.BigDecimal;
 import java.util.Locale;
 
-public class VoiceMainActivity extends Activity  {
+    public class VoiceMainActivity extends Activity  {
 
     private SQLiteDatabase sb = null;
     private DatabaseOpenHelper databaseHelper = null;
@@ -35,6 +35,8 @@ public class VoiceMainActivity extends Activity  {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
+
+        Toast.makeText(this,"WTFFFFFFF " ,Toast.LENGTH_SHORT).show();
         String query= "";
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
