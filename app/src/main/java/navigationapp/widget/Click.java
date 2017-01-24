@@ -18,10 +18,6 @@ import navigationapp.main_application.DatabaseOpenHelper;
 import navigationapp.main_application.Provider;
 import navigationapp.voice_application.GPSPosition;
 
-/**
- * Created by Adam on 23.1.2017.
- */
-
 public class Click {
 
     private SQLiteDatabase database = null;
@@ -31,17 +27,16 @@ public class Click {
     private Bump Handler = null;
 
     public Click(final Context context) {
-        Log.d("QQQQQ","ppppapasdasdas");
         gps = new GPSPosition(context);
         if(gps.canGetLocation()) { // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu
             final double longitude = gps.getLongitude();
-            Log.d(TAG, " mám polohu " + gps.getLatitude());
+            Log.d(TAG, " mám polohu " + gps.getLatitude() +" " + gps.getLongitude() );
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
             if (gps.isNetworkAvailable(context)) {
-                Handler = new Bump(loc, 6.7f, 1);
+                Handler = new Bump(loc, 6.0f, 1);
                 Handler.getResponse(new CallBackReturn() {
                     public void callback(String results) {
                         if (results.equals("success")) {
@@ -91,18 +86,11 @@ public class Click {
                     Toast.makeText(context, context.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
                 }
             });
-
-
         }
-
         gps.stopUsingGPS();
     }
 
-
-
-
     public void initialization_database(Context context){
-        // inicializacia databazy
         databaseHelper = new DatabaseOpenHelper(context);
         database = databaseHelper.getWritableDatabase();
     }
@@ -111,6 +99,4 @@ public class Click {
         database.close();
         databaseHelper.close();
     }
-
-
 }

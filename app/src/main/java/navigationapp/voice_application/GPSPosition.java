@@ -1,7 +1,6 @@
 package navigationapp.voice_application;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -108,8 +107,10 @@ public class GPSPosition extends Service implements LocationListener {
 
     public void stopUsingGPS() {
         if (locationManager != null) {
-            //  locationManager.removeUpdates(this);
-
+            if (ActivityCompat.checkSelfPermission((mContext), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+               return;
+            }
+           locationManager.removeUpdates(GPSPosition.this);
         }
     }
 

@@ -13,7 +13,6 @@ import android.widget.Toast;
 import android.speech.tts.TextToSpeech;
 
 import navigationapp.R;
-
 import navigationapp.error.ExceptionHandler;
 import navigationapp.main_application.Bump;
 import navigationapp.main_application.CallBackReturn;
@@ -22,13 +21,13 @@ import navigationapp.main_application.Provider;
 import java.math.BigDecimal;
 import java.util.Locale;
 
-    public class VoiceMainActivity extends Activity  {
+public class VoiceMainActivity extends Activity  {
 
     private SQLiteDatabase sb = null;
     private DatabaseOpenHelper databaseHelper = null;
     private Boolean voice = false;
     private GPSPosition gps = null;
-    private Bump Handler = null;
+    private Bump BumpHandler = null;
     private TextToSpeech talker = null;
     private final String TAG = "VoiceMainActivity";
     @Override
@@ -36,7 +35,6 @@ import java.util.Locale;
         super.onCreate(savedInstanceState);
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 
-        Toast.makeText(this,"WTFFFFFFF " ,Toast.LENGTH_SHORT).show();
         String query= "";
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
@@ -79,8 +77,8 @@ import java.util.Locale;
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
-            Handler = new Bump(loc, 6.0f, 1);
-            Handler.getResponse(new CallBackReturn() {
+            BumpHandler = new Bump(loc, 6.0f, 1);
+            BumpHandler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if (results.equals("success")) {
                         Log.d(TAG,"success handler");
@@ -107,8 +105,7 @@ import java.util.Locale;
                                 Toast.makeText(getApplicationContext(), getApplication().getResources().getString(R.string.voice_language_not_supported), Toast.LENGTH_LONG).show();
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
-                                talker.speak("Bump was added " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
-                                while (talker.isSpeaking()){}
+                               talker.speak("Bump was added " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
                             }
                         } else {
                             Log.i("DEBUG", "MISSION FAILED");
@@ -141,7 +138,8 @@ import java.util.Locale;
             else
                 Toast.makeText(this,getApplication().getResources().getString(R.string.voice_turn_gps) ,Toast.LENGTH_LONG).show();
         }
-         finish();
+        gps.stopUsingGPS();
+        finish();
     }
 
     public void initialization_database(){
@@ -152,7 +150,7 @@ import java.util.Locale;
 
     public  String setting_name() { // ziskavam používatelove meno z nastavení
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Log.d(TAG,"retur name "+ prefs.getString("name", ""));
+        Log.d(TAG,"return name "+ prefs.getString("name", ""));
         return prefs.getString("name", "");
 
     }
