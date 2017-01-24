@@ -6,6 +6,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
@@ -106,9 +108,16 @@ public class GPSPosition extends Service implements LocationListener {
 
     public void stopUsingGPS() {
         if (locationManager != null) {
-          //  locationManager.removeUpdates(this);
+            //  locationManager.removeUpdates(this);
 
         }
+    }
+
+    public boolean isNetworkAvailable(Context context) {  // kontrola pripojeného internetu
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     @Override

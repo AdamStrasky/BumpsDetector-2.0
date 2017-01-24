@@ -24,7 +24,7 @@ import navigationapp.voice_application.GPSPosition;
 
 public class Click {
 
-    private SQLiteDatabase sb = null;
+    private SQLiteDatabase database = null;
     private DatabaseOpenHelper databaseHelper = null;
     private GPSPosition gps = null;
     private final String TAG = "Click";
@@ -32,7 +32,6 @@ public class Click {
 
     public Click(final Context context) {
         Log.d("QQQQQ","ppppapasdasdas");
-        initialization_database(context);
         gps = new GPSPosition(context);
         if(gps.canGetLocation()) { // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu
@@ -41,24 +40,41 @@ public class Click {
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
-            Handler = new Bump(loc, 6.7f, 1);
-            Handler.getResponse(new CallBackReturn() {
-                public void callback(String results) {
-                    if (results.equals("success")) {
-                        Log.d(TAG, "success handler");
-                    } else {
-                        Log.d(TAG, "error handler, zapisujem do db");
-                        BigDecimal bd = new BigDecimal(Float.toString(6));
-                        bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                        ContentValues contentValues = new ContentValues();
-                        contentValues.put(Provider.new_bumps.LATITUDE, latitude);
-                        contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
-                        contentValues.put(Provider.new_bumps.MANUAL, 1);
-                        contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                        sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+            if (gps.isNetworkAvailable(context)) {
+                Handler = new Bump(loc, 6.7f, 1);
+                Handler.getResponse(new CallBackReturn() {
+                    public void callback(String results) {
+                        if (results.equals("success")) {
+                            Log.d(TAG, "success handler");
+                        } else {
+                            Log.d(TAG, "error handler, zapisujem do db");
+                            initialization_database(context);
+                            BigDecimal bd = new BigDecimal(Float.toString(6));
+                            bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                            ContentValues contentValues = new ContentValues();
+                            contentValues.put(Provider.new_bumps.LATITUDE, latitude);
+                            contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
+                            contentValues.put(Provider.new_bumps.MANUAL, 1);
+                            contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                            database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                            close_db();
+                        }
                     }
-                }
-            });
+                });
+            } else {
+                Log.d(TAG, "no internet, zapisujem do db");
+                initialization_database(context);
+                BigDecimal bd = new BigDecimal(Float.toString(6));
+                bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(Provider.new_bumps.LATITUDE, latitude);
+                contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
+                contentValues.put(Provider.new_bumps.MANUAL, 1);
+                contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                close_db();
+            }
+
             android.os.Handler handler = new Handler(Looper.getMainLooper());
             handler.post(new Runnable() {
                 @Override
@@ -88,6 +104,13 @@ public class Click {
     public void initialization_database(Context context){
         // inicializacia databazy
         databaseHelper = new DatabaseOpenHelper(context);
-        sb = databaseHelper.getWritableDatabase();
+        database = databaseHelper.getWritableDatabase();
     }
+
+    public void close_db(){
+        database.close();
+        databaseHelper.close();
+    }
+
+
 }
