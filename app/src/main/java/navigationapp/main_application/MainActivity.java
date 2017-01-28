@@ -5,6 +5,7 @@ import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -112,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MapManager mapManager = null;
     private PlaceLocation positionGPS = null;
     ImageView searchLocation = null;
+
 
     @InjectView(R.id.location)
     PlacesAutocompleteTextView mAutocomplete;

@@ -3,6 +3,7 @@ package navigationapp.main_application;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -47,7 +48,7 @@ import static navigationapp.main_application.MainActivity.mapbox;
 import static navigationapp.main_application.MainActivity.navig_on;
 
 public class MapManager extends Activity {
-
+    ProgressDialog pDialog;
     public static String selectedName = null;
     private OfflineManager offlineManager = null;
     private OfflineRegion offlineRegion = null;
@@ -147,11 +148,26 @@ public class MapManager extends Activity {
                                     // zvolené zadanie regionu
                                     if (click == 1) {
                                         Address address = null;
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                pDialog = new ProgressDialog(context);
+                                                pDialog.setMessage(context.getResources().getString(R.string.fnd_location));
+                                                pDialog.show();
+                                            }
+                                        });
+
                                         try {
                                             address = Route.findLocality(regionName, context);
                                         } catch (IOException e) {
                                             e.printStackTrace();
                                         }
+
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                pDialog.dismiss();}
+                                        });
 
                                         if (address == null) {
                                             if (isEneableShowText(context))
@@ -173,7 +189,15 @@ public class MapManager extends Activity {
 
                             @Override
                             public void onClick(View view) {
-                                Toast.makeText(context, context.getResources().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
+                           runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        pDialog = new ProgressDialog(context);
+                                        pDialog.setMessage(context.getResources().getString(R.string.fnd_location));
+                                        pDialog.show();
+                                     }
+                                });
+
                                 Address address = null;
                                 String regionName = regionNameEdit.getText().toString();
                                 try {
@@ -181,6 +205,12 @@ public class MapManager extends Activity {
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        pDialog.dismiss();}
+                                });
 
                                 if (address == null) {
                                     if (isEneableShowText(context))
