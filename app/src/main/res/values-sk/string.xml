@@ -115,7 +115,7 @@
     <string name="button_back">Späť</string>
     <string name="button_delete">Zmazať</string>
     <string name="button_download">Stiahnuť</string>
-    <string name="button_back_on">Naspäť na aktuálnu polohu</string>
+    <string name="button_back_on">Späť</string>
 
     <string name="add_marker">Pridaný výtlk</string>
     <string name="list">Zoznam</string>

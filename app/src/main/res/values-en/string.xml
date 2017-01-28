@@ -116,7 +116,7 @@
     <string name="button_back">Back</string>
     <string name="button_delete">Delete</string>
     <string name="button_download">Download</string>
-    <string name="button_back_on">Back on my position</string>
+    <string name="button_back_on">Back</string>
 
     <string name="add_marker">Add bump</string>
     <string name="list">List</string>
