@@ -40,9 +40,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 import com.google.android.gms.maps.model.LatLng;
@@ -58,8 +61,13 @@ import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.services.commons.geojson.Feature;
 import com.mapbox.services.commons.geojson.FeatureCollection;
+import com.seatgeek.placesautocomplete.DetailsCallback;
+import com.seatgeek.placesautocomplete.OnPlaceSelectedListener;
+import com.seatgeek.placesautocomplete.PlacesAutocompleteTextView;
+import com.seatgeek.placesautocomplete.model.Place;
+import com.seatgeek.placesautocomplete.model.PlaceDetails;
+import com.seatgeek.placesautocomplete.model.PlaceLocation;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -70,7 +78,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
-
 import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.MapManager.selectedName;
 import static navigationapp.main_application.MapManager.setOnPosition;
@@ -103,6 +110,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout = null;
     private MapManager mapManager = null;
+    private PlaceLocation positionGPS = null;
+    ImageView searchLocation = null;
+
+    @InjectView(R.id.location)
+    PlacesAutocompleteTextView mAutocomplete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         Language.setLanguage(MainActivity.this,getLanguage());
         setContentView(R.layout.activity_main);
+        ButterKnife.inject(this);
         context = this;
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
         mapView.onCreate(savedInstanceState);
@@ -219,9 +232,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-
-        final EditText searchBar = (EditText) findViewById(R.id.location);
-        searchBar.setText(getApplication().getResources().getString(R.string.navig));
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);
         delete_button = (Button) findViewById(R.id.delete_btn);
@@ -230,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         navig_on = (Button) findViewById(R.id.navig_on);
         mapConfirm = (LinearLayout) findViewById(R.id.mapConfirm);
         confirm = (LinearLayout) findViewById(R.id.confirm);
-
+        searchLocation = (ImageView) findViewById(R.id.search_img);
         navig_on.setVisibility(View.INVISIBLE);
         confirm.setVisibility(View.INVISIBLE);
         mapConfirm.setVisibility(View.INVISIBLE);
@@ -245,11 +255,82 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         isEneableScreen();  // nastavenie či vypínať displej
 
-        searchBar.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
+        mAutocomplete.setOnPlaceSelectedListener(new OnPlaceSelectedListener() {
+            @Override
+            public void onPlaceSelected(final Place place) {
+
+                mAutocomplete.getDetailsFor(place, new DetailsCallback() {
+
+                    @Override
+                    public void onSuccess(final PlaceDetails details) {
+                        positionGPS = details.geometry.location;
+                        Log.d(TAG," Autocomplete positionGPS;"+  positionGPS);
+                    }
+
+                    @Override
+                    public void onFailure(final Throwable failure) {
+                        Log.d(TAG, "Autocomplete failure " + failure);
+                        positionGPS = null;
+                    }
+                });
+            }
+        });
+        searchLocation.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
             @Override
             public void onClick(View v) {
-                searchBar.setCursorVisible(true);
-                searchBar.setText("");
+                Log.d(TAG,"onClick searchLocation");
+                if ( fragmentActivity==null || fragmentActivity.detection==null) { // nieje načítana mapa
+                    if (isEneableShowText())
+                        Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                    return ;
+                }
+                Address address = null;
+                EditText text = (EditText) findViewById(R.id.location);
+                if (isEneableShowText())
+                    Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
+                text.setCursorVisible(false);
+                hideKeyboard(v);
+                LatLng position = null ;
+                String location = text.getText().toString();
+                if (fragmentActivity.isNetworkAvailable(context)) {
+                    try {
+                        if (positionGPS==null) {
+                            Log.d(TAG,"searchLocation positionGPS bola null");
+                            address = Route.findLocality(location, getApplicationContext());
+                            position= new LatLng(address.getLatitude(),address.getLongitude()) ;
+                        }else  {
+                            Log.d(TAG,"searchLocation positionGPS not null");
+                            position= new LatLng(positionGPS.lat,positionGPS.lng) ;
+                        }
+
+                        if (address == null && positionGPS==null) {
+                            if (isEneableShowText())
+                                Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
+                        } else {
+                            positionGPS = null;
+                            final LatLng to_position = new LatLng(position.latitude,position.longitude);
+                            new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
+                                public void run() {
+                                    fragmentActivity.detection.stop_collison_navigate();
+                                    fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
+                                }
+                            }.start();
+                        }
+                    }
+                    catch (Exception e) {
+                        if (isEneableShowText())
+                            Toast.makeText(getApplicationContext(),  getApplicationContext().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
+                        if ( fragmentActivity.gps!=null) {
+                            fragmentActivity.gps.remove_draw_road();
+                            fragmentActivity.detection.setRoad(false);
+                            fragmentActivity.detection.stop_collison_navigate();
+                        }
+                    }
+                }
+                else {
+                    if (isEneableShowText())
+                        Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find_net), Toast.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -500,8 +581,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
            case R.id.navigation:  // ukončuje navigáciu
                 close();
                 EditText text = (EditText) findViewById(R.id.location);
-
-                text.setText(this.getResources().getString(R.string.navig));
+                 positionGPS =null;
+                text.setText("");
                 if ( fragmentActivity.gps!=null) {
 
                             fragmentActivity.gps.remove_draw_road();
@@ -581,9 +662,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mapManager.downloadedRegionList();
                 return true;
 
-           case R.id.error:
+         /*  case R.id.error:
                int number = Integer.parseInt("number");
-               return true;
+               return true;*/
 
             case R.id.exit:
                 close();
@@ -961,6 +1042,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
             case R.id.navig_on:
+                positionGPS = null;
                 setOnPosition =true;
                 if (fragmentActivity.gps!=null)
                     fragmentActivity.gps.getOnPosition();
@@ -980,47 +1062,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public static void activityPaused() {
         activityVisible = false;
-    }
-
-    public void onClick_Search(View v) throws IOException {
-        if ( fragmentActivity==null || fragmentActivity.detection==null) { // nieje načítana mapa
-            if (isEneableShowText())
-                Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
-            return ;
-        }
-        Address address = null;
-        EditText text = (EditText) findViewById(R.id.location);
-        if (isEneableShowText())
-            Toast.makeText(this, this.getResources().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
-        text.setCursorVisible(false);
-        hideKeyboard(v);
-        String location = text.getText().toString();
-        if (fragmentActivity.isNetworkAvailable(context)) {
-            try {
-                address = Route.findLocality(location, this);
-                if (address == null) {
-                    if (isEneableShowText())
-                        Toast.makeText(this, this.getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
-                }
-                else {
-                    final LatLng to_position = new LatLng(address.getLatitude(),address.getLongitude());
-                    new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
-                        public void run() {
-                            fragmentActivity.detection.stop_collison_navigate();
-                            fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
-                        }
-                    }.start();
-                }
-            }
-            catch (Exception e) {
-                if (isEneableShowText())
-                    Toast.makeText(this,  this.getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
-            }
-        }
-        else {
-            if (isEneableShowText())
-                Toast.makeText(this, this.getResources().getString(R.string.unable_find_net), Toast.LENGTH_LONG).show();
-        }
     }
 
     public void hideKeyboard(View v) {

@@ -74,7 +74,7 @@ public class Click {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(context, context.getResources().getString(R.string.bump_add), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, context.getResources().getString(R.string.bump_add), Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -83,7 +83,7 @@ public class Click {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(context, context.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, context.getResources().getString(R.string.no_gps), Toast.LENGTH_SHORT).show();
                 }
             });
         }

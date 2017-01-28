@@ -4,7 +4,6 @@
     xmlns:mapbox="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
     android:orientation="vertical"
     tools:context="navigationapp.main_application.MainActivity" >
 
@@ -12,41 +11,26 @@
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:theme="@style/AppTheme.AppBarOverlay">
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
-
     </android.support.design.widget.AppBarLayout>
-
-
-
-
 
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapboxMarkerMapView"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         mapbox:style_url="mapbox://styles/mapbox/streets-v9"
         mapbox:zoom="2"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/location"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         mapbox:center_latitude="49.2066418"
-        mapbox:center_longitude="18.8746749">
-
-
+        mapbox:center_longitude="18.8746749"
+        android:layout_below="@+id/laytbtns">
     </com.mapbox.mapboxsdk.maps.MapView>
 
     <LinearLayout
-
-        android:layout_width="384dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/mapConfirm"
@@ -67,7 +51,6 @@
             android:textAllCaps="false"
             style="@style/Widget.AppCompat.Button.Colored" />
 
-
         <Button
             android:id="@+id/backMap_btn"
             android:layout_width="fill_parent"
@@ -79,7 +62,6 @@
     </LinearLayout>
 
     <LinearLayout
-
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
@@ -122,33 +104,6 @@
         android:textAllCaps="false"
         style="@style/Widget.AppCompat.Button.Colored" />
 
-    <EditText
-        android:layout_width="fill_parent"
-        android:layout_height="50dp"
-        android:id="@+id/location"
-        android:text="Navigate to..."
-        android:focusableInTouchMode="true"
-        android:focusable="true"
-        android:cursorVisible="false"
-        android:paddingLeft="15dp"
-        android:textStyle="bold"
-        android:textColorHint="#ffffff"
-        android:textColor="#ffffff"
-        android:background="#282626"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <ImageView
-        android:id="@+id/search_img"
-        android:onClick="onClick_Search"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_alignTop="@+id/location"
-        android:layout_alignBottom="@+id/location"
-        android:layout_alignRight="@+id/location"
-        android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"/>
-
     <Button
         android:id="@+id/add_button"
         android:layout_width="80dp"
@@ -164,4 +119,33 @@
         android:layout_alignBottom="@+id/mapConfirm"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
+
+    <LinearLayout
+        android:id="@+id/laytbtns"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <com.seatgeek.placesautocomplete.PlacesAutocompleteTextView
+            android:id="@+id/location"
+            android:hint="@string/navig"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:minHeight="50dp"
+            app:pacv_googleMapsApiKey="AIzaSyA_L4Y03zBnAh6u9y6Lq2WcpcXkig_N0xs"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@+id/search_img"
+            android:layout_toStartOf="@+id/search_img"
+            android:layout_weight="5"/>
+
+        <ImageView
+            android:id="@+id/search_img"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
 </RelativeLayout>
