@@ -20,7 +20,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -107,44 +106,76 @@ public class MapManager extends Activity {
     }
 
     public void alertSelectRegion(final String region,final int which) {
-        Log.d(TAG, "alertSelectRegion start");
-        String strName = context.getResources().getString(R.string.map_for_download);
-        // ktorá možnosť bola zvolená - currnet/ select
-        final int click = which;
-        final EditText regionNameEdit = new EditText(context);
-        if (which == 0)
-            regionNameEdit.setHint(context.getResources().getString(R.string.name_region));
-        else
-            regionNameEdit.setHint(context.getResources().getString(R.string.name_region_download));
-        // ak bolo znovuotvorene, nech zostane uložený nazov regionu
-        if (region != null)
-            regionNameEdit.setText(region);
+        new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
+            public void run() {
+                Looper.prepare();
+                Log.d(TAG, "alertSelectRegion start");
+                String strName = context.getResources().getString(R.string.map_for_download);
+                // ktorá možnosť bola zvolená - currnet/ select
+                final int click = which;
+                final EditText regionNameEdit = new EditText(context);
+                if (which == 0)
+                    regionNameEdit.setHint(context.getResources().getString(R.string.name_region));
+                else
+                    regionNameEdit.setHint(context.getResources().getString(R.string.name_region_download));
+                // ak bolo znovuotvorene, nech zostane uložený nazov regionu
+                if (region != null)
+                    regionNameEdit.setText(region);
 
-        AlertDialog.Builder windowAlert = new AlertDialog.Builder(context);
-        windowAlert.setPositiveButton(context.getResources().getString(R.string.download), null);
-        windowAlert.setNegativeButton(context.getResources().getString(R.string.cancel), null);
-        // ak volím select, dať možnosť aj zobraziť mapu
-        if (which != 0)
-            windowAlert.setNeutralButton(context.getResources().getString(R.string.navige_to), null);
-        windowAlert.setView(regionNameEdit);
-        windowAlert.setTitle(strName);
-        final AlertDialog mAlertDialog = windowAlert.create();
-        mAlertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialog) {
-                Button positive_btn = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                positive_btn.setOnClickListener(new View.OnClickListener() {
-
+                AlertDialog.Builder windowAlert = new AlertDialog.Builder(context);
+                windowAlert.setPositiveButton(context.getResources().getString(R.string.download), null);
+                windowAlert.setNegativeButton(context.getResources().getString(R.string.cancel), null);
+                // ak volím select, dať možnosť aj zobraziť mapu
+                if (which != 0)
+                    windowAlert.setNeutralButton(context.getResources().getString(R.string.navige_to), null);
+                windowAlert.setView(regionNameEdit);
+                windowAlert.setTitle(strName);
+                final AlertDialog mAlertDialog = windowAlert.create();
+                mAlertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
                     @Override
-                    public void onClick(View view) {
-                        String regionName = regionNameEdit.getText().toString();
-                        if (regionName.length() == 0) {
-                            if (isEneableShowText(context))
-                                Toast.makeText(context, context.getResources().getString(R.string.region_empty), Toast.LENGTH_SHORT).show();
-                        } else {
-                            // zvolené zadanie regionu
-                            if (click == 1) {
+                    public void onShow(DialogInterface dialog) {
+                        Button positive_btn = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                        positive_btn.setOnClickListener(new View.OnClickListener() {
+
+                            @Override
+                            public void onClick(View view) {
+                                String regionName = regionNameEdit.getText().toString();
+                                if (regionName.length() == 0) {
+                                    if (isEneableShowText(context))
+                                        Toast.makeText(context, context.getResources().getString(R.string.region_empty), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    // zvolené zadanie regionu
+                                    if (click == 1) {
+                                        Address address = null;
+                                        try {
+                                            address = Route.findLocality(regionName, context);
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        if (address == null) {
+                                            if (isEneableShowText(context))
+                                                Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            mAlertDialog.cancel();
+                                            downloadRegion(regionName, click);
+                                        }
+                                    } else {
+                                        mAlertDialog.cancel();
+                                        downloadRegion(regionName, click);
+                                    }
+                                }
+                            }
+                        });
+                        // kliknutie na navigovanie na zadani region
+                        Button neutral_btn = mAlertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+                        neutral_btn.setOnClickListener(new View.OnClickListener() {
+
+                            @Override
+                            public void onClick(View view) {
+                                Toast.makeText(context, context.getResources().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
                                 Address address = null;
+                                String regionName = regionNameEdit.getText().toString();
                                 try {
                                     address = Route.findLocality(regionName, context);
                                 } catch (IOException e) {
@@ -153,53 +184,31 @@ public class MapManager extends Activity {
 
                                 if (address == null) {
                                     if (isEneableShowText(context))
-                                        Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_LONG).show();
                                 } else {
+                                    setOnPosition = false;
                                     mAlertDialog.cancel();
-                                    downloadRegion(regionName, click);
+
+                                    selectedName = regionName;
+                                    animetaCamera(address.getLatitude(), address.getLongitude());
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mapbox.setMyLocationEnabled(false);
+                                            // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
+                                            mapConfirm.setVisibility(View.VISIBLE);
+                                            add_button.setVisibility(View.INVISIBLE);
+                                        }
+                                    });
                                 }
-                            } else {
-                                mAlertDialog.cancel();
-                                downloadRegion(regionName, click);
                             }
-                        }
+                        });
                     }
                 });
-                // kliknutie na navigovanie na zadani region
-                Button neutral_btn = mAlertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
-                neutral_btn.setOnClickListener(new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View view) {
-
-                        Address address = null;
-                        String regionName = regionNameEdit.getText().toString();
-                        try {
-                            address = Route.findLocality(regionName, context);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        if (address == null) {
-                            if (isEneableShowText(context))
-                                Toast.makeText(context, context.getResources().getString(R.string.region_not_exist), Toast.LENGTH_LONG).show();
-
-                        } else {
-                            setOnPosition = false;
-                            mapbox.setMyLocationEnabled(false);
-                            mAlertDialog.cancel();
-
-                            selectedName = regionName;
-                            animetaCamera(address.getLatitude(), address.getLongitude());
-                            // zobrazenie buttonu na  vratenie mapy na sucasnu polohu
-                            mapConfirm.setVisibility(View.VISIBLE);
-                            add_button.setVisibility(View.INVISIBLE);
-                        }
-                    }
-                });
+                mAlertDialog.show();
+                Looper.loop();
             }
-        });
-        mAlertDialog.show();
+        }.start();
     }
 
     private void animetaCamera(double latitude, double longitude) {

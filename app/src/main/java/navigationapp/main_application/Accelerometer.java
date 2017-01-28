@@ -88,12 +88,12 @@ public class Accelerometer extends Service implements SensorEventListener {
 
     synchronized public void recalibrate() {
         Log.d(TAG, "Recalibrate start");
-        if (global_gps != null && global_gps.getmCurrentLocation()!=null && global_gps.getmCurrentLocation().getSpeed()== 0) {
+        if (delta < THRESHOLD || String.valueOf(delta).equals("NaN")) {
             Log.d(TAG, "sensor Accelerometer automatic re-calibrate");
             calibrate();
         }
         else
-            Log.d(TAG, "sensor Accelerometer automatic re-calibrate no gps or speed > 0");
+            Log.d(TAG, "sensor Accelerometer automatic delta > THRESHOLD" + delta);
     }
 
     public ArrayList<HashMap<Location, Float>> getPossibleBumps() {
