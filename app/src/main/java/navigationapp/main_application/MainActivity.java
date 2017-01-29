@@ -25,7 +25,9 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -60,6 +62,7 @@ import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -123,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @InjectView(R.id.location)
     PlacesAutocompleteTextView mAutocomplete;
-
+    com.mapbox.mapboxsdk.geometry.LatLng points =null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -147,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onMapClick(@NonNull com.mapbox.mapboxsdk.geometry.LatLng point) {
                         if (allow_click) {  // ak som klikol na plus, možem klikať
+                            points =point;
                             if (featureMarker != null) { // ak existuje marker, posuvam ho po mape
                                 ValueAnimator markerAnimator = ObjectAnimator.ofObject(featureMarker, "position",
                                         new LatLngEvaluator(), featureMarker.getPosition(), point);
@@ -169,6 +173,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 Log.d(TAG," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
                         }
+
+                      mapboxMap.setOnCameraChangeListener(new MapboxMap.OnCameraChangeListener() {
+                            @Override
+                            public void onCameraChange(CameraPosition position) {
+                                if (allow_click) {
+                                    if (featureMarker != null) {
+                                        runOnUiThread(new Runnable() {
+                                            public void run() {
+                                                show();
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        });
 
                         ////////////////////////////////////////////////////////////////
                         final SymbolLayer markerAuto = (SymbolLayer) mapbox.getLayer("selected-marker-layer-auto");
@@ -286,6 +305,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         searchLocation.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
             @Override
             public void onClick(final View v) {
+                EditText text = (EditText) findViewById(R.id.location);
+                text.setCursorVisible(false);
                 new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
                     public void run() {
                         Looper.prepare();
@@ -338,8 +359,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Looper.loop();
                     }
                 }.start();
-                EditText text = (EditText) findViewById(R.id.location);
-                text.setCursorVisible(false);
+
             }
 
         });
@@ -372,6 +392,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         navigationView.setNavigationItemSelectedListener(this);
     }
 
+    synchronized  public  void show () {
+        if (featureMarker != null) {
+            ValueAnimator markerAnimator = ObjectAnimator.ofObject(featureMarker, "position",
+                    new LatLngEvaluator(), featureMarker.getPosition(), points);
+            markerAnimator.setDuration(2000);
+            markerAnimator.start();
+        }
+    }
+
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {  // reaguje na klik na menu
         super.onPostCreate(savedInstanceState);
@@ -390,7 +419,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+           // super.onBackPressed();
         }
     }
     @Override

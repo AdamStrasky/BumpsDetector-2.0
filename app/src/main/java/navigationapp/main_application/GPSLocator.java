@@ -127,6 +127,8 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         if (mapbox!=null  && getmCurrentLocation()!=null) {
          final   com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
             if (mapbox != null && yourLatLng != null) {
+                mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
+
                 final CameraPosition position = new CameraPosition.Builder()
                         .target(yourLatLng)
                         .zoom(ZOOM_LEVEL)
