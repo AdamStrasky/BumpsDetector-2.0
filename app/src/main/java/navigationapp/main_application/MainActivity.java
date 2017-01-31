@@ -6,7 +6,6 @@ import android.animation.ValueAnimator;
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -25,9 +24,7 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -281,7 +278,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mapManager = new MapManager(this);
 
         isEneableScreen();  // nastavenie či vypínať displej
-
+        EditText text = (EditText) findViewById(R.id.location);
+        text.setCursorVisible(false);
         mAutocomplete.setOnPlaceSelectedListener(new OnPlaceSelectedListener() {
             @Override
             public void onPlaceSelected(final Place place) {
@@ -291,13 +289,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onSuccess(final PlaceDetails details) {
                         positionGPS = details.geometry.location;
-                        Log.d(TAG," Autocomplete positionGPS;"+  positionGPS);
+                        Log.d(TAG," Autocomplete positionGPS.lat;"+  positionGPS.lat +" positionGPS.lng "+positionGPS.lng);
                     }
 
                     @Override
                     public void onFailure(final Throwable failure) {
                         Log.d(TAG, "Autocomplete failure " + failure);
-                        positionGPS = null;
+                       // positionGPS = null;
                     }
                 });
             }

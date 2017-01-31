@@ -10,7 +10,7 @@
     <ImageButton
         android:id="@+id/actionButton"
         android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_height="75dp"
         android:src="@drawable/widget"
         android:background="#00000000"
     />

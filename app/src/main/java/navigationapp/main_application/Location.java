@@ -10,7 +10,6 @@ import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.Toast;
 
-import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -243,6 +242,7 @@ public class Location {
                         Log.d(TAG, "collision_places  isInterrupted ");
                     }
                     while(!this.isInterrupted() ) {
+                        int time_to_sleeep = 40000;
                         Log.d(TAG, "collision_places - name of pid " + String.valueOf(this.getId()));
 
                         if (Thread.currentThread().isInterrupted()) {
@@ -365,10 +365,11 @@ public class Location {
                                     }
                                 }
                             } else {
+                                time_to_sleeep = 5000;
                                 Log.d(TAG, "collision_places  no selected road");
                             }
                             try {
-                                Thread.sleep(40000);
+                                Thread.sleep(time_to_sleeep);
                             } catch (InterruptedException e) {
                                 Log.d(TAG,"collision_places throw sleep  for 40 seconds ");
                                 throw new InterruptedException();
@@ -441,7 +442,7 @@ public class Location {
                         Log.d(TAG, "estimation avarage_speed_second "+ String.valueOf(avarage_speed_second));
 
                         if (avarage_speed > avarage_speed_second )
-                            best_cause = avarage_speed_second;
+                            best_cause = avarage_speed;
                         else
                             best_cause = avarage_speed_second;
 
@@ -480,8 +481,9 @@ public class Location {
                                     }
                                 }
 
-                            } else {   if (directionPoint != null &&  directionPoint.size() > 0 )
-                                actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
+                            } else {
+                                if (directionPoint != null &&  directionPoint.size() > 0 )
+                                    actual_distance = getDistance((float) latitude, (float) longitude, (float) directionPoint.get(0).latitude, (float) directionPoint.get(0).longitude);
 
                                 if (previous_distance < actual_distance) {
                                     if (bump_actual != null && bump_actual.size() > 0) {
@@ -498,7 +500,7 @@ public class Location {
                             double times_to_sleep = actual_distance / best_cause;
                             Log.d(TAG, "estimation čas ku výtlku  " + String.valueOf(times_to_sleep));
                             //  - čas pred výtlkom
-                            if (String.valueOf(times_to_sleep).equals("NaN")) {
+                            if (String.valueOf(times_to_sleep).equals("NaN") || String.valueOf(times_to_sleep).equals("Infinity")) {
                                 times_to_sleep = 999999;
                                 Log.d(TAG, "estimation čas ku výtlku bol NAN " );
                             }
@@ -509,17 +511,18 @@ public class Location {
 
                             if (convert_time > treshold || convert_time < 0)
                                 time_stop = treshold;
-                            else if (convert_time < 5000) {
+                            else if (convert_time < 10000) {
                                 if (this.isInterrupted()) {
                                     Log.d(TAG, "estimation isInterrupted pred upozornenim na výtlk ");
                                     throw new InterruptedException("");
                                 }
                                     if (!isEneableVoice()) {
-                                    final double i =  round (actual_distance,0);
+                                    final  int rounded_distance = (int) Math.round(actual_distance);
+
                                     while (tts.isSpeaking()){ }
                                     context.runOnUiThread(new Runnable() {
                                         public void run() {
-                                            tts.speak("for" + i + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
+                                            tts.speak("for" + rounded_distance + " meters is detected bump", TextToSpeech.QUEUE_FLUSH, null);
                                         }
                                     });
                                     while (tts.isSpeaking()){ }
