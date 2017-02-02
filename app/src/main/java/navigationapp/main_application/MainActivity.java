@@ -3,7 +3,6 @@ package navigationapp.main_application;
 import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
-import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
@@ -36,7 +35,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
-import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -166,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         .title(getApplication().getResources().getString(R.string.add_marker))
                                         .icon(icons)
                                 );
+                                fragmentActivity.mapLayer.setClear(featureMarker);
                                 convert_location = point;
                                 Log.d(TAG," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
@@ -484,23 +483,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     case 0:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        if (featureMarker!=null)
-                                            fragmentActivity.mapLayer.setClear(featureMarker);
                                         fragmentActivity.mapLayer.getAllBumps(lightBumps.latitude, lightBumps.longitude);
                                         break;
 
                                     case 1:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                                         LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        if (featureMarker!=null)
-                                            fragmentActivity.mapLayer.setClear(featureMarker);
                                         fragmentActivity.mapLayer.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
                                         LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        if (featureMarker!=null)
-                                            fragmentActivity.mapLayer.setClear(featureMarker);
                                         fragmentActivity.mapLayer.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
 
                                         break;
@@ -550,8 +543,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                                 fragmentActivity.mapLayer.level = ALL_BUMPS;
                                                 LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
-                                                if (featureMarker!=null)
-                                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
 
                                         break;
@@ -560,8 +551,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                                 fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
                                                 LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
-                                                if (featureMarker!=null)
-                                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
 
                                         break;
@@ -569,8 +558,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                                 fragmentActivity.mapLayer.level = LARGE_BUMPS;
                                                 LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
-                                                if (featureMarker!=null)
-                                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                                 fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
 
                                         break;
@@ -610,8 +597,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
            case R.id.clear_map:  // vyčistí mapu
                 close();
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
-                    if (featureMarker!=null)
-                        fragmentActivity.mapLayer.setClear(featureMarker);
                     fragmentActivity.gps.remove_draw_road();
                     fragmentActivity.mapLayer.deleteOldMarker();
 
@@ -958,8 +943,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 // spustenie listenera na mapu
                                 allow_click=true;
                                 confirm.setVisibility(View.VISIBLE);
-                                if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
-                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                 add_button.setVisibility(View.INVISIBLE);
 
                             }
@@ -1060,10 +1043,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
                 allow_click=false;  // disable listener na klik
-                save(false);
+
                 convert_location  =null;
                 if (fragmentActivity!=null && fragmentActivity.mapLayer!=null)
                     fragmentActivity.mapLayer.setClear(null);  // mapa už bude mazať aj marker
+                save(false);
                 break;
             case R.id.backMap_btn:
                 setOnPosition = true;

@@ -266,7 +266,7 @@ public class MapLayer {
             if ( mapbox != null) {
                 List<Marker> markers = mapbox.getMarkers();
                 for (int i = 0; i < markers.size(); i++) {
-                    if (markers.get(i)!=marker )
+                    if (markers.get(i)!= marker )
                     mapbox.removeMarker(markers.get(i));
                 }
             }

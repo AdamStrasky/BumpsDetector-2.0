@@ -506,6 +506,7 @@ public class Location {
                             }
                             long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
                             double convert_time = result;
+                            Log.d(TAG, "estimation convert_time "+ convert_time );
                             time_stop = 0;
                             int treshold = 20000;
 
