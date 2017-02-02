@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdate;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 
@@ -127,7 +128,7 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
         if (mapbox!=null  && getmCurrentLocation()!=null) {
          final   com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
             if (mapbox != null && yourLatLng != null) {
-                mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
+                mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(yourLatLng.getLatitude(), yourLatLng.getLongitude())));
 
                 final CameraPosition position = new CameraPosition.Builder()
                         .target(yourLatLng)
