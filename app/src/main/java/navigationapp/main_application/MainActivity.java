@@ -32,6 +32,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
@@ -41,11 +42,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import butterknife.ButterKnife;
@@ -72,9 +76,11 @@ import com.seatgeek.placesautocomplete.PlacesAutocompleteTextView;
 import com.seatgeek.placesautocomplete.model.Place;
 import com.seatgeek.placesautocomplete.model.PlaceDetails;
 import com.seatgeek.placesautocomplete.model.PlaceLocation;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -88,6 +94,9 @@ import static navigationapp.main_application.MapManager.selectedName;
 import static navigationapp.main_application.MapManager.setOnPosition;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener {
+
+    private SlidingUpPanelLayout mLayout;
+
     private Context context;
     private AtomicBoolean threadLock = new AtomicBoolean(false);
     private final float ALL_BUMPS = 1.0f;
@@ -129,6 +138,71 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         Language.setLanguage(MainActivity.this,getLanguage());
         setContentView(R.layout.activity_main);
+        mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        mLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        ListView lv = (ListView) findViewById(R.id.list);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(MainActivity.this, "onItemClick", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        List<String> your_array_list = Arrays.asList(
+                "This",
+                "Is",
+                "An",
+                "Example",
+                "ListView",
+                "That",
+                "You",
+                "Can",
+                "Scroll",
+                ".",
+                "It",
+                "Shows",
+                "How",
+                "Any",
+                "Scrollable",
+                "View",
+                "Can",
+                "Be",
+                "Included",
+                "As",
+                "A",
+                "Child",
+                "Of",
+                "SlidingUpPanelLayout"
+        );
+
+        // This is the array adapter, it takes the context of the activity as a
+        // first parameter, the type of list view as a second parameter and your
+        // array as a third parameter.
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_list_item_1,
+                your_array_list );
+
+        lv.setAdapter(arrayAdapter);
+
+        mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+
+
+        TextView t = (TextView) findViewById(R.id.name);
+        t.setText("aaaa");
+        Button f = (Button) findViewById(R.id.follow);
+        f.setText("bbbb");
+
+        f.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+              //  Intent i = new Intent(Intent.ACTION_VIEW);
+              //  i.setData(Uri.parse("http://www.twitter.com/umanoapp"));
+             //   startActivity(i);
+            }
+        });
+
+
         ButterKnife.inject(this);
         context = this;
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
@@ -235,6 +309,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             deselectMarker(markerManual, 1);
                         }
                         if (featureAuto.size() > 0) {
+
                             if (featureAuto.get(0).getStringProperty("property")!=null) {
                                 if (isEneableShowText())
                                  Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
@@ -243,6 +318,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             return;
                         }
                         if (featuresManual.size() > 0) {
+
                             if (featuresManual.get(0).getStringProperty("property")!=null) {
                                 if (isEneableShowText())
                                     Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
@@ -798,6 +874,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // animácia na vybraný marker - zväčšenie
         if (marker==null)
             return;
+        mLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         ValueAnimator markerAnimator = new ValueAnimator();
         markerAnimator.setObjectValues(1f, 2f);
         markerAnimator.setDuration(300);
@@ -822,6 +899,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // animácia na vybraný marker - zmenšenie
         if (marker==null)
             return;
+        mLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         ValueAnimator markerAnimator = new ValueAnimator();
         markerAnimator.setObjectValues(2f, 1f);
         markerAnimator.setDuration(300);
