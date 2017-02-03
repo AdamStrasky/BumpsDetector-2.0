@@ -56,6 +56,12 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import navigationapp.error.ExceptionHandler;
 import navigationapp.R;
+
+import com.daimajia.slider.library.Animations.DescriptionAnimation;
+import com.daimajia.slider.library.SliderLayout;
+import com.daimajia.slider.library.SliderTypes.BaseSliderView;
+import com.daimajia.slider.library.SliderTypes.TextSliderView;
+import com.daimajia.slider.library.Tricks.ViewPagerEx;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
@@ -93,9 +99,10 @@ import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.MapManager.selectedName;
 import static navigationapp.main_application.MapManager.setOnPosition;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener , BaseSliderView.OnSliderClickListener, ViewPagerEx.OnPageChangeListener{
 
     private SlidingUpPanelLayout mLayout;
+    private SliderLayout mDemoSlider;
 
     private Context context;
     private AtomicBoolean threadLock = new AtomicBoolean(false);
@@ -140,52 +147,63 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         mLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-        ListView lv = (ListView) findViewById(R.id.list);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(MainActivity.this, "onItemClick", Toast.LENGTH_SHORT).show();
-            }
-        });
 
-        List<String> your_array_list = Arrays.asList(
-                "This",
-                "Is",
-                "An",
-                "Example",
-                "ListView",
-                "That",
-                "You",
-                "Can",
-                "Scroll",
-                ".",
-                "It",
-                "Shows",
-                "How",
-                "Any",
-                "Scrollable",
-                "View",
-                "Can",
-                "Be",
-                "Included",
-                "As",
-                "A",
-                "Child",
-                "Of",
-                "SlidingUpPanelLayout"
-        );
-
-        // This is the array adapter, it takes the context of the activity as a
-        // first parameter, the type of list view as a second parameter and your
-        // array as a third parameter.
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
-                this,
-                android.R.layout.simple_list_item_1,
-                your_array_list );
-
-        lv.setAdapter(arrayAdapter);
 
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        mDemoSlider = (SliderLayout)findViewById(R.id.slider);
+
+        HashMap<String,String> url_maps = new HashMap<String, String>();
+        url_maps.put("Hannibal", "http://static2.hypable.com/wp-content/uploads/2013/12/hannibal-season-2-release-date.jpg");
+        url_maps.put("Big Bang Theory", "http://tvfiles.alphacoders.com/100/hdclearart-10.png");
+        url_maps.put("House of Cards", "http://cdn3.nflximg.net/images/3093/2043093.jpg");
+        url_maps.put("Game of Thrones1", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+        url_maps.put("Game of Thrones2", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+        url_maps.put("Game of Thrones3", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+        url_maps.put("Game of Thrones4", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+        url_maps.put("Game of Thrones5", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+        url_maps.put("Game of Thrones6", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+        url_maps.put("Game of Thrones7", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+
+        HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
+        file_maps.put("Hannibal",R.drawable.hannibal);
+        file_maps.put("Big Bang Theory",R.drawable.bigbang);
+        file_maps.put("House of Cards",R.drawable.house);
+        file_maps.put("Game of Thrones1", R.drawable.game_of_thrones);
+        file_maps.put("Game of Thrones2", R.drawable.game_of_thrones);
+
+        file_maps.put("Game of Thrones3", R.drawable.game_of_thrones);
+        file_maps.put("Game of Thrones4", R.drawable.game_of_thrones);
+
+        file_maps.put("Game of Thrones5", R.drawable.game_of_thrones);
+
+        file_maps.put("Game of Thrones6", R.drawable.game_of_thrones);
+
+        file_maps.put("Game of Thrones7", R.drawable.game_of_thrones);
+
+
+        for(String name : file_maps.keySet()){
+            TextSliderView textSliderView = new TextSliderView(this);
+            // initialize a SliderLayout
+            textSliderView
+                    .description(name)
+                    .image(file_maps.get(name))
+                    .setScaleType(BaseSliderView.ScaleType.Fit)
+                    .setOnSliderClickListener(this);
+
+            //add your extra information
+            textSliderView.bundle(new Bundle());
+            textSliderView.getBundle()
+                    .putString("extra",name);
+
+            mDemoSlider.addSlider(textSliderView);
+        }
+        mDemoSlider.setPresetTransformer(SliderLayout.Transformer.Accordion);
+        mDemoSlider.setPresetIndicator(SliderLayout.PresetIndicators.Center_Bottom);
+        mDemoSlider.setCustomAnimation(new DescriptionAnimation());
+        mDemoSlider.setDuration(4000);
+        mDemoSlider.addOnPageChangeListener(this);
+        mDemoSlider.setPresetTransformer(SliderLayout.Transformer.RotateUp);
+
 
 
         TextView t = (TextView) findViewById(R.id.name);
@@ -855,6 +873,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
        }
+    }
+
+    @Override
+    public void onSliderClick(BaseSliderView slider) {
+
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
     }
 
     private  class LatLngEvaluator implements TypeEvaluator<com.mapbox.mapboxsdk.geometry.LatLng> {
