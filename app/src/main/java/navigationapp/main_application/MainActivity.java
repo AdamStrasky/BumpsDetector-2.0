@@ -16,10 +16,8 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
@@ -28,7 +26,6 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -36,7 +33,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
@@ -46,13 +42,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -90,13 +84,11 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -128,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public  final String TAG = "MainActivity";
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
+    private static final int PICK_IMAGE_ID = 234;
     private Float intensity = null;
     LinearLayout confirm = null;
     Button  save_button, delete_button,downloand_button,back_button;
@@ -164,10 +157,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDemoSlider = (SliderLayout)findViewById(R.id.slider);
         mDemoSlider.setPresetIndicator(SliderLayout.PresetIndicators.Center_Bottom);
         mDemoSlider.setCustomAnimation(new DescriptionAnimation());
-        mDemoSlider.setDuration(8000);
+        mDemoSlider.setDuration(5000);
         mDemoSlider.addOnPageChangeListener(this);
         mDemoSlider.setPresetTransformer(SliderLayout.Transformer.RotateDown);
-
         ButterKnife.inject(this);
         context = this;
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
@@ -737,9 +729,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mapManager.downloadedRegionList();
                 return true;
 
-         /*  case R.id.error:
+           case R.id.error:
                int number = Integer.parseInt("number");
-               return true;*/
+               return true;
 
             case R.id.exit:
                 close();
@@ -1241,53 +1233,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void setPanel(String text) {
-
-        TextView t = (TextView) findViewById(R.id.name);
+        TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
-
-        Button f = (Button) findViewById(R.id.follow);
-        f.setText("+");
-
+        Button f = (Button) findViewById(R.id.add_photo);
         f.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onPickImage( getCurrentFocus());
-
             }
         });
 
         mDemoSlider.removeAllSliders();
-        HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
+        HashMap<String,Integer> file_maps = new HashMap<String, Integer>();  //  pridám fotky
         file_maps.put("27/07/2016",R.drawable.bump_1);
         file_maps.put("19/10/2016",R.drawable.bump_2);
         file_maps.put("09/12/2016",R.drawable.bump_3);
-        file_maps.put("14/01/2017", R.drawable.bump_4);
-
-
+        file_maps.put("14/01/2017",R.drawable.bump_4);
 
         for(String name : file_maps.keySet()){
             TextSliderView textSliderView = new TextSliderView(this);
-            // initialize a SliderLayout
             textSliderView
                     .description(name)
                     .image(file_maps.get(name))
                     .setScaleType(BaseSliderView.ScaleType.Fit)
                     .setOnSliderClickListener(this);
-
             //add your extra information
             textSliderView.bundle(new Bundle());
-            textSliderView.getBundle()
-                    .putString("extra",name);
-
+            textSliderView.getBundle().putString("extra",name);
             mDemoSlider.addSlider(textSliderView);
         }
-
-
-
+        mDemoSlider.setCurrentPosition(0);
     }
-
-
-    private static final int PICK_IMAGE_ID = 234; // the number doesn't matter
 
     public void onPickImage(View view) {
         Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
@@ -1300,32 +1276,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case PICK_IMAGE_ID:
                 Bitmap bitmap = ImagePicker.getImageFromResult(this, resultCode, data);
 
-               if (bitmap!=null) {
-
-                   File f = new File(context.getCacheDir(), bitmap.toString() + ".png");
-                   try {
+                if (bitmap!=null) {
+                    File f = new File(context.getCacheDir(), bitmap.toString() + ".png");
+                    try {
                        f.createNewFile();
-                   } catch (IOException e) {
+                    } catch (IOException e) {
                        e.printStackTrace();
-                   }
+                    }
 
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+                    byte[] bitmapdata = bos.toByteArray();
 
-                   ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                   bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
-                   byte[] bitmapdata = bos.toByteArray();
-
-//write the bytes in file
-                   FileOutputStream fos = null;
-                   try {
+                    FileOutputStream fos = null;
+                    try {
                        fos = new FileOutputStream(f);
-
                        fos.write(bitmapdata);
                        fos.flush();
                        fos.close();
 
-                   } catch (IOException e) {
+                    } catch (IOException e) {
                        e.printStackTrace();
-                   }
+                    }
 
                    SimpleDateFormat now;
                    Calendar cal = Calendar.getInstance();
@@ -1335,27 +1307,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                    HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
                    file_maps.put(now_formated, bitmap.describeContents());
 
+                    TextSliderView textSliderView = new TextSliderView(this);
 
-
-                       TextSliderView textSliderView = new TextSliderView(this);
-                       // initialize a SliderLayout
-                       textSliderView
+                        textSliderView
                                .description(now_formated)
                                .image(f)
                                .setScaleType(BaseSliderView.ScaleType.Fit)
                                .setOnSliderClickListener(this);
-
-                       //add your extra information
-                       textSliderView.bundle(new Bundle());
-                       textSliderView.getBundle()
-                               .putString("extra", now_formated);
-
-                       mDemoSlider.addSlider(textSliderView);
-
-
-                   // TODO use bitmap
-               }
-                break;
+                    textSliderView.bundle(new Bundle());
+                    textSliderView.getBundle().putString("extra", now_formated);
+                    mDemoSlider.addSlider(textSliderView);
+            }
+            break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);
                 break;
