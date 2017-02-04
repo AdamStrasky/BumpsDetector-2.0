@@ -72,9 +72,9 @@
 
     <string name="no_gps">Žiaden GPS signál</string>
 
-    <string name="auto_bump">Automatický výtlk</string>
-    <string name="manual_bump">Manuálny výtlk</string>
-    <string name="number_bump">Počet výtlkov: </string>
+    <string name="auto_bump">Automatický detegovany výtlk</string>
+    <string name="manual_bump">Manuálne detegovaný výtlk</string>
+    <string name="number_bump">Počet detekcií: </string>
     <string name="modif">Modifikácia:</string>
 
 

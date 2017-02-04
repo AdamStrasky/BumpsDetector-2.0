@@ -108,7 +108,7 @@
         android:id="@+id/add_button"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:background="@drawable/circle_button"
+        android:background="@drawable/circle_button_add"
         android:text="+"
         android:textColor="#fff"
         android:textSize="36sp"

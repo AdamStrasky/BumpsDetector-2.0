@@ -15,8 +15,11 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
@@ -25,6 +28,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -84,14 +88,23 @@ import com.seatgeek.placesautocomplete.model.PlaceDetails;
 import com.seatgeek.placesautocomplete.model.PlaceLocation;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
 import java.util.concurrent.atomic.AtomicBoolean;
+
 
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
@@ -147,79 +160,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         mLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-
-
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         mDemoSlider = (SliderLayout)findViewById(R.id.slider);
-
-        HashMap<String,String> url_maps = new HashMap<String, String>();
-        url_maps.put("Hannibal", "http://static2.hypable.com/wp-content/uploads/2013/12/hannibal-season-2-release-date.jpg");
-        url_maps.put("Big Bang Theory", "http://tvfiles.alphacoders.com/100/hdclearart-10.png");
-        url_maps.put("House of Cards", "http://cdn3.nflximg.net/images/3093/2043093.jpg");
-        url_maps.put("Game of Thrones1", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
-        url_maps.put("Game of Thrones2", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
-        url_maps.put("Game of Thrones3", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
-        url_maps.put("Game of Thrones4", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
-        url_maps.put("Game of Thrones5", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
-        url_maps.put("Game of Thrones6", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
-        url_maps.put("Game of Thrones7", "http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
-
-        HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
-        file_maps.put("Hannibal",R.drawable.hannibal);
-        file_maps.put("Big Bang Theory",R.drawable.bigbang);
-        file_maps.put("House of Cards",R.drawable.house);
-        file_maps.put("Game of Thrones1", R.drawable.game_of_thrones);
-        file_maps.put("Game of Thrones2", R.drawable.game_of_thrones);
-
-        file_maps.put("Game of Thrones3", R.drawable.game_of_thrones);
-        file_maps.put("Game of Thrones4", R.drawable.game_of_thrones);
-
-        file_maps.put("Game of Thrones5", R.drawable.game_of_thrones);
-
-        file_maps.put("Game of Thrones6", R.drawable.game_of_thrones);
-
-        file_maps.put("Game of Thrones7", R.drawable.game_of_thrones);
-
-
-        for(String name : file_maps.keySet()){
-            TextSliderView textSliderView = new TextSliderView(this);
-            // initialize a SliderLayout
-            textSliderView
-                    .description(name)
-                    .image(file_maps.get(name))
-                    .setScaleType(BaseSliderView.ScaleType.Fit)
-                    .setOnSliderClickListener(this);
-
-            //add your extra information
-            textSliderView.bundle(new Bundle());
-            textSliderView.getBundle()
-                    .putString("extra",name);
-
-            mDemoSlider.addSlider(textSliderView);
-        }
-        mDemoSlider.setPresetTransformer(SliderLayout.Transformer.Accordion);
         mDemoSlider.setPresetIndicator(SliderLayout.PresetIndicators.Center_Bottom);
         mDemoSlider.setCustomAnimation(new DescriptionAnimation());
-        mDemoSlider.setDuration(4000);
+        mDemoSlider.setDuration(8000);
         mDemoSlider.addOnPageChangeListener(this);
-        mDemoSlider.setPresetTransformer(SliderLayout.Transformer.RotateUp);
-
-
-
-        TextView t = (TextView) findViewById(R.id.name);
-        t.setText("aaaa");
-        Button f = (Button) findViewById(R.id.follow);
-        f.setText("bbbb");
-
-        f.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-              //  Intent i = new Intent(Intent.ACTION_VIEW);
-              //  i.setData(Uri.parse("http://www.twitter.com/umanoapp"));
-             //   startActivity(i);
-            }
-        });
-
+        mDemoSlider.setPresetTransformer(SliderLayout.Transformer.RotateDown);
 
         ButterKnife.inject(this);
         context = this;
@@ -329,8 +276,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (featureAuto.size() > 0) {
 
                             if (featureAuto.get(0).getStringProperty("property")!=null) {
-                                if (isEneableShowText())
-                                 Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                                setPanel( featureAuto.get(0).getStringProperty("property"));
+                               // if (isEneableShowText())
+                                // Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+
                             }
                             selectMarker(markerAuto,  0);
                             return;
@@ -338,8 +287,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (featuresManual.size() > 0) {
 
                             if (featuresManual.get(0).getStringProperty("property")!=null) {
-                                if (isEneableShowText())
-                                    Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                                setPanel( featuresManual.get(0).getStringProperty("property"));
+                               // if (isEneableShowText())
+                                   // Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
                             }
                             selectMarker(markerManual, 1);
                             return;
@@ -509,7 +459,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        }
+        else if (mLayout != null &&
+                (mLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED || mLayout.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED)) {
+            mLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        }
+
+        else {
            // super.onBackPressed();
         }
     }
@@ -1283,4 +1239,127 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG,"getLanguage stav - "+name);
         return name;
     }
+
+    public void setPanel(String text) {
+
+        TextView t = (TextView) findViewById(R.id.name);
+        t.setText(text);
+
+        Button f = (Button) findViewById(R.id.follow);
+        f.setText("+");
+
+        f.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onPickImage( getCurrentFocus());
+
+            }
+        });
+
+        mDemoSlider.removeAllSliders();
+        HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
+        file_maps.put("27/07/2016",R.drawable.bump_1);
+        file_maps.put("19/10/2016",R.drawable.bump_2);
+        file_maps.put("09/12/2016",R.drawable.bump_3);
+        file_maps.put("14/01/2017", R.drawable.bump_4);
+
+
+
+        for(String name : file_maps.keySet()){
+            TextSliderView textSliderView = new TextSliderView(this);
+            // initialize a SliderLayout
+            textSliderView
+                    .description(name)
+                    .image(file_maps.get(name))
+                    .setScaleType(BaseSliderView.ScaleType.Fit)
+                    .setOnSliderClickListener(this);
+
+            //add your extra information
+            textSliderView.bundle(new Bundle());
+            textSliderView.getBundle()
+                    .putString("extra",name);
+
+            mDemoSlider.addSlider(textSliderView);
+        }
+
+
+
+    }
+
+
+    private static final int PICK_IMAGE_ID = 234; // the number doesn't matter
+
+    public void onPickImage(View view) {
+        Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
+        startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode) {
+            case PICK_IMAGE_ID:
+                Bitmap bitmap = ImagePicker.getImageFromResult(this, resultCode, data);
+
+               if (bitmap!=null) {
+
+                   File f = new File(context.getCacheDir(), bitmap.toString() + ".png");
+                   try {
+                       f.createNewFile();
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
+
+
+                   ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                   bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+                   byte[] bitmapdata = bos.toByteArray();
+
+//write the bytes in file
+                   FileOutputStream fos = null;
+                   try {
+                       fos = new FileOutputStream(f);
+
+                       fos.write(bitmapdata);
+                       fos.flush();
+                       fos.close();
+
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
+
+                   SimpleDateFormat now;
+                   Calendar cal = Calendar.getInstance();
+                   cal.setTime(new Date());
+                   now = new SimpleDateFormat("dd/MM/yyyy");
+                   String now_formated = now.format(cal.getTime());
+                   HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
+                   file_maps.put(now_formated, bitmap.describeContents());
+
+
+
+                       TextSliderView textSliderView = new TextSliderView(this);
+                       // initialize a SliderLayout
+                       textSliderView
+                               .description(now_formated)
+                               .image(f)
+                               .setScaleType(BaseSliderView.ScaleType.Fit)
+                               .setOnSliderClickListener(this);
+
+                       //add your extra information
+                       textSliderView.bundle(new Bundle());
+                       textSliderView.getBundle()
+                               .putString("extra", now_formated);
+
+                       mDemoSlider.addSlider(textSliderView);
+
+
+                   // TODO use bitmap
+               }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+                break;
+        }
+    }
+
 }

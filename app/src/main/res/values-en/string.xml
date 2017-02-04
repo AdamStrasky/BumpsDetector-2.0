@@ -73,9 +73,9 @@
 
     <string name="no_gps">No GPS signal</string>
 
-    <string name="auto_bump">Automatic bump</string>
-    <string name="manual_bump">Manual bump</string>
-    <string name="number_bump">Numbers of bump: </string>
+    <string name="auto_bump">Automatic detect bump</string>
+    <string name="manual_bump">Manual detect bump</string>
+    <string name="number_bump">Numbers of detection: </string>
     <string name="modif">Modification:</string>
 
 
