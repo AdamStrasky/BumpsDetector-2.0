@@ -1,12 +1,17 @@
 package navigationapp.widget;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import java.math.BigDecimal;
@@ -26,8 +31,11 @@ public class Click {
     private final String TAG = "Click";
     private Bump Handler = null;
 
-    public Click(final Context context) {
+    public Click(final Context context, Widget.UpdateService updateService) {
         gps = new GPSPosition(context);
+
+
+
         if(gps.canGetLocation()) { // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu
             final double longitude = gps.getLongitude();
@@ -36,7 +44,7 @@ public class Click {
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
             if (gps.isNetworkAvailable(context)) {
-                Handler = new Bump(loc, 6.0f, 1);
+                Handler = new Bump(loc, 6.0f, 2);
                 Handler.getResponse(new CallBackReturn() {
                     public void callback(String results) {
                         if (results.equals("success")) {

@@ -8,11 +8,36 @@
     android:gravity="center">
 
     <ImageButton
-        android:id="@+id/actionButton"
-        android:layout_width="70dp"
-        android:layout_height="75dp"
-        android:src="@drawable/widget"
+        android:id="@+id/bump"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/bump"
         android:background="#00000000"
-    />
+        />
+
+    <ImageButton
+        android:id="@+id/trash"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/trash"
+        android:background="#00000000"
+        />
+
+    <ImageButton
+        android:id="@+id/canstock"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/canstock"
+        android:background="#00000000"
+        />
+
+
+    <ImageButton
+        android:id="@+id/select"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/select"
+        android:background="#00000000"
+        />
 
 </LinearLayout>
