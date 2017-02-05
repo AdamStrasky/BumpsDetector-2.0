@@ -10,10 +10,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
+import android.util.Log;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import navigationapp.R;
 
@@ -21,17 +21,18 @@ public class Widget extends AppWidgetProvider {
 
     @Override
     public synchronized void onReceive(Context context, Intent intent) {
-       if (intent.getAction()==null || intent.getExtras().getString("bucketno")!=null) {
-           String value = "eeee";
-        if ( intent.getExtras().getString("bucketno")!=null)
-            value = intent.getExtras().getString("bucketno");
+       if ( intent.getAction()==null || ( intent.getExtras()!=null && intent.getExtras().containsKey("type"))) {
+
+           Integer type = 0;
+
+           if (intent.getExtras()!=null  && intent.getExtras().containsKey("type"))
+               type = intent.getExtras().getInt("type",0);
+
            Intent i = new Intent(context, UpdateService.class);
            i.putExtra("click", true);
-           i.putExtra("value", value);
-
+           i.putExtra("type", type);
            context.startService(i);
-       }
-       else {
+       } else {
          super.onReceive(context, intent);
        }
     }
@@ -54,60 +55,76 @@ public class Widget extends AppWidgetProvider {
         @Override
         public void onHandleIntent(Intent intent) {
            Boolean extra = intent.getBooleanExtra("click",false);
-           String value = intent.getStringExtra("value");
+           Integer type = intent.getIntExtra("type",0);
            ComponentName componentName=new ComponentName(this, Widget.class);
            AppWidgetManager manager=AppWidgetManager.getInstance(this);
-           manager.updateAppWidget(componentName, buildUpdate(this,extra,value));
+           manager.updateAppWidget(componentName, buildUpdate(this,extra,type));
         }
 
-        private RemoteViews buildUpdate(final Context context, Boolean flag, final String value) {
+        private RemoteViews buildUpdate(final Context context, Boolean flag ,final Integer type) {
 
            RemoteViews updateViews=new RemoteViews(context.getPackageName(), R.layout.widget);
            if (flag) {
 
-               Handler mHandler = new Handler(getMainLooper());
-               mHandler.post(new Runnable() {
-                   @Override
-                   public void run() {
-                       Toast.makeText(getApplicationContext(), value, Toast.LENGTH_LONG).show();
-               AlertDialog dialog = new AlertDialog.Builder(context)
-                       .setTitle(context.getResources().getString(R.string.list))
-                      .setPositiveButton(context.getResources().getString(R.string.navige_to), new DialogInterface.OnClickListener() {
-                           @Override
-                           public void onClick(DialogInterface dialog, int id) {
-                               dialog.dismiss();
-                           }
-                       })
-                       .setNeutralButton(context.getResources().getString(R.string.delete), new DialogInterface.OnClickListener() {
-                           @Override
-                           public void onClick(DialogInterface dialog, int id) {
-                               dialog.dismiss();
-                           }
-                       })
-                       .setNegativeButton(context.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                           @Override
-                           public void onClick(DialogInterface dialog, int id) {
-                               dialog.dismiss();
-                           }
-                       }).create();
-               dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-               dialog.show();
-                   }
-               });
+               if (type == 0) {
+                   new Click(getApplicationContext(), type);
+               } else if (type == 1) {
+                   new Click(getApplicationContext(), type);
+               }  else if (type == 2) {
+                   new Click(getApplicationContext(), type);
+               }
+               else if (type == 3) {
 
-              // new Click(getApplicationContext(), type, text);
+                   Handler mHandler = new Handler(getMainLooper());
+                   mHandler.post(new Runnable() {
+                       @Override
+                       public void run() {
+                           final EditText edittext = new EditText(context);
+                           AlertDialog dialog = new AlertDialog.Builder(context)
+                                   .setTitle(context.getResources().getString(R.string.alert_widget))
+                                   .setView(edittext)
+                                   .setPositiveButton(context.getResources().getString(R.string.confirm), new DialogInterface.OnClickListener() {
+                                       @Override
+                                       public void onClick(DialogInterface dialog, int id) {
+                                           new Click(getApplicationContext(), type);
+                                           dialog.dismiss();
+                                       }
+                                   })
+                                    .setNegativeButton(context.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                                       @Override
+                                       public void onClick(DialogInterface dialog, int id) {
+                                           dialog.dismiss();
+                                       }
+                                   }).create();
+                           dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                           dialog.show();
+                       }
+                   });
+               }
+           }
 
-            }
+           Intent bump = new Intent(this, Widget.class);
+           bump.putExtra("type", 0);
+           PendingIntent PendingIntentBump =PendingIntent.getBroadcast(context,0, bump,0);
 
-           Intent i=new Intent(this, Widget.class);
-            i.putExtra("bucketno", "aaaa");
-            i.putExtra("bucketna", 5);
-           PendingIntent pi=PendingIntent.getBroadcast(context,0, i,0);
+           Intent trash = new Intent(this, Widget.class);
+           trash.putExtra("type", 1);
+           PendingIntent PendingIntentTrash=PendingIntent.getBroadcast(context,1, trash,0);
 
-           updateViews.setOnClickPendingIntent(R.id.actionButton,pi);
+           Intent canstock = new Intent(this, Widget.class);
+           canstock.putExtra("type", 2);
+           PendingIntent PendingIntentCanstock=PendingIntent.getBroadcast(context,2, canstock,0);
+
+           Intent select = new Intent(this, Widget.class);
+           select.putExtra("type", 3);
+           PendingIntent PendingIntentSelect=PendingIntent.getBroadcast(context,3, select,0);
+
+           updateViews.setOnClickPendingIntent(R.id.bump,PendingIntentBump);
+           updateViews.setOnClickPendingIntent(R.id.trash,PendingIntentTrash);
+           updateViews.setOnClickPendingIntent(R.id.canstock,PendingIntentCanstock);
+           updateViews.setOnClickPendingIntent(R.id.select,PendingIntentSelect);
+
            return(updateViews);
         }
-
-
     }
 }

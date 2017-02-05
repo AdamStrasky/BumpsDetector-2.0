@@ -1,17 +1,12 @@
 package navigationapp.widget;
 
-import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import java.math.BigDecimal;
@@ -31,10 +26,8 @@ public class Click {
     private final String TAG = "Click";
     private Bump Handler = null;
 
-    public Click(final Context context, Widget.UpdateService updateService) {
+    public Click(final Context context, final Integer type) {
         gps = new GPSPosition(context);
-
-
 
         if(gps.canGetLocation()) { // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu
@@ -82,7 +75,16 @@ public class Click {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(context, context.getResources().getString(R.string.bump_add), Toast.LENGTH_SHORT).show();
+                    String text =null;
+                    if (type == 0)
+                        text = context.getResources().getString(R.string.bump_add);
+                    if (type == 1)
+                        text = context.getResources().getString(R.string.trasht_add);
+                    if (type == 2)
+                        text = context.getResources().getString(R.string.canstock_add);
+                    if (type == 3)
+                        text = context.getResources().getString(R.string.select_add);
+                    Toast.makeText(context,text, Toast.LENGTH_SHORT).show();
                 }
             });
 

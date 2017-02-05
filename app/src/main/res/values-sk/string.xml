@@ -24,6 +24,10 @@
     <string name="type_medium">Stredný</string>
     <string name="type_normal">Normálny</string>
     <string name="bump_add">Výtlk pridaný</string>
+    <string name="trasht_add">Plný kôš bol nahlásený</string>
+    <string name="canstock_add">Chýbajúci poklop bol nahlásaný</string>
+    <string name="select_add">Problém bol nahlásený</string>
+
     <string name="fnd_location">Hľadám polohu ...</string>
     <string name="unable_find">Pozícia nenájdená, zlý názov!</string>
     <string name="unable_find_net">Pozícia nenájdená, zlý názov! Pripojte sa k internetu prosím</string>
@@ -127,5 +131,5 @@
 
     <string name="pick_image_intent_text">Vyber obrázok</string>
 
-
+    <string name="alert_widget">Typ problému</string>
 </resources>
