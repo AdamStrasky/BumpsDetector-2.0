@@ -88,6 +88,14 @@ public class ImagePicker {
         return bm;
     }
 
+    public static Bitmap  getImage(Context context,Uri selectedImage ) {
+        Bitmap bm = null;
+        bm = getImageResized(context, selectedImage);
+        int rotation = getRotation(context, selectedImage, false);
+        bm = rotate(bm, rotation);
+        return bm;
+    }
+
 
     private static File getTempFile(Context context) {
         File imageFile = new File(context.getExternalCacheDir(), TEMP_IMAGE_NAME);

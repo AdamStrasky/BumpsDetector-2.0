@@ -131,4 +131,14 @@
 
     <string name="alert_widget">Typ problému</string>
 
+    <string name="share_bump">Výtlk</string>
+    <string name="share_trash">Plný kôš </string>
+    <string name="share_canstock">Chýbajúci poklop</string>
+    <string name="share_other">Iný problém</string>
+    <string name="share_text">Typ problému</string>
+    <string name="share_send">Odoslať</string>
+    <string name="share_check">Prosím, vyberte typ hlásenia</string>
+    <string name="share_was_send">Problém bol nahlásený</string>
+
+
 </resources>

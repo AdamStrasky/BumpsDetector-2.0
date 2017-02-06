@@ -134,6 +134,14 @@
 
 
 
+    <string name="share_bump">Bump</string>
+    <string name="share_trash">Full basket </string>
+    <string name="share_canstock">Missing channel</string>
+    <string name="share_other">Other problem</string>
+    <string name="share_text">Type of problem</string>
+    <string name="share_send">Send</string>
+    <string name="share_check">Please, choose one type of report</string>
+    <string name="share_was_send">Report was send</string>
 
 
 
