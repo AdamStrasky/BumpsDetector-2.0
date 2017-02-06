@@ -12,8 +12,9 @@ import android.util.Log;
 import android.widget.Toast;
 import android.speech.tts.TextToSpeech;
 
+import navigationapp.Error.ExceptionHandler;
 import navigationapp.R;
-import navigationapp.error.ExceptionHandler;
+
 import navigationapp.main_application.Bump;
 import navigationapp.main_application.CallBackReturn;
 import navigationapp.main_application.DatabaseOpenHelper;

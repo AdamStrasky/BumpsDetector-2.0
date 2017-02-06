@@ -1,4 +1,4 @@
-package navigationapp.error;
+package navigationapp.Error;
 
 import android.os.Environment;
 

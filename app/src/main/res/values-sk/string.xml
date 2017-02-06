@@ -23,10 +23,11 @@
     <string name="type_lage">Veľký</string>
     <string name="type_medium">Stredný</string>
     <string name="type_normal">Normálny</string>
+
     <string name="bump_add">Výtlk pridaný</string>
-    <string name="trasht_add">Plný kôš bol nahlásený</string>
-    <string name="canstock_add">Chýbajúci poklop bol nahlásaný</string>
-    <string name="select_add">Problém bol nahlásený</string>
+<string name="trasht_add">Plný kôš bol nahlásený</string>
+<string name="canstock_add">Chýbajúci poklop bol nahlásaný</string>
+<string name="select_add">Problém bol nahlásený</string>
 
     <string name="fnd_location">Hľadám polohu ...</string>
     <string name="unable_find">Pozícia nenájdená, zlý názov!</string>
@@ -126,10 +127,8 @@
 
     <string name="error_download">Chyba,sťahovanie máp bolo prerušené</string>
     <string name="map_exceeded">Povolené množstvo stiahnutých máp bolo prekročené. Prosím vymažte mapy na stiahnutie nových</string>
-
     <string name="error">Chyba</string>
 
-    <string name="pick_image_intent_text">Vyber obrázok</string>
-
     <string name="alert_widget">Typ problému</string>
+
 </resources>

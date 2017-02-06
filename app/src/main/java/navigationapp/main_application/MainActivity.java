@@ -16,8 +16,10 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
@@ -26,6 +28,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -33,6 +36,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
@@ -42,18 +46,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-import navigationapp.error.ExceptionHandler;
+import navigationapp.Error.ExceptionHandler;
 import navigationapp.R;
 
 import com.daimajia.slider.library.Animations.DescriptionAnimation;
@@ -85,11 +91,13 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -118,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static int ZOOM_LEVEL = 16;
     private FragmentActivity fragmentActivity =null;
     public  final String FRAGMENTACTIVITY_TAG = "blankFragment";
-    private static final int PICK_IMAGE_ID = 234;
     public  final String TAG = "MainActivity";
     private static boolean activityVisible=true;
     public static final String PREF_FILE_NAME = "Settings";
@@ -203,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             }
                         }
 
-                        mapboxMap.setOnCameraChangeListener(new MapboxMap.OnCameraChangeListener() {
+                      mapboxMap.setOnCameraChangeListener(new MapboxMap.OnCameraChangeListener() {
                             @Override
                             public void onCameraChange(CameraPosition position) {
                                 if (allow_click) {
@@ -271,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                             if (featureAuto.get(0).getStringProperty("property")!=null) {
                                 setPanel( featureAuto.get(0).getStringProperty("property"));
-                                // if (isEneableShowText())
+                               // if (isEneableShowText())
                                 // Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
 
                             }
@@ -282,8 +289,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                             if (featuresManual.get(0).getStringProperty("property")!=null) {
                                 setPanel( featuresManual.get(0).getStringProperty("property"));
-                                // if (isEneableShowText())
-                                // Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
+                               // if (isEneableShowText())
+                                   // Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
                             }
                             selectMarker(markerManual, 1);
                             return;
@@ -332,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onFailure(final Throwable failure) {
                         Log.d(TAG, "Autocomplete failure " + failure);
-                        // positionGPS = null;
+                       // positionGPS = null;
                     }
                 });
             }
@@ -375,8 +382,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 } else {
                                     positionGPS = null;
                                     final LatLng to_position = new LatLng(position.latitude, position.longitude);
-                                    fragmentActivity.detection.stop_collison_navigate();
-                                    fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
+                                            fragmentActivity.detection.stop_collison_navigate();
+                                            fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
                                 }
                             } catch (Exception e) {
                                 if (isEneableShowText())
@@ -460,7 +467,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         else {
-            // super.onBackPressed();
+           // super.onBackPressed();
         }
     }
     @Override
@@ -585,24 +592,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 switch (select) {
                                     case 0:
 
-                                        fragmentActivity.mapLayer.level = ALL_BUMPS;
-                                        LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
+                                                fragmentActivity.mapLayer.level = ALL_BUMPS;
+                                                LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
 
                                         break;
 
                                     case 1:
 
-                                        fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
-                                        LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
+                                                fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
+                                                LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
 
                                         break;
                                     case 2:
 
-                                        fragmentActivity.mapLayer.level = LARGE_BUMPS;
-                                        LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
-                                        fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
+                                                fragmentActivity.mapLayer.level = LARGE_BUMPS;
+                                                LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
+                                                fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
 
                                         break;
                                 }
@@ -624,9 +631,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+       switch (item.getItemId()) {
 
-            case R.id.calibrate:  // spusti prekalibrovanie aplikácie
+           case R.id.calibrate:  // spusti prekalibrovanie aplikácie
                 close();
                 if ( fragmentActivity.accelerometer!=null) {
                     fragmentActivity.accelerometer.calibrate();
@@ -638,7 +645,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 return true;
 
-            case R.id.clear_map:  // vyčistí mapu
+           case R.id.clear_map:  // vyčistí mapu
                 close();
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     fragmentActivity.gps.remove_draw_road();
@@ -647,27 +654,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 return true;
 
-            case R.id.navigation:  // ukončuje navigáciu
+           case R.id.navigation:  // ukončuje navigáciu
                 close();
                 EditText text = (EditText) findViewById(R.id.location);
-                positionGPS =null;
+                 positionGPS =null;
                 text.setText("");
                 if ( fragmentActivity.gps!=null) {
 
-                    fragmentActivity.gps.remove_draw_road();
-                    fragmentActivity.detection.setRoad(false);
-                    fragmentActivity.detection.stop_collison_navigate();
+                            fragmentActivity.gps.remove_draw_road();
+                            fragmentActivity.detection.setRoad(false);
+                            fragmentActivity.detection.stop_collison_navigate();
 
                 }
                 return true;
 
 
-            case R.id.action_settings: // presun do seeting activity
+           case R.id.action_settings: // presun do seeting activity
                 close();
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
 
-            case R.id.download:
+           case R.id.download:
 
                 if (fragmentActivity!=null &&  mapManager!=null) {
                     if (mapManager.isMapTitleExceeded()) {  // upozornenie na prekročenie kapacity map
@@ -692,7 +699,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 save(false);
                 setOnPosition =true;
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.mapLayer.setClear(featureMarker);
+               fragmentActivity.mapLayer.setClear(featureMarker);
                 add_button.setVisibility(View.VISIBLE);
                 navig_on.setVisibility(View.INVISIBLE);
                 if ( mapManager!=null && !mapManager.isEndNotified()) {
@@ -703,14 +710,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mapManager.downloadRegionDialog();
                 return true;
 
-            case R.id.list:
+           case R.id.list:
                 close();
 
-                if ( fragmentActivity.mapLayer==null) { // nieje načítana mapa
-                    if (isEneableShowText())
-                        Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
-                    return true;
-                }
+               if ( fragmentActivity.mapLayer==null) { // nieje načítana mapa
+                   if (isEneableShowText())
+                       Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                   return true;
+               }
 
                 save(false);
                 if ( mapbox==null ) {
@@ -721,7 +728,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 add_button.setVisibility(View.VISIBLE);  //  schovanie tlačidiel
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
-                fragmentActivity.mapLayer.setClear(featureMarker);
+               fragmentActivity.mapLayer.setClear(featureMarker);
                 navig_on.setVisibility(View.INVISIBLE);
                 if (mapManager!=null && !mapManager.isEndNotified()) {
                     if (isEneableShowText())
@@ -741,7 +748,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     while (true) {
                         if (updatesLock.tryLock()) {
                             Log.d(TAG," exit updatesLock lock");
-                            try  {
+                           try  {
                                 while (true) {
                                     if (lockZoznam.tryLock()) {
                                         try {
@@ -799,11 +806,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 }
                             }
                             finally {
-                                Log.d(TAG, " exit updatesLock unlock  ");
-                                updatesLock.unlock();
-                                break;
+                               Log.d(TAG, " exit updatesLock unlock  ");
+                               updatesLock.unlock();
+                               break;
                             }
-                        } else {
+                           } else {
                             Log.d(TAG, " exit updatesLock try lock");
                             try {
                                 Thread.sleep(20);
@@ -812,17 +819,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             }
                         }
                     }
-                    fragmentActivity.stop_servise();  // ukončujem servises
+                        fragmentActivity.stop_servise();  // ukončujem servises
                 }
                 onDestroy();
                 return true;
 
-            default:
+           default:
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
                 return true;
 
-        }
+       }
     }
 
     @Override
@@ -914,7 +921,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (screen)
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else
-            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+          getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     public void save(boolean save_click) {
@@ -1072,8 +1079,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                             updatesLock.unlock();
                                                         }
                                                     }
-                                                    threadLock.getAndSet(false);
-                                                    Log.d(TAG," save button casový lock end");
+                                                     threadLock.getAndSet(false);
+                                                     Log.d(TAG," save button casový lock end");
                                                 }
                                                 finally {
                                                     Log.d(TAG," save button lockZoznam unlock");
@@ -1095,7 +1102,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 try {
                                     Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
                                 } catch (InterruptedException e) {
-                                    e.getMessage();
+                                   e.getMessage();
                                 }
                             }
                             Looper.loop();
@@ -1121,7 +1128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mapManager.alertSelectRegion(selectedName,1); // spusti sa alert dialog na opetovné hladanie mapy
                 mapConfirm.setVisibility(View.INVISIBLE);
                 add_button.setVisibility(View.VISIBLE);
-                break;
+                 break;
             case R.id.saveMap_btn:
                 mapManager.downloadRegion(selectedName, 0);
                 mapConfirm.setVisibility(View.INVISIBLE);
@@ -1161,6 +1168,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
+        Log.d("aaaaaaa","aaaa");
         mapManager.endDownloadNotification();
         super.onDestroy();
         mapView.onDestroy();
@@ -1236,15 +1244,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void setPanel(String text) {
 
-        TextView t = (TextView) findViewById(R.id.info);
+        TextView t = (TextView) findViewById(R.id.name);
         t.setText(text);
 
-        Button f = (Button) findViewById(R.id.add_photo);
+        Button f = (Button) findViewById(R.id.follow);
+        f.setText("+");
 
         f.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                freeMemory();
                 onPickImage( getCurrentFocus());
+
             }
         });
 
@@ -1253,23 +1264,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         file_maps.put("27/07/2016",R.drawable.bump_1);
         file_maps.put("19/10/2016",R.drawable.bump_2);
         file_maps.put("09/12/2016",R.drawable.bump_3);
-        file_maps.put("14/01/2017",R.drawable.bump_4);
+        file_maps.put("14/01/2017", R.drawable.bump_4);
+
+
 
         for(String name : file_maps.keySet()){
             TextSliderView textSliderView = new TextSliderView(this);
+            // initialize a SliderLayout
             textSliderView
                     .description(name)
                     .image(file_maps.get(name))
                     .setScaleType(BaseSliderView.ScaleType.Fit)
                     .setOnSliderClickListener(this);
 
+            //add your extra information
             textSliderView.bundle(new Bundle());
             textSliderView.getBundle()
                     .putString("extra",name);
 
             mDemoSlider.addSlider(textSliderView);
         }
+
+
+
     }
+
+
+    private static final int PICK_IMAGE_ID = 234; // the number doesn't matter
 
     public void onPickImage(View view) {
         Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
@@ -1282,57 +1303,72 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case PICK_IMAGE_ID:
                 Bitmap bitmap = ImagePicker.getImageFromResult(this, resultCode, data);
 
-                if (bitmap!=null) {
-                    File f = new File(context.getCacheDir(), bitmap.toString() + ".png");
-                    try {
-                        f.createNewFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+               if (bitmap!=null) {
 
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
-                    byte[] bitmapdata = bos.toByteArray();
+                   File f = new File(context.getCacheDir(), bitmap.toString() + ".png");
+                   try {
+                       f.createNewFile();
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
 
-                    FileOutputStream fos = null;
-                    try {
-                        fos = new FileOutputStream(f);
 
-                        fos.write(bitmapdata);
-                        fos.flush();
-                        fos.close();
+                   ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                   bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+                   byte[] bitmapdata = bos.toByteArray();
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//write the bytes in file
+                   FileOutputStream fos = null;
+                   try {
+                       fos = new FileOutputStream(f);
 
-                    SimpleDateFormat now;
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(new Date());
-                    now = new SimpleDateFormat("dd/MM/yyyy");
-                    String now_formated = now.format(cal.getTime());
-                    HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
-                    file_maps.put(now_formated, bitmap.describeContents());
+                       fos.write(bitmapdata);
+                       fos.flush();
+                       fos.close();
 
-                    TextSliderView textSliderView = new TextSliderView(this);
-                    textSliderView
-                            .description(now_formated)
-                            .image(f)
-                            .setScaleType(BaseSliderView.ScaleType.Fit)
-                            .setOnSliderClickListener(this);
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
 
-                    textSliderView.bundle(new Bundle());
-                    textSliderView.getBundle()
-                            .putString("extra", now_formated);
+                   SimpleDateFormat now;
+                   Calendar cal = Calendar.getInstance();
+                   cal.setTime(new Date());
+                   now = new SimpleDateFormat("dd/MM/yyyy");
+                   String now_formated = now.format(cal.getTime());
+                   HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
+                   file_maps.put(now_formated, bitmap.describeContents());
 
-                    mDemoSlider.addSlider(textSliderView);
-                    mDemoSlider.setCurrentPosition(0);
-                }
+
+
+                       TextSliderView textSliderView = new TextSliderView(this);
+                       // initialize a SliderLayout
+                       textSliderView
+                               .description(now_formated)
+                               .image(f)
+                               .setScaleType(BaseSliderView.ScaleType.Fit)
+                               .setOnSliderClickListener(this);
+
+                       //add your extra information
+                       textSliderView.bundle(new Bundle());
+                       textSliderView.getBundle()
+                               .putString("extra", now_formated);
+
+                       mDemoSlider.addSlider(textSliderView);
+
+
+                   // TODO use bitmap
+               }
                 break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);
                 break;
         }
+    }
+
+    public void freeMemory(){
+        System.runFinalization();
+        Runtime.getRuntime().gc();
+        System.gc();
     }
 
 }

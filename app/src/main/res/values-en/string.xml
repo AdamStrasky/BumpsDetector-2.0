@@ -23,6 +23,7 @@
     <string name="type_lage">Large</string>
     <string name="type_medium">Medium</string>
     <string name="type_normal">Normal</string>
+
     <string name="bump_add">Bump was added</string>
     <string name="trasht_add">Full basket was reported</string>
     <string name="canstock_add">Missing channel was reported</string>
@@ -129,9 +130,6 @@
     <string name="map_exceeded">The allowed amount of downloaded maps have been exceeded. Please delete old map for download new</string>
 
     <string name="error">Error</string>
-
-    <string name="pick_image_intent_text">Choose an image</string>
-
     <string name="alert_widget">Type of problem</string>
 
 
