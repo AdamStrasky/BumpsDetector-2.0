@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -26,6 +27,7 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import java.util.List;
 
 
+import navigationapp.R;
 
 import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
 import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
@@ -38,10 +40,11 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     private GoogleApiClient mGoogleApiClient;
     private final String TAG = "GPSLocator";
     private boolean draw_road= false;
-
+    private com.mapbox.mapboxsdk.location.LocationServices locationServices;
     public GPSLocator () {
         this.mGoogleApiClient = global_mGoogleApiClient;
         startLocationUpdates();
+        locationServices = com.mapbox.mapboxsdk.location.LocationServices.getLocationServices(GPSLocator.this);
     }
 
     //vykresli cestu
@@ -112,8 +115,10 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
       if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {   // nastavujem kameru ak zmenim pozíciu
             try {
-                if (mapbox!=null)
-                mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
+                if (mapbox!=null) {
+                    mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
+                    locationServices.onLocationChanged(getmCurrentLocation());
+                }
             } catch  (NullPointerException e) {
                 e.getMessage();
             }
@@ -125,15 +130,15 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
 
     public void SetZoom() {    // nastavujem kam sa ma presunúť kamera s akým zoomov
         ZoomInit = false;
-        if (mapbox!=null  && getmCurrentLocation()!=null) {
+        if (mapbox!=null  && getmCurrentLocation()!=null){
          final   com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
-            if (mapbox != null && yourLatLng != null) {
-                mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(yourLatLng.getLatitude(), yourLatLng.getLongitude())));
+                locationServices.onLocationChanged(getmCurrentLocation());
 
                 final CameraPosition position = new CameraPosition.Builder()
                         .target(yourLatLng)
                         .zoom(ZOOM_LEVEL)
                         .build();
+
                 mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
                         new MapboxMap.CancelableCallback() {
                             @Override
@@ -146,10 +151,11 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
                             public void onFinish() {
                                 Log.d("XXXXX","SetZoom onFinish ");
                                 mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
+
                              }
                         });
-            }
-        }
+        } else
+            Toast.makeText(this, this.getResources().getString(R.string.not_position), Toast.LENGTH_LONG).show();
     }
 
     public void getOnPosition() {

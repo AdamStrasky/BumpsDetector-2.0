@@ -74,6 +74,7 @@ import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.location.LocationServices;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -150,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ImageView searchLocation = null;
     private Integer numOfPicture = 0;
 
-    @InjectView(R.id.location)
+     @InjectView(R.id.location)
     PlacesAutocompleteTextView mAutocomplete;
     com.mapbox.mapboxsdk.geometry.LatLng points =null;
     @Override
@@ -160,6 +161,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         Language.setLanguage(MainActivity.this,getLanguage());
         setContentView(R.layout.activity_main);
+
+
+
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         mLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
@@ -178,9 +182,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onMapReady(final MapboxMap mapboxMap) {
                 mapbox = mapboxMap;
-
-                if (setOnPosition)
-                    mapbox.setMyLocationEnabled(true);
+                mapbox.setMyLocationEnabled(false);
+               if (setOnPosition)
+                   mapbox.setMyLocationEnabled(true);
 
                 mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
                     @Override
@@ -1249,7 +1253,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         t.setText(text);
 
         Button f = (Button) findViewById(R.id.follow);
-        f.setText("+");
 
         f.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -1332,20 +1335,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                        e.printStackTrace();
                    }
 
-                   SimpleDateFormat now;
-                   Calendar cal = Calendar.getInstance();
-                   cal.setTime(new Date());
-                   now = new SimpleDateFormat("dd/MM/yyyy");
-                   String now_formated = now.format(cal.getTime());
+                   String date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
                    HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
-                   file_maps.put(now_formated, bitmap.describeContents());
+                   file_maps.put(date, bitmap.describeContents());
 
 
 
                        TextSliderView textSliderView = new TextSliderView(this);
                        // initialize a SliderLayout
                        textSliderView
-                               .description(now_formated)
+                               .description(date)
                                .image(f)
                                .setScaleType(BaseSliderView.ScaleType.Fit)
                                .setOnSliderClickListener(this);
@@ -1353,7 +1352,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                        //add your extra information
                        textSliderView.bundle(new Bundle());
                        textSliderView.getBundle()
-                               .putString("extra", now_formated);
+                               .putString("extra", date);
 
                        mDemoSlider.addSlider(textSliderView);
                    numOfPicture ++ ;
@@ -1368,8 +1367,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                    }, 150);
 
 
-               //    mDemoSlider.moveNextPosition();
-                   //mDemoSlider.setCurrentPosition(numOfPicture-1);
 
                }
                 break;
