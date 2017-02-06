@@ -194,6 +194,7 @@ public class SyncDatabase {
             context.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    freeMemory();
                     lockHandler = true;
                     if (isNetworkAvailable(context)) {   //  ak je pripojenie na internet
                         if (!(isEneableDownload() && !isConnectedWIFI())) { // povolené sťahovanie
@@ -1183,5 +1184,12 @@ public class SyncDatabase {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         Log.d(TAG, "isEneableDownload stav - " +String.valueOf(prefs.getBoolean("net", Boolean.parseBoolean(null))));
         return prefs.getBoolean("net", Boolean.parseBoolean(null));
+    }
+
+
+    public void freeMemory(){
+        System.runFinalization();
+        Runtime.getRuntime().gc();
+        System.gc();
     }
 }

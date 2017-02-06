@@ -26,6 +26,7 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
@@ -147,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MapManager mapManager = null;
     private PlaceLocation positionGPS = null;
     ImageView searchLocation = null;
-
+    private Integer numOfPicture = 0;
 
     @InjectView(R.id.location)
     PlacesAutocompleteTextView mAutocomplete;
@@ -1267,8 +1268,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         file_maps.put("14/01/2017", R.drawable.bump_4);
 
 
-
+        numOfPicture =0 ;
         for(String name : file_maps.keySet()){
+            numOfPicture++;
             TextSliderView textSliderView = new TextSliderView(this);
             // initialize a SliderLayout
             textSliderView
@@ -1354,9 +1356,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                .putString("extra", now_formated);
 
                        mDemoSlider.addSlider(textSliderView);
+                   numOfPicture ++ ;
+                   mDemoSlider.setCurrentPosition(numOfPicture-2);
+                   mDemoSlider.setDuration(100);
+
+                   new Handler().postDelayed(new Runnable() {
+                       @Override
+                       public void run() {
+                           mDemoSlider.setDuration(8000);
+                       }
+                   }, 150);
 
 
-                   // TODO use bitmap
+               //    mDemoSlider.moveNextPosition();
+                   //mDemoSlider.setCurrentPosition(numOfPicture-1);
+
                }
                 break;
             default:
@@ -1369,6 +1383,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         System.runFinalization();
         Runtime.getRuntime().gc();
         System.gc();
+        super.onLowMemory();
+        mapView.onLowMemory();
     }
 
 }
