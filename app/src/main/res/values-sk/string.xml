@@ -139,6 +139,7 @@
     <string name="share_send">Odoslať</string>
     <string name="share_check">Prosím, vyberte typ hlásenia</string>
     <string name="share_was_send">Problém bol nahlásený</string>
+    <string name="share_gps">Poloha nenájdená,prosím povoľte GPS</string>
 
 
 </resources>

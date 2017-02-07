@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,6 +15,7 @@ import android.widget.Toast;
 
 import navigationapp.R;
 import navigationapp.main_application.ImagePicker;
+import navigationapp.voice_application.GPSPosition;
 
 public class ShareActivity extends AppCompatActivity {
 
@@ -21,6 +23,7 @@ public class ShareActivity extends AppCompatActivity {
     EditText editText = null;
     Button sendButton = null;
     Boolean check = false;
+    private GPSPosition gps = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,15 +55,31 @@ public class ShareActivity extends AppCompatActivity {
             }
         });
 
+
+
         sendButton.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
             @Override
             public void onClick(final View v) {
-                if (check) {
-                    Toast.makeText(getApplication(),  getApplication().getString(R.string.share_was_send), Toast.LENGTH_LONG).show();
-                    finish();
+                gps = new GPSPosition(ShareActivity.this);
+                Log.d("rretyujtr",gps.canGetLocation()+ " getLatitude "+  gps.getLatitude()+ " getLongitude "+  gps.getLongitude() );
+                if(gps.canGetLocation() &&  gps.getLatitude()!= 0 && gps.getLongitude()!=0) {
+                    final double latitude = gps.getLatitude(); // vratim si polohu
+                    final double longitude = gps.getLongitude();
+
+                    if (check) {
+                        Toast.makeText(getApplication(),  getApplication().getString(R.string.share_was_send), Toast.LENGTH_LONG).show();
+                        gps.stopUsingGPS();
+                        finish();
+                    }
+                    else
+                        Toast.makeText(getApplication(),  getApplication().getString(R.string.share_check), Toast.LENGTH_LONG).show();
+
                 }
-                else
-                    Toast.makeText(getApplication(),  getApplication().getString(R.string.share_check), Toast.LENGTH_LONG).show();
+                else {
+                    Toast.makeText(getApplication(), getApplication().getString(R.string.share_gps), Toast.LENGTH_LONG).show();
+                    gps.stopUsingGPS();
+                }
+
             }
 
         });
@@ -77,20 +96,12 @@ public class ShareActivity extends AppCompatActivity {
     void handleSendImage(Intent intent) {
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-
-
-            ImagePicker aa = new ImagePicker();
-            Bitmap bitmap = aa.getImage(getApplicationContext(),imageUri);
-
-
-            Toast.makeText(getApplication(), "send is ok", Toast.LENGTH_LONG).show();
-
-
+             ImagePicker aa = new ImagePicker();
+             Bitmap bitmap = aa.getImage(getApplicationContext(),imageUri);
             ImageView myImage = (ImageView) findViewById(R.id.imageView);
 
             myImage.setImageBitmap(bitmap);
-        } else
-            Toast.makeText(getApplication(), "send not work ", Toast.LENGTH_LONG).show();
+        }
     }
 
 
