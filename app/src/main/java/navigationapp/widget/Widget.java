@@ -9,8 +9,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RemoteViews;
@@ -63,7 +66,7 @@ public class Widget extends AppWidgetProvider {
 
         private RemoteViews buildUpdate(final Context context, Boolean flag ,final Integer type) {
 
-            RemoteViews updateViews=new RemoteViews(context.getPackageName(), R.layout.widget);
+            RemoteViews updateViews=new RemoteViews(context.getPackageName(), R.layout.widget_horizontal);
             if (flag) {
 
                 if (type == 0) {
@@ -126,5 +129,7 @@ public class Widget extends AppWidgetProvider {
 
             return(updateViews);
         }
+
+
     }
 }

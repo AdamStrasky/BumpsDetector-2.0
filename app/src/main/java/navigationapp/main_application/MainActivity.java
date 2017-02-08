@@ -282,10 +282,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (featureAuto.size() > 0) {
 
                             if (featureAuto.get(0).getStringProperty("property")!=null) {
-                                setPanel( featureAuto.get(0).getStringProperty("property"));
-                               // if (isEneableShowText())
-                                // Toast.makeText(getApplication(), featureAuto.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
-
+                                setPanel( featureAuto.get(0).getStringProperty("property"),featureAuto.get(0).getStringProperty("lat"),featureAuto.get(0).getStringProperty("ltn"));
                             }
                             selectMarker(markerAuto,  0);
                             return;
@@ -293,10 +290,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (featuresManual.size() > 0) {
 
                             if (featuresManual.get(0).getStringProperty("property")!=null) {
-                                setPanel( featuresManual.get(0).getStringProperty("property"));
-                               // if (isEneableShowText())
-                                   // Toast.makeText(getApplication(), featuresManual.get(0).getStringProperty("property"), Toast.LENGTH_LONG).show();
-                            }
+                                setPanel( featuresManual.get(0).getStringProperty("property"),featuresManual.get(0).getStringProperty("lat"),featuresManual.get(0).getStringProperty("ltn"));
+                             }
                             selectMarker(markerManual, 1);
                             return;
                         }
@@ -1037,82 +1032,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (convert_location != null) {
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.bump_add), Toast.LENGTH_LONG).show();
-                    final double ll = intensity;
+
+
                     final Location location = new Location("new");
                     location.setLatitude(round(convert_location.getLatitude(),7));
                     location.setLongitude(round(convert_location.getLongitude(),7));
-                    location.setTime(new Date().getTime());
-                    convert_location  =null;
-                    new Thread() {
-                        public void run() {
-                            Looper.prepare();
-                            while(true) {
-                                if (!threadLock.get() ) {
-                                    if (lockAdd.tryLock()) {
-                                        Log.d(TAG," save button lockAdd lock ");
-                                        try {
-                                            if (lockZoznam.tryLock()) {
-                                                Log.d(TAG," save button lockZoznam lock ");
-                                                try {
-                                                    Log.d(TAG," save button pridal do zoznamu");
-                                                    threadLock.getAndSet(true);
-                                                    fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
-                                                    fragmentActivity.accelerometer.addBumpsManual(1);
-                                                    if (updatesLock.tryLock()) {
-                                                        Log.d(TAG," save button updatesLock lock ");
-                                                        try  {
-                                                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
-                                                            fragmentActivity.checkIntegrityDB(database);
-                                                            Log.d(TAG," save button vlozil do db ");
-                                                            database.beginTransaction();
-                                                            ContentValues contentValues = new ContentValues();
-                                                            contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
-                                                            contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
-                                                            contentValues.put(Provider.new_bumps.MANUAL, 1);
-                                                            contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
-                                                            database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                                            database.setTransactionSuccessful();
-                                                            database.endTransaction();
-                                                            database.close();
-                                                            databaseHelper.close();
-                                                            fragmentActivity.checkCloseDb(database);
-                                                        }
-                                                        finally {
-                                                            Log.d(TAG," save button updatesLock unlock");
-                                                            updatesLock.unlock();
-                                                        }
-                                                    }
-                                                     threadLock.getAndSet(false);
-                                                     Log.d(TAG," save button casový lock end");
-                                                }
-                                                finally {
-                                                    Log.d(TAG," save button lockZoznam unlock");
-                                                    lockZoznam.unlock();
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        finally {
-                                            Log.d(TAG," save button lockAdd unlock");
-                                            lockAdd.unlock();
-                                        }
-                                    }
-                                }
-                                Log.d(TAG,"casovy lock");
-                                Log.d(TAG, " save button " + String.valueOf(location.getLatitude()));
-                                Log.d(TAG, " save button " + String.valueOf(location.getLongitude()));
-                                Log.d(TAG, " save button " + String.valueOf(ll));
-                                try {
-                                    Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
-                                } catch (InterruptedException e) {
-                                   e.getMessage();
-                                }
-                            }
-                            Looper.loop();
-                        }
-                    }.start();
+                    convert_location  =null;
+                    add_bump(location, intensity);
+
+
                 }
                 else
                     Log.d(TAG, " save button  null location !!!!!! " );
@@ -1247,12 +1176,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return name;
     }
 
-    public void setPanel(String text) {
+    public void setPanel(String text, final String lat,final String ltn) {
 
-        TextView t = (TextView) findViewById(R.id.name);
+        TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
 
-        Button f = (Button) findViewById(R.id.follow);
+        Button f = (Button) findViewById(R.id.add);
 
         f.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -1262,6 +1191,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
+
+        Button i = (Button) findViewById(R.id.increase);
+
+        i.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final Location location = new Location("new");
+                location.setLatitude(Double.parseDouble(lat));
+                location.setLongitude(Double.parseDouble(ltn));
+                location.setLongitude(Double.parseDouble(ltn));
+                Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string. increase_number), Toast.LENGTH_LONG).show();
+                add_bump(location,6);
+
+            }
+        });
+
+
+
+
+
 
         mDemoSlider.removeAllSliders();
         HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
@@ -1382,6 +1331,93 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         System.gc();
         super.onLowMemory();
         mapView.onLowMemory();
+    }
+
+   synchronized public void add_bump(final Location location, final double ll) {
+        location.setTime(new Date().getTime());
+        new Thread() {
+            public void run() {
+                Looper.prepare();
+                while(true) {
+                    if (!threadLock.get() ) {
+                        threadLock.getAndSet(true);
+                        boolean aaa =false;
+                        if (lockAdd.tryLock()) {
+                            Log.d(TAG," save button lockAdd lock ");
+                            try {
+                                if (lockZoznam.tryLock()) {
+                                    Log.d(TAG," save button lockZoznam lock ");
+                                    try {
+                                        Log.d(TAG," save button pridal do zoznamu");
+
+                                        fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
+                                        fragmentActivity.accelerometer.addBumpsManual(1);
+                                        if (updatesLock.tryLock()) {
+                                            Log.d(TAG," save button updatesLock lock ");
+                                            try  {
+                                                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                                SQLiteDatabase database = databaseHelper.getReadableDatabase();
+
+                                                fragmentActivity.checkIntegrityDB(database);
+                                                Log.d(TAG," save button vlozil do db ");
+                                                database.beginTransaction();
+                                                ContentValues contentValues = new ContentValues();
+                                                contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
+                                                contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
+                                                contentValues.put(Provider.new_bumps.MANUAL, 1);
+                                                contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
+                                                database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                                                database.setTransactionSuccessful();
+                                                database.endTransaction();
+                                                database.close();
+                                                databaseHelper.close();
+                                                fragmentActivity.checkCloseDb(database);
+                                            }
+                                            finally {
+                                                Log.d(TAG," save button updatesLock unlock");
+                                                updatesLock.unlock();
+                                            }
+                                        }  else  {   Log.d(TAG," loczoznam");}
+
+                                        Log.d(TAG," save button casový lock end");
+                                    }
+                                    finally {
+                                        Log.d(TAG," save button lockZoznam unlock");
+                                        aaa =true;
+                                        lockZoznam.unlock();
+
+                                    }
+                                }
+                                else  {   Log.d(TAG," loczoznam");}
+                            }
+                            finally {
+                                Log.d(TAG," save button lockAdd unlock");
+
+                                lockAdd.unlock();
+                                if (aaa) {
+                                    threadLock.getAndSet(false);
+                                    break;
+
+                                }
+                            }
+                        }else  {   Log.d(TAG," lockAdd");}
+                        Log.d(TAG," break break break");
+                        threadLock.getAndSet(false);
+                    }
+                    else  {   Log.d(TAG," threadLock");}
+                    Log.d(TAG,"casovy lock");
+                    Log.d(TAG, " save button " + String.valueOf(location.getLatitude()));
+                    Log.d(TAG, " save button " + String.valueOf(location.getLongitude()));
+                    Log.d(TAG, " save button " + String.valueOf(ll));
+                    try {
+                        Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
+                    } catch (InterruptedException e) {
+                        e.getMessage();
+                    }
+                }
+                Looper.loop();
+            }
+        }.start();
     }
 
 }

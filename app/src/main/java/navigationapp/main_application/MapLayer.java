@@ -122,6 +122,8 @@ public class MapLayer {
                                             autoFeature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
                                                     context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
                                                     context.getResources().getString(R.string.modif) + " " + showFormatData);
+                                            autoFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
+                                            autoFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
                                             autoBumpSequence++;
                                         } else { // jednotkou je označený  manuálne detegovaný výtlk
                                             manualMarkerCoordinates.add(Feature.fromGeometry(
@@ -131,6 +133,8 @@ public class MapLayer {
                                             manualFeature.addStringProperty("property", context.getResources().getString(R.string.manual_bump) + "\n" +
                                                     context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
                                                     context.getResources().getString(R.string.modif) + " " + showFormatData);
+                                            manualFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
+                                            manualFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
                                             manualBumpSequence++;
                                         }
                                     }
@@ -421,6 +425,8 @@ public class MapLayer {
                                 autoFeature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
                                         context.getResources().getString(R.string.number_bump) + "1\n" +
                                         context.getResources().getString(R.string.modif) + " " + now_formated);
+                                autoFeature.addStringProperty("lat", String.valueOf(loc.getLatitude()));
+                                autoFeature.addStringProperty("ltn", String.valueOf(loc.getLongitude()));
                                 autoSeq++;
                           }
 
@@ -433,6 +439,8 @@ public class MapLayer {
                             manualFeature.addStringProperty("property",context.getResources().getString(R.string.manual_bump) + "\n" +
                                         context.getResources().getString(R.string.number_bump) + "1\n" +
                                         context.getResources().getString(R.string.modif) + " " + now_formated);
+                               manualFeature.addStringProperty("lat", String.valueOf(loc.getLatitude()));
+                               manualFeature.addStringProperty("ltn", String.valueOf(loc.getLongitude()));
                             manulSeq++;
                         }
                     }

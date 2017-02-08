@@ -141,5 +141,7 @@
     <string name="share_was_send">Problém bol nahlásený</string>
     <string name="share_gps">Poloha nenájdená,prosím povoľte GPS</string>
 
+    <string name="increase_number">Počet bol navýšený</string>
+
 
 </resources>
