@@ -41,7 +41,7 @@ public class VoiceMainActivity extends Activity  {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             voice = isEneableVoice();
 
-            if (!query.equals("bump")) {
+            if (!query.equals("bump") || !query.equals("bin")  || !query.equals("cover") || !query.equals("other") ) {
                 Log.d(TAG,"zly hlasový príkaz");
                 if (voice) {
                     talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -106,7 +106,7 @@ public class VoiceMainActivity extends Activity  {
                                 Toast.makeText(getApplicationContext(), getApplication().getResources().getString(R.string.voice_language_not_supported), Toast.LENGTH_LONG).show();
                                 Log.e("DEBUG", "Language Not Supported");
                             } else {
-                               talker.speak("Bump was added " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
+                               talker.speak("Report was added " + setting_name(), TextToSpeech.QUEUE_FLUSH, null);
                             }
                         } else {
                             Log.i("DEBUG", "MISSION FAILED");

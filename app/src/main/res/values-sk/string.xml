@@ -24,7 +24,7 @@
     <string name="type_medium">Stredný</string>
     <string name="type_normal">Normálny</string>
 
-    <string name="bump_add">Výtlk pridaný</string>
+    <string name="bump_add">Hlásenie zaznamenané</string>
 <string name="trasht_add">Plný kôš bol nahlásený</string>
 <string name="canstock_add">Chýbajúci poklop bol nahlásaný</string>
 <string name="select_add">Problém bol nahlásený</string>
@@ -143,5 +143,11 @@
 
     <string name="increase_number">Počet bol navýšený</string>
 
+    <string name="add_photo">Pridať fotku</string>
 
+    <string name="type_problem">Typ problému</string>
+    <string name="type_problem_bump">Pridať výtlk</string>
+    <string name="type_problem_basket">Plný kôš</string>
+    <string name="type_problem_canstock">Chýbajúci poklop</string>
+    <string name="type_problem_other">Iné</string>
 </resources>

@@ -24,7 +24,7 @@
     <string name="type_medium">Medium</string>
     <string name="type_normal">Normal</string>
 
-    <string name="bump_add">Bump was added</string>
+    <string name="bump_add">Report was added</string>
     <string name="trasht_add">Full basket was reported</string>
     <string name="canstock_add">Missing channel was reported</string>
     <string name="select_add">Problem was reported</string>
@@ -144,8 +144,15 @@
     <string name="share_was_send">Report was send</string>
     <string name="share_gps">Not found position, please turn on your GPS</string>
 
-    <string name="increase_number">The number was increased</string>
+    <string name="increase_number">The count was increased</string>
 
+    <string name="add_photo">Add photo</string>
+
+    <string name="type_problem">Type of problem</string>
+    <string name="type_problem_bump">Add bump</string>
+    <string name="type_problem_basket">Full bin</string>
+    <string name="type_problem_canstock">Missing channel</string>
+    <string name="type_problem_other">Other</string>
 
 
 
