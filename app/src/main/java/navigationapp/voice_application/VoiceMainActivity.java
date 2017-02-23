@@ -41,7 +41,7 @@ public class VoiceMainActivity extends Activity  {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             voice = isEneableVoice();
 
-            if (!query.equals("bump") || !query.equals("bin")  || !query.equals("cover") || !query.equals("other") ) {
+            if ( !(query.equals("bump") || query.equals("bin")  || query.equals("cover") || query.equals("other")) ) {
                 Log.d(TAG,"zly hlasový príkaz");
                 if (voice) {
                     talker=new TextToSpeech(this, new TextToSpeech.OnInitListener() {
