@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -143,12 +144,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int select_iteam = 0;
     private static final int PICK_IMAGE_ID = 234;
     private static final int PICK_IMAGE_ADD_ID = 233;
-
+    public static String androidId =  null;
     @InjectView(R.id.location)
     PlacesAutocompleteTextView mAutocomplete;
     com.mapbox.mapboxsdk.geometry.LatLng points =null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
@@ -288,7 +290,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
             }
         });
-
+        androidId = Settings.Secure.getString(getContentResolver(),
+                Settings.Secure.ANDROID_ID);
         add_button = (Button) findViewById(R.id.add_button);
         save_button = (Button) findViewById(R.id.save_btn);
         delete_button = (Button) findViewById(R.id.delete_btn);

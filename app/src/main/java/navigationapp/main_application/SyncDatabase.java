@@ -174,7 +174,7 @@ public class SyncDatabase {
     }
 
     private void startGPS() {
-        new Timer().schedule(new SyncDb(), 0, 300000);
+        new Timer().schedule(new SyncDb(), 0, 30000);  //300000
         Log.d(TAG, " start regular update SyncDb");
     }
 
@@ -270,7 +270,8 @@ public class SyncDatabase {
                 regular_update = false;
                 if (gps != null && gps.getCurrentLatLng() != null) {
                     Log.d(TAG, "getBumpsWithLevel mam povolenie alebo som na wifi");
-                    get_max_bumps(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                    syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                    //get_max_bumps(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                 }
            } else if (regular_update) {  // ak je to prve spustenie alebo pravidelný update
                 if (accelerometer != null && accelerometer.getPossibleBumps() != null && accelerometer.getPossibleBumps().size() > 0) {
@@ -980,6 +981,7 @@ public class SyncDatabase {
 
     public void saveBump(ArrayList<HashMap< android.location.Location, Float>> list, ArrayList<Integer> bumpsManual, Integer sequel) {
         Log.d(TAG, "saveBump start" );
+        Log.d(TAG, "saveBump start" +list.size());
         listHelp = list;
         bumpsManualHelp = bumpsManual;
         poradie = sequel;
@@ -1191,5 +1193,298 @@ public class SyncDatabase {
         System.runFinalization();
         Runtime.getRuntime().gc();
         System.gc();
+    }
+
+
+
+
+
+    ArrayList<Integer> listID = new ArrayList<Integer>();
+    ArrayList<String> listDate = new ArrayList<String>();
+    String StringlistID = null;
+    String StringlistDate = null;
+
+    private void syncList(final Double langtitude, final Double longtitude, final Integer nets)  {
+        Log.d(TAG, "syncList start");
+        new Thread() {
+            public void run() {
+                while (true) {
+                    if (updatesLock.tryLock()) {
+                        try {
+                            SimpleDateFormat now, ago;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            now = new SimpleDateFormat("yyyy-MM-dd");
+                            String now_formated = now.format(cal.getTime());
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            String ago_formated = ago.format(cal.getTime());
+                             StringlistID = null;
+                             StringlistDate = null;;
+
+                            String selectQuery = "SELECT b_id_bumps, last_modified  FROM " + TABLE_NAME_BUMPS
+                                    + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                    + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))";
+
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+                            checkIntegrityDB(database);
+                            database.beginTransaction();
+                            Cursor cursor = database.rawQuery(selectQuery, null);
+                            nummA =0 ;
+                            if (cursor != null && cursor.moveToFirst()) {
+                                do {
+                                    if (!cursor.isNull(0) && !cursor.isNull(1) ) {
+                                        StringlistID = StringlistID+ "@"+cursor.getInt(0);
+                                        StringlistDate = StringlistDate+ "@"+cursor.getString(1);
+                                        nummA++;
+                                     //   listID.add(cursor.getInt(0));
+                                       // listDate.add(cursor.getString(1));
+                                        Log.d(TAG, "syncList b_id_bumps " + cursor.getInt(0));
+                                        Log.d(TAG, "syncList last_modified " + cursor.getString(1));
+                                    }
+                                } while (cursor.moveToNext());
+                            }
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
+                            databaseHelper.close();
+                            checkCloseDb(database);
+                        } finally {
+                            Log.d(TAG, "syncList unlock");
+                            updatesLock.unlock();
+                            break;
+                        }
+                    } else {
+                        Log.d(TAG, "syncList try lock");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
+                            e.getMessage();
+                        }
+                    }
+                }
+                lang_database = langtitude; // ukladam pozície, aby som všade pracoval s rovnakými
+                longt_database = longtitude;
+
+                new UpdateList().execute();
+
+            }
+        }.start();
+    }
+int nummA=0 , nummB=0 ;
+    class UpdateList extends AsyncTask<String, Void, JSONArray> {
+
+        protected JSONArray doInBackground(String... args) {
+            Log.d(TAG, "UpdateList start");
+            Log.d(TAG, "StringlistDate " + StringlistDate);
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
+            params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
+            params.add(new BasicNameValuePair("listID", StringlistID));
+            params.add(new BasicNameValuePair("listDate", StringlistDate));
+            params.add(new BasicNameValuePair("net", String.valueOf(1)));
+            Log.d(TAG, "UpdateList odosielam požiadavku na server");
+            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/sync_bump.php", "POST", params);
+            if (json == null) {
+                JSONArray response = new JSONArray();
+                try {
+                    Log.d(TAG, "UpdateList - error");
+                    response.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return response;
+            }
+            try {
+                int success = json.getInt("success");
+                Log.d(TAG, "UpdateList - success" + success);
+                JSONArray response = new JSONArray();
+                if (success == 0) {   // mam nove data na stiahnutie
+                    bumps = json.getJSONArray("bumps");
+                    Log.d(TAG, "UpdateList - new data");
+                    return bumps;
+                } else if (success == 1) {  // potrebujem potvrdit nove data na stiahnutie , nemám povolený net ale bol flag
+                    response.put(0, "update");
+                    Log.d(TAG, "UpdateList - need update");
+                    return response;
+                } else {
+                    Log.d(TAG, "UpdateList - no data");
+                    return null;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                JSONArray response = new JSONArray();
+                try {
+                    response.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                Log.d(TAG, "UpdateList - JSONException");
+                return response;
+            }
+        }
+        // Boolean errorQ = false;
+        protected void onPostExecute(JSONArray array) {
+            if (array == null) { // žiadne nové data v bumps, zisti collisons
+                Log.d(TAG, "UpdateList onPostExecute - no data");
+                if (gps != null && gps.getCurrentLatLng() != null) {
+                    context.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                        }
+                    });
+                }
+                return;
+            }
+
+            try {
+                 if (array.get(0).equals("error")) {
+                    Log.d(TAG, "UpdateList onPostExecute - error");
+                    if (gps != null && gps.getCurrentLatLng() != null) {
+                        context.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                            }
+                        });
+                        return;
+                    }
+                } else if (array.get(0).equals("update")) { // mam nove data, zistit aj collision a potom upozorni uživatela
+                    Log.d(TAG, "UpdateList onPostExecute - update");
+                    GetUpdateAction();
+                } else {
+                     Log.d(TAG, "UpdateList onPostExecute - new data, update databazu");
+
+                     Thread t = new Thread() {    // insertujem nove data do databazy
+                         public void run() {
+
+                             Boolean error = false;
+                             while (true) {
+                                 if (updatesLock.tryLock()) {
+                                     try {
+                                         nummB= 0;
+                                         DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                         checkIntegrityDB(database);
+                                         database.beginTransaction();
+                                         for (int i = 0; i < bumps.length(); i++) {
+                                             nummB++;
+                                             JSONObject data = null;
+                                             try {
+                                                 data = bumps.getJSONObject(i);
+                                             } catch (JSONException e) {
+                                                 error = true;  // zle parsovanie dat, zaznamenám chybu, neuložim do databázy
+                                                 e.printStackTrace();
+                                                 break;
+                                             }
+                                             double latitude = 0, longitude = 0;
+                                             int count = 0, b_id = 0, rating = 0, manual = 0, type =0 , fix =0;
+                                             String last_modified = null;
+                                             if (data != null) {
+                                                 try {
+                                                     b_id = data.getInt("b_id");
+                                                     latitude = data.getDouble("latitude");
+                                                     longitude = data.getDouble("longitude");
+                                                     Log.d(TAG, "UpdateList latitude " + latitude);
+                                                     Log.d(TAG, "UpdateList longitude" + longitude);
+                                                     Log.d(TAG, "UpdateList last_modified" + longitude);
+                                                     count = data.getInt("count");
+                                                     type = data.getInt("type");
+                                                     count = data.getInt("count");
+                                                     fix = data.getInt("fix");
+                                                     rating = data.getInt("rating");
+                                                     last_modified = data.getString("last_modified");
+                                                     Log.d(TAG, "UpdateList last_modified" + last_modified);
+                                                     manual = data.getInt("manual");
+                                                     Log.d(TAG, "UpdateList b_id" + b_id);
+                                                     Cursor cursor = null;
+                                                     String sql = "SELECT * FROM my_bumps WHERE b_id_bumps=" + b_id;
+                                                     try {
+                                                         cursor = database.rawQuery(sql, null);
+                                                         if (cursor.getCount() > 0) {
+
+                                                             Log.d(TAG, "UpdateList exist b_id");
+                                                             sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", fix="+fix+", count=" + count +", last_modified='"+last_modified+"' WHERE b_id_bumps=" + b_id;
+                                                             database.execSQL(sql);
+                                                         }
+                                                         else {
+                                                             Log.d(TAG, "UpdateList new  b_id");
+                                                             ContentValues contentValues = new ContentValues();
+                                                             contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
+                                                             contentValues.put(Provider.bumps_detect.COUNT, count);
+                                                             contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
+                                                             contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
+                                                             contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
+                                                             contentValues.put(Provider.bumps_detect.MANUAL, manual);
+                                                             contentValues.put(Provider.bumps_detect.RATING, rating);
+                                                             contentValues.put(Provider.bumps_detect.TYPE, type);
+                                                             contentValues.put(Provider.bumps_detect.FIX, fix);
+                                                              database.insert(TABLE_NAME_BUMPS, null, contentValues);
+
+                                                         }
+
+                                                     } finally {
+                                                         if (cursor != null)
+                                                             cursor.close();
+                                                     }
+                                                 } catch (JSONException e) {
+                                                     error = true;
+                                                     e.printStackTrace();
+                                                     break;
+                                                 }
+                                             }
+                                         }
+                                         if (!error) {  // insert prebehol v poriadku, ukonči transakciu
+                                             database.setTransactionSuccessful();
+                                             database.endTransaction();
+                                             database.close();
+                                             databaseHelper.close();
+                                             checkCloseDb(database);
+                                             Log.d(TAG, "UpdateList no error");
+                                         } else { // nastala chyba, načitaj uložene vytlky
+                                             Log.d(TAG, "UpdateList  error");
+                                         }
+                                         database.endTransaction();
+                                         database.close();
+                                         databaseHelper.close();
+                                         checkCloseDb(database);
+                                     } finally {
+                                         updatesLock.unlock();
+                                         break;
+                                     }
+                                 } else {
+                                     Log.d(TAG, "UpdateList try lock");
+                                     try {
+                                         Random ran = new Random();
+                                         int x = ran.nextInt(20) + 1;
+                                         Thread.sleep(x);
+                                     } catch (InterruptedException e) {
+                                         e.getMessage();
+                                     }
+                                 }
+                             }
+
+                             if (gps != null && gps.getCurrentLatLng() != null) {
+                                 context.runOnUiThread(new Runnable() {
+                                     @Override
+                                     public void run() {
+                                         mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                                     }
+                                 });
+                             }
+                             Log.d(TAG, "UpdateList končí");
+                             Log.d(TAG, "UpdateList nummA " + nummA + " nummB " +nummB);
+                         }
+                     };
+                     t.start();
+                 }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

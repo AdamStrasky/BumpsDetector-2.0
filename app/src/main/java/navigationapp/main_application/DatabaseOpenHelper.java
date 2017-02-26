@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import static android.provider.BaseColumns._ID;
+import static navigationapp.main_application.Provider.bumps_detect.FIX;
 import static  navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
 import static  navigationapp.main_application.Provider.bumps_detect.B_ID_BUMPS;
 import static  navigationapp.main_application.Provider.bumps_detect.COUNT;
@@ -20,6 +21,7 @@ import static  navigationapp.main_application.Provider.bumps_collision.C_ID;
 import static  navigationapp.main_application.Provider.bumps_collision.B_ID_COLLISIONS;
 import static  navigationapp.main_application.Provider.bumps_collision.INTENSITY;
 import static  navigationapp.main_application.Provider.bumps_collision.CRETED_AT;
+import static navigationapp.main_application.Provider.bumps_detect.TYPE;
 import static  navigationapp.main_application.Provider.new_bumps.TABLE_NAME_NEW_BUMPS;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
@@ -48,9 +50,11 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                     + "%s DOUBLE,"
                     + "%s DOUBLE,"
                     + "%s INTEGER,"
+                    + "%s INTEGER,"
+                    + "%s INTEGER,"
                     + "%s INTEGER"
                     + ")";
-            return String.format(sqlTemplate, TABLE_NAME_BUMPS, B_ID_BUMPS, COUNT, LAST_MODIFIED,LATITUDE,LONGTITUDE,MANUAL,RATING);
+            return String.format(sqlTemplate, TABLE_NAME_BUMPS, B_ID_BUMPS, COUNT, LAST_MODIFIED,LATITUDE,LONGTITUDE,MANUAL,RATING,TYPE,FIX);
         }
 
         private String createTableSqlCollisions() {

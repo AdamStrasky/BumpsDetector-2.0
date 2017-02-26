@@ -12,6 +12,8 @@ public interface Provider {
         public static final String LATITUDE = "latitude";
         public static final String LONGTITUDE = "longitude";
         public static final String MANUAL = "manual";
+        public static final String TYPE = "type";
+        public static final String FIX = "fix";
     }
 
     public interface bumps_collision extends BaseColumns {

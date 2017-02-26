@@ -1,13 +1,18 @@
 package navigationapp.main_application;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -29,58 +34,60 @@ import java.util.List;
 
 import navigationapp.R;
 
+import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
 import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
 import static navigationapp.main_application.MainActivity.mapbox;
 import static navigationapp.main_application.MapManager.setOnPosition;
 
-public class GPSLocator extends Service implements LocationListener,  MapboxMap.OnMyLocationChangeListener{
+public class GPSLocator extends Service implements LocationListener, MapboxMap.OnMyLocationChangeListener {
 
-    private Location mCurrentLocation=null;
+    private Location mCurrentLocation = null;
     private GoogleApiClient mGoogleApiClient;
     private final String TAG = "GPSLocator";
-    private boolean draw_road= false;
+    private boolean draw_road = false;
     private com.mapbox.mapboxsdk.location.LocationServices locationServices;
-    public GPSLocator () {
+
+    public GPSLocator() {
         this.mGoogleApiClient = global_mGoogleApiClient;
         startLocationUpdates();
         locationServices = com.mapbox.mapboxsdk.location.LocationServices.getLocationServices(GPSLocator.this);
     }
 
     //vykresli cestu
-    public void showDirection (final List<LatLng> directionPoint) {
+    public void showDirection(final List<LatLng> directionPoint) {
         Log.d(TAG, "showDirection - vykreslujem cestu");
         new Thread() {
             public void run() {
                 Looper.prepare();
-        com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
-        for(int i = 0 ; i < directionPoint.size() ; i++) {
-            points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
-                    directionPoint.get(i).latitude,
-                    directionPoint.get(i).longitude);
-        }
+                com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
+                for (int i = 0; i < directionPoint.size(); i++) {
+                    points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
+                            directionPoint.get(i).latitude,
+                            directionPoint.get(i).longitude);
+                }
 
-        draw_road = true;
-        mapbox.addPolyline(new PolylineOptions()
-                .add(points)
-                .color(Color.parseColor("#009688"))
-                .width(5));
+                draw_road = true;
+                mapbox.addPolyline(new PolylineOptions()
+                        .add(points)
+                        .color(Color.parseColor("#009688"))
+                        .width(5));
                 Looper.loop();
             }
         }.start();
     }
 
-    public void remove_draw_road () { // maže vykreslenu cestu
-       Log.d(TAG, "remove_draw_road");
-       if (draw_road) {
-           if(mapbox!=null) {
-               List<Polyline> markers =  mapbox.getPolylines();
-               for (int i = 0; i < markers.size(); i++) {
-                   mapbox.removePolyline(markers.get(i));
-               }
-            draw_road=false;
-           }
-       }
+    public void remove_draw_road() { // maže vykreslenu cestu
+        Log.d(TAG, "remove_draw_road");
+        if (draw_road) {
+            if (mapbox != null) {
+                List<Polyline> markers = mapbox.getPolylines();
+                for (int i = 0; i < markers.size(); i++) {
+                    mapbox.removePolyline(markers.get(i));
+                }
+                draw_road = false;
+            }
+        }
     }
 
     public Location getmCurrentLocation() {   // vracia aktuálnu polohu
@@ -88,13 +95,19 @@ public class GPSLocator extends Service implements LocationListener,  MapboxMap.
     }
 
     public LatLng getCurrentLatLng() {
-        if (mCurrentLocation == null )
-            return null ;
+        if (mCurrentLocation == null)
+            return null;
         else
-          return new LatLng(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude());
+            return new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
     }
 
     protected void startLocationUpdates() {
+
+        if ( Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission( GPSLocator.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission( GPSLocator.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            return  ;
+
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
     }
 

@@ -2,8 +2,9 @@ package navigationapp.main_application;
 
 import android.location.Location;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.util.Log;
-
+import android.provider.Settings;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
@@ -13,15 +14,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static navigationapp.main_application.MainActivity.androidId;
+
 public class Bump {
 
     JSONParser jsonParser = new JSONParser();
-    private static String url_create_product = "http://sport.fiit.ngnlab.eu/create.php";
+    private static String url_create_product = "http://sport.fiit.ngnlab.eu/create_bump.php";
     private float intensity;
     private Location location;
     private int rating;
     private int manual;
     private final String TAG = "Bump";
+
     public Bump(Location location, float delta, Integer manual) {
         this.intensity = delta;
         this.location = location;
@@ -30,6 +34,7 @@ public class Bump {
         if (isBetween(intensity, 6, 10)) rating = 2;
         if (isBetween(intensity, 10, 10000)) rating = 3;
         this.manual = manual;
+
     }
 
     public static boolean isBetween(float x, float from, float to) {
@@ -57,12 +62,15 @@ public class Bump {
             String latitude = String.valueOf(location.getLatitude());
             String longitude = String.valueOf(location.getLongitude());
             List<NameValuePair> params = new ArrayList<NameValuePair>();
+
            //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
             params.add(new BasicNameValuePair("intensity", Float.toString(intensity)));
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
+            params.add(new BasicNameValuePair("type", Integer.toString(0)));
+            params.add(new BasicNameValuePair("device_id", androidId));
 
             JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
 
