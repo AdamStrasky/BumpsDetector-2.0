@@ -22,7 +22,9 @@ import android.widget.Toast;
 import navigationapp.R;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Timer;
@@ -38,6 +40,7 @@ import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.MainActivity.getDate;
 import static navigationapp.main_application.MainActivity.round;
 
 public class Accelerometer extends Service implements SensorEventListener {
@@ -48,6 +51,8 @@ public class Accelerometer extends Service implements SensorEventListener {
     private float THRESHOLD = 4.5f;
     private ArrayList<HashMap<Location, Float>> possibleBumps = null;
     private ArrayList <Integer> BumpsManual = null;
+    private ArrayList <Integer> typeDetect = null;
+    private ArrayList <String> textDetect = null;
     private float priorityX = 0.0f;
     private float priorityY = 0.0f;
     private float priorityZ = 0.0f;
@@ -72,6 +77,9 @@ public class Accelerometer extends Service implements SensorEventListener {
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         possibleBumps = new ArrayList<>();
         BumpsManual = new ArrayList<>();
+        typeDetect = new ArrayList<>();
+        textDetect = new ArrayList<>();
+
     }
 
     private void startRecalibrate() {// spustenie pravidelneho rekalibrovania
@@ -113,6 +121,23 @@ public class Accelerometer extends Service implements SensorEventListener {
     public void addBumpsManual(int manual) {
         BumpsManual.add(manual);
     }
+
+    public ArrayList<Integer> gettypeDetect() {
+        return typeDetect;
+    }
+
+    public void addtypeDetect(int type) {
+        typeDetect.add(type);
+    }
+
+    public ArrayList<String> gettextDetect() {
+        return textDetect;
+    }
+
+    public void addtextDetect(String text) {
+        textDetect.add(text);
+    }
+
 
     @Override
     //pri zmene dat z akcelerometra nam metoda dava tieto data v premennej event.values[]
@@ -296,7 +321,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                     databaseHelper = new DatabaseOpenHelper(this);
                                                     database = databaseHelper.getWritableDatabase();
                                                     checkIntegrityDB(database);
-                                                    database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
+                                                    database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6), created_at='"+getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss")+"' WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7)  AND type=0 ");
                                                 }
                                                 finally {
                                                     if (database!=null) {
@@ -335,7 +360,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                         databaseHelper = new DatabaseOpenHelper(this);
                                                         database = databaseHelper.getWritableDatabase();
                                                         checkIntegrityDB(database);
-                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6) WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) ");
+                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6), created_at='"+getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss")+"' WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) AND type=0 ");
                                                     }
                                                     finally {
                                                         if (database!=null) {
@@ -370,6 +395,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                     HashMap<Location, Float> hashToArray = new HashMap();
                     location.setLatitude(round(location.getLatitude(),7));
                     location.setLongitude(round(location.getLongitude(),7));
+
                     hashToArray.put(location,data);
                     //zdetegovany vytlk, ktory sa prida do zoznamu vytlkov, ktore sa odoslu do databazy
                     if (lockZoznam.tryLock()) {
@@ -377,6 +403,8 @@ public class Accelerometer extends Service implements SensorEventListener {
                             Log.d(TAG, "detect - add to list new dump");
                             possibleBumps.add(hashToArray);
                             BumpsManual.add(0);
+                            typeDetect.add(0);
+                            textDetect.add("bump");
                         }
                         finally {
                             lockZoznam.unlock();
@@ -398,6 +426,9 @@ public class Accelerometer extends Service implements SensorEventListener {
                                 contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
                                 contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
                                 contentValues.put(Provider.new_bumps.MANUAL, 0);
+                                contentValues.put(Provider.new_bumps.TYPE, 0);
+                                contentValues.put(Provider.new_bumps.TEXT, "bump");
+                                contentValues.put(Provider.new_bumps.CREATED_AT, getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss"));
                                 contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
                                 database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                             }
@@ -462,4 +493,5 @@ public class Accelerometer extends Service implements SensorEventListener {
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
 }

@@ -14,6 +14,7 @@ public interface Provider {
         public static final String MANUAL = "manual";
         public static final String TYPE = "type";
         public static final String FIX = "fix";
+        public static final String INFO = "info";
     }
 
     public interface bumps_collision extends BaseColumns {
@@ -30,5 +31,8 @@ public interface Provider {
         public static final String LONGTITUDE = "longitude";
         public static final String INTENSITY = "intensity";
         public static final String MANUAL = "manual";
+        public static final String CREATED_AT = "created_at";
+        public static final String TYPE = "type";
+        public static final String TEXT = "text";
     }
 }

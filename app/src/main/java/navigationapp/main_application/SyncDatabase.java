@@ -23,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,6 +43,7 @@ import static navigationapp.main_application.FragmentActivity.isNetworkAvailable
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.MainActivity.getDate;
 import static navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
 public class SyncDatabase {
@@ -95,7 +97,7 @@ public class SyncDatabase {
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {   // načítam všetky uložené výtlky ktoré neboli synchronizovane zo serverom
-                            String selectQuery = "SELECT latitude,longitude,intensity,manual FROM new_bumps ";
+                            String selectQuery = "SELECT latitude,longitude,intensity,manual,type, text, created_at FROM new_bumps ";
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
                             checkIntegrityDB(database);
@@ -103,6 +105,9 @@ public class SyncDatabase {
                             Cursor cursor = database.rawQuery(selectQuery, null);
                             ArrayList<HashMap< android.location.Location , Float>> hashToArray = new ArrayList<HashMap< android.location.Location , Float>>();
                             ArrayList<Integer> listA = new ArrayList<Integer>();
+                            ArrayList<Integer> listType = new ArrayList<Integer>();
+                            ArrayList<String> listText = new ArrayList<String>();
+
                             long date = new Date().getTime();
                             if (cursor != null && cursor.moveToFirst()) {
                                 do {
@@ -110,14 +115,29 @@ public class SyncDatabase {
                                         android.location.Location  location = new android.location.Location ("new");
                                         location.setLatitude(cursor.getDouble(0));
                                         location.setLongitude(cursor.getDouble(1));
-                                        location.setTime(date);
+                                        try {
+
+                                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                            Date datea = sdf.parse(cursor.getString(6));
+                                            location.setTime(datea.getTime());
+                                        } catch (ParseException e) {
+                                            e.printStackTrace();
+                                        }
+
+
+
+
                                         HashMap<android.location.Location, Float> hashToArraya = new HashMap();
                                         hashToArraya.put(location, (float) cursor.getDouble(2));
                                         hashToArray.add(hashToArraya);
                                         listA.add(cursor.getInt(3));
+                                        listType.add(cursor.getInt(4));
+                                        listText.add(cursor.getString(5));
                                         Log.d(TAG, "loadSaveDB latitude " + cursor.getDouble(0));
                                         Log.d(TAG, "loadSaveDB longitude " + cursor.getDouble(1));
-                                        Log.d(TAG, "loadSaveDB intensity " + cursor.getDouble(2));
+                                        Log.d(TAG, "loadSaveDB listType " + cursor.getInt(4));
+                                        Log.d(TAG, "loadSaveDB listText " + cursor.getString(5));
+                                        Log.d(TAG, "loadSaveDB listdate " + getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss"));
                                     }
                                 } while (cursor.moveToNext());
                                 if (cursor != null) {
@@ -128,6 +148,8 @@ public class SyncDatabase {
                                                     Log.d(TAG, "loadSaveDB copy old bump");
                                                     accelerometer.getPossibleBumps().addAll(hashToArray);
                                                     accelerometer.getBumpsManual().addAll(listA);
+                                                    accelerometer.gettypeDetect().addAll(listType);
+                                                    accelerometer.gettextDetect().addAll(listText);
                                                 } finally {
                                                     Log.d(TAG, "loadSaveDB lockZoznam unlock");
                                                     lockZoznam.unlock();
@@ -187,6 +209,8 @@ public class SyncDatabase {
     }
     ArrayList<HashMap<android.location.Location, Float>> bumpsQQ = new ArrayList<HashMap<android.location.Location, Float>>();
     ArrayList<Integer> bumpsManualQQ = new ArrayList<Integer>();
+    ArrayList<Integer> bumpsTypeQQ = new ArrayList<Integer>();
+    ArrayList<String> bumpsTextQQ = new ArrayList<String>();
 
     private class SyncDb extends TimerTask {
         @Override
@@ -213,8 +237,12 @@ public class SyncDatabase {
                                                     try {
                                                         bumpsQQ.addAll(accelerometer.getPossibleBumps());
                                                         bumpsManualQQ.addAll(accelerometer.getBumpsManual());
+                                                        bumpsTypeQQ.addAll(accelerometer.gettypeDetect());
+                                                        bumpsTextQQ.addAll(accelerometer.gettextDetect());
                                                         accelerometer.getPossibleBumps().clear();
                                                         accelerometer.getBumpsManual().clear();
+                                                        accelerometer.gettypeDetect().clear();
+                                                        accelerometer.gettextDetect().clear();
                                                     } finally {
                                                         Log.d(TAG, "SyncDb lockZoznam unlock");
                                                         lockZoznam.unlock();
@@ -239,7 +267,7 @@ public class SyncDatabase {
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
-                                    saveBump(bumpsQQ, bumpsManualQQ, 0);
+                                    saveBump(bumpsQQ, bumpsManualQQ,bumpsTypeQQ,bumpsTextQQ, 0);
                                 } else {
                                     Log.d(TAG, "SyncDb zoznam je prázdny ");
                                     getBumpsWithLevel();
@@ -917,8 +945,12 @@ public class SyncDatabase {
                                             try {
                                                 bumpsQQ.addAll(accelerometer.getPossibleBumps());
                                                 bumpsManualQQ.addAll(accelerometer.getBumpsManual());
+                                                bumpsTypeQQ.addAll(accelerometer.gettypeDetect());
+                                                bumpsTextQQ.addAll(accelerometer.gettextDetect());
                                                 accelerometer.getPossibleBumps().clear();
                                                 accelerometer.getBumpsManual().clear();
+                                                bumpsTypeQQ.addAll(accelerometer.gettypeDetect());
+                                                bumpsTextQQ.addAll(accelerometer.gettextDetect());
                                             } finally {
                                                 Log.d(TAG, "GetUpdateAction lockZoznam unlock");
                                                 lockZoznam.unlock();
@@ -945,7 +977,7 @@ public class SyncDatabase {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            saveBump(bumpsQQ, bumpsManualQQ, 0);
+                            saveBump(bumpsQQ, bumpsManualQQ,bumpsTypeQQ,bumpsTextQQ, 0);
                         } else if (updates == 1) {
                             Log.d(TAG, "GetUpdateAction updates == 1 v getupdate" );
                             updates = 0;
@@ -977,13 +1009,17 @@ public class SyncDatabase {
     private boolean lock = true;
     private ArrayList<HashMap< android.location.Location, Float>> listHelp = null;
     private ArrayList<Integer> bumpsManualHelp = null;
+    private ArrayList<Integer> bumpsTypeHelp = null;
+    private ArrayList<String> bumpsTextlHelp = null;
     private Integer poradie = 0;
 
-    public void saveBump(ArrayList<HashMap< android.location.Location, Float>> list, ArrayList<Integer> bumpsManual, Integer sequel) {
+    public void saveBump(ArrayList<HashMap< android.location.Location, Float>> list, ArrayList<Integer> bumpsManual, ArrayList<Integer> bumpsType,ArrayList<String> bumpsText, Integer sequel) {
         Log.d(TAG, "saveBump start" );
         Log.d(TAG, "saveBump start" +list.size());
         listHelp = list;
         bumpsManualHelp = bumpsManual;
+        bumpsTypeHelp = bumpsType;
+        bumpsTextlHelp = bumpsText;
         poradie = sequel;
         new Thread() {
             public void run() {
@@ -995,7 +1031,7 @@ public class SyncDatabase {
                             HashMap.Entry pair = (HashMap.Entry) it.next();
                             final  android.location.Location  loc = ( android.location.Location) pair.getKey();
                             final float data = (float) pair.getValue();
-                            Handler = new Bump(loc, data, bumpsManualHelp.get(poradie));
+                            Handler = new Bump(loc, data, bumpsManualHelp.get(poradie),bumpsTypeHelp.get(poradie),bumpsTextlHelp.get(poradie));
                             Handler.getResponse(new CallBackReturn() {
                                 public void callback(String results) {
                                     if (results.equals("success")) {
@@ -1014,12 +1050,14 @@ public class SyncDatabase {
                                                         database.beginTransaction();
                                                         Log.d(TAG, "saveBump success delete db ");
                                                         database.execSQL("DELETE FROM new_bumps WHERE ROUND(latitude,7)= ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)= ROUND(" + loc.getLongitude() + ",7)"
-                                                                + " and  ROUND(intensity,6)==ROUND(" + data + ",6) and manual=" + bumpsManualHelp.get(num) + "");
+                                                                + " and  ROUND(intensity,6)==ROUND(" + data + ",6) and type="+bumpsTypeHelp.get(num)+" and manual=" + bumpsManualHelp.get(num) + "");
                                                         Log.d("TEST", "mazem");
                                                         Log.d(TAG, "mazem " + listHelp.get(num).toString());
                                                         Log.d(TAG, "mazem " + bumpsManualHelp.get(num).toString());
                                                         listHelp.remove(num);
+                                                        bumpsTypeHelp.remove(num);
                                                         bumpsManualHelp.remove(num);
+                                                        bumpsTextlHelp.remove(num);
                                                         database.setTransactionSuccessful();
                                                         database.endTransaction();
                                                     }
@@ -1102,6 +1140,8 @@ public class SyncDatabase {
                                                                 // mažem s pomocného zoznamu updatnuté hodnoty
                                                                 listHelp.remove(i);
                                                                 bumpsManualHelp.remove(i);
+                                                                bumpsTypeHelp.remove(i);
+                                                                bumpsTextlHelp.remove(i);
                                                             }
                                                         }
                                                         i++;
@@ -1114,10 +1154,14 @@ public class SyncDatabase {
                                             // doplnim do zoznamu povodné, ktoré sa nezmenili
                                             accelerometer.getPossibleBumps().addAll(listHelp);
                                             accelerometer.getBumpsManual().addAll(bumpsManualHelp);
+                                            accelerometer.gettypeDetect().addAll(bumpsTypeHelp);
+                                            accelerometer.gettextDetect().addAll(bumpsTextlHelp);
                                         } else if (listHelp.size() > 0) {
                                             // nepribudli nové hodnoty, tak tam vrátim pôvodné
                                             accelerometer.getPossibleBumps().addAll(listHelp);
                                             accelerometer.getBumpsManual().addAll(bumpsManualHelp);
+                                            accelerometer.gettypeDetect().addAll(bumpsTypeHelp);
+                                            accelerometer.gettextDetect().addAll(bumpsTextlHelp);
                                         }
                                     } finally {
                                         updatesLock.unlock();
@@ -1150,6 +1194,8 @@ public class SyncDatabase {
 
                 listHelp = null;
                 bumpsManualHelp = null;
+                bumpsTypeHelp = null;
+                bumpsTextlHelp = null;
 
                 if (regularUpdatesLock) {
                     Log.d(TAG, "updates == 1 v save" );
@@ -1203,6 +1249,7 @@ public class SyncDatabase {
     ArrayList<String> listDate = new ArrayList<String>();
     String StringlistID = null;
     String StringlistDate = null;
+    String StringlistCount = null;
 
     private void syncList(final Double langtitude, final Double longtitude, final Integer nets)  {
         Log.d(TAG, "syncList start");
@@ -1219,10 +1266,11 @@ public class SyncDatabase {
                             cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             String ago_formated = ago.format(cal.getTime());
-                             StringlistID = null;
-                             StringlistDate = null;;
+                            StringlistID = null;
+                            StringlistDate = null;
+                            StringlistCount = null;
 
-                            String selectQuery = "SELECT b_id_bumps, last_modified  FROM " + TABLE_NAME_BUMPS
+                            String selectQuery = "SELECT b_id_bumps, last_modified, count  FROM " + TABLE_NAME_BUMPS
                                     + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
                                     + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))";
 
@@ -1237,6 +1285,7 @@ public class SyncDatabase {
                                     if (!cursor.isNull(0) && !cursor.isNull(1) ) {
                                         StringlistID = StringlistID+ "@"+cursor.getInt(0);
                                         StringlistDate = StringlistDate+ "@"+cursor.getString(1);
+                                        StringlistCount = StringlistCount+ "@"+cursor.getInt(2);
                                         nummA++;
                                      //   listID.add(cursor.getInt(0));
                                        // listDate.add(cursor.getString(1));
@@ -1285,6 +1334,8 @@ int nummA=0 , nummB=0 ;
             params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
             params.add(new BasicNameValuePair("listID", StringlistID));
             params.add(new BasicNameValuePair("listDate", StringlistDate));
+            params.add(new BasicNameValuePair("listCount", StringlistCount));
+
             params.add(new BasicNameValuePair("net", String.valueOf(1)));
             Log.d(TAG, "UpdateList odosielam požiadavku na server");
             JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/sync_bump.php", "POST", params);
@@ -1383,7 +1434,7 @@ int nummA=0 , nummB=0 ;
                                              }
                                              double latitude = 0, longitude = 0;
                                              int count = 0, b_id = 0, rating = 0, manual = 0, type =0 , fix =0;
-                                             String last_modified = null;
+                                             String last_modified = null, info= null;
                                              if (data != null) {
                                                  try {
                                                      b_id = data.getInt("b_id");
@@ -1396,9 +1447,11 @@ int nummA=0 , nummB=0 ;
                                                      type = data.getInt("type");
                                                      count = data.getInt("count");
                                                      fix = data.getInt("fix");
+                                                     info = data.getString("info");
                                                      rating = data.getInt("rating");
                                                      last_modified = data.getString("last_modified");
                                                      Log.d(TAG, "UpdateList last_modified" + last_modified);
+                                                     Log.d(TAG, "UpdateList info" + info);
                                                      manual = data.getInt("manual");
                                                      Log.d(TAG, "UpdateList b_id" + b_id);
                                                      Cursor cursor = null;
@@ -1420,6 +1473,7 @@ int nummA=0 , nummB=0 ;
                                                              contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
                                                              contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
                                                              contentValues.put(Provider.bumps_detect.MANUAL, manual);
+                                                             contentValues.put(Provider.bumps_detect.INFO, info);
                                                              contentValues.put(Provider.bumps_detect.RATING, rating);
                                                              contentValues.put(Provider.bumps_detect.TYPE, type);
                                                              contentValues.put(Provider.bumps_detect.FIX, fix);

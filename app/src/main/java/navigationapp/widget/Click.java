@@ -37,7 +37,7 @@ public class Click {
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
             if (gps.isNetworkAvailable(context)) {
-                Handler = new Bump(loc, 6.0f, 2);
+                Handler = new Bump(loc, 6.0f, 0,0,"bump");
                 Handler.getResponse(new CallBackReturn() {
                     public void callback(String results) {
                         if (results.equals("success")) {

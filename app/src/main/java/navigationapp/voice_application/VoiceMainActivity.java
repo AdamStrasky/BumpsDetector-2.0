@@ -78,7 +78,7 @@ public class VoiceMainActivity extends Activity  {
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
-            BumpHandler = new Bump(loc, 6.0f, 1);
+            BumpHandler = new Bump(loc, 6.0f, 0,0,"bump");
             BumpHandler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if (results.equals("success")) {

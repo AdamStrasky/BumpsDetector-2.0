@@ -93,6 +93,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -741,6 +742,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             Log.d(TAG," exit lockzoznam lock");
                                             ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
                                             ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
+                                            ArrayList<Integer> bumpsType = fragmentActivity.accelerometer.gettypeDetect();
+                                            ArrayList<String> bumpstext = fragmentActivity.accelerometer.gettextDetect();
                                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
                                             SQLiteDatabase sb = databaseHelper.getWritableDatabase();
                                             fragmentActivity.checkIntegrityDB(sb);
@@ -753,7 +756,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                     Location loc = (Location) pair.getKey();
                                                     float data = (float) pair.getValue();
                                                     String sql = "SELECT intensity FROM new_bumps WHERE ROUND(latitude,7)==ROUND(" + loc.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + loc.getLongitude() + ",7) "
-                                                            + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and manual=" + bumpsManual.get(i);
+                                                            + " and  ROUND(intensity,6)==ROUND(" + data + ",6)  and type="+bumpsType.get(i)+" and manual=" + bumpsManual.get(i);
 
                                                     BigDecimal bd = new BigDecimal(Float.toString(data));
                                                     bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
@@ -765,6 +768,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                         contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
                                                         contentValues.put(Provider.new_bumps.MANUAL, bumpsManual.get(i));
                                                         contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                                                        contentValues.put(Provider.new_bumps.TYPE, bumpsType.get(i));
+                                                        contentValues.put(Provider.new_bumps.TEXT, bumpstext.get(i));
+                                                        contentValues.put(Provider.new_bumps.CREATED_AT, getDate(loc.getTime(), "yyyy-MM-dd HH:mm:ss"));
                                                         sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                                                     }
                                                 }
@@ -1077,7 +1083,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     location.setLatitude(round(convert_location.getLatitude(),7));
                     location.setLongitude(round(convert_location.getLongitude(),7));
                     convert_location  =null;
-                    add_bump(location, intensity);
+                    add_bump(location, intensity,"bump" ,0 );
                 }
                 else
                     Log.d(TAG, " save button  null location !!!!!! " );
@@ -1236,7 +1242,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 location.setLongitude(Double.parseDouble(ltn));
                 location.setLongitude(Double.parseDouble(ltn));
                 Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string. increase_number), Toast.LENGTH_LONG).show();
-                add_bump(location,6);
+                add_bump(location,6, "bump" ,0);
 
             }
         });
@@ -1357,7 +1363,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mapView.onLowMemory();
     }
 
-    synchronized public void add_bump(final Location location, final double ll) {
+    synchronized public void add_bump(final Location location, final double ll,final String text,final Integer type) {
         location.setTime(new Date().getTime());
         new Thread() {
             public void run() {
@@ -1375,6 +1381,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                         fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                         fragmentActivity.accelerometer.addBumpsManual(1);
+                                        fragmentActivity.accelerometer.addtextDetect(text);
+                                        fragmentActivity.accelerometer.addtypeDetect(type);
                                         if (updatesLock.tryLock()) {
                                             Log.d(TAG," save button updatesLock lock ");
                                             try  {
@@ -1388,6 +1396,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                 contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
                                                 contentValues.put(Provider.new_bumps.LONGTITUDE, location.getLongitude());
                                                 contentValues.put(Provider.new_bumps.MANUAL, 1);
+                                                contentValues.put(Provider.new_bumps.TYPE, type);
+                                                contentValues.put(Provider.new_bumps.TEXT, text);
+                                                contentValues.put(Provider.new_bumps.CREATED_AT, getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss"));
                                                 contentValues.put(Provider.new_bumps.INTENSITY, (float) round(intensity,6));
                                                 database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                                                 database.setTransactionSuccessful();
@@ -1441,5 +1452,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Looper.loop();
             }
         }.start();
+    }
+
+    public static String getDate(long milliSeconds, String dateFormat)
+    {
+        // Create a DateFormatter object for displaying date in specified format.
+        SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+
+        // Create a calendar object that will convert the date and time value in milliseconds to date.
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(milliSeconds);
+        return formatter.format(calendar.getTime());
     }
 }
