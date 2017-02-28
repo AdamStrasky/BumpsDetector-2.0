@@ -17,14 +17,6 @@ public interface Provider {
         public static final String INFO = "info";
     }
 
-    public interface bumps_collision extends BaseColumns {
-        public static final String TABLE_NAME_COLLISIONS = "collisions";
-        public static final String C_ID = "c_id";
-        public static final String B_ID_COLLISIONS = "b_id_collisions";
-        public static final String INTENSITY = "intensity";
-        public static final String CRETED_AT = "created_at";
-    }
-
     public interface new_bumps extends BaseColumns {
         public static final String TABLE_NAME_NEW_BUMPS = "new_bumps";
         public static final String LATITUDE = "latitude";

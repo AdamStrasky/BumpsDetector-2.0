@@ -17,12 +17,10 @@ import static  navigationapp.main_application.Provider.bumps_detect.LONGTITUDE;
 import static  navigationapp.main_application.Provider.bumps_detect.MANUAL;
 import static  navigationapp.main_application.Provider.bumps_detect.RATING;
 
-import static  navigationapp.main_application.Provider.bumps_collision.TABLE_NAME_COLLISIONS;
-import static  navigationapp.main_application.Provider.bumps_collision.C_ID;
-import static  navigationapp.main_application.Provider.bumps_collision.B_ID_COLLISIONS;
-import static  navigationapp.main_application.Provider.bumps_collision.INTENSITY;
-import static  navigationapp.main_application.Provider.bumps_collision.CRETED_AT;
+
 import static navigationapp.main_application.Provider.bumps_detect.TYPE;
+import static navigationapp.main_application.Provider.new_bumps.CREATED_AT;
+import static navigationapp.main_application.Provider.new_bumps.INTENSITY;
 import static  navigationapp.main_application.Provider.new_bumps.TABLE_NAME_NEW_BUMPS;
 import static navigationapp.main_application.Provider.new_bumps.TEXT;
 
@@ -39,7 +37,6 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         public void onCreate(SQLiteDatabase db) {
             Log.d(TAG, "onCreate SQLiteDatabase");
             db.execSQL(createTableSqlBumps());
-            db.execSQL(createTableSqlCollisions());
             db.execSQL(createTableSqlNewBump());
          }
 
@@ -60,17 +57,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
             return String.format(sqlTemplate, TABLE_NAME_BUMPS, B_ID_BUMPS, COUNT, LAST_MODIFIED,LATITUDE,LONGTITUDE,MANUAL,RATING,TYPE,FIX,INFO);
         }
 
-        private String createTableSqlCollisions() {
-             String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
-                + "%s INTEGER PRIMARY KEY ,"
-                + "%s INTEGER,"
-                + "%s DOUBLE,"
-                + "%s DATETIME"
-                + ")";
-            return String.format(sqlTemplate, TABLE_NAME_COLLISIONS, C_ID, B_ID_COLLISIONS, INTENSITY,CRETED_AT);
-        }
-
-         private String createTableSqlNewBump() {
+        private String createTableSqlNewBump() {
          String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
                 + "%s INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "%s DOUBLE,"
@@ -81,7 +68,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                 + "%s INTEGER,"
                 + "%s STRING"
                 + ")";
-            return String.format(sqlTemplate, TABLE_NAME_NEW_BUMPS,_ID, LATITUDE, LONGTITUDE, INTENSITY,MANUAL,CRETED_AT,TYPE,TEXT);
+            return String.format(sqlTemplate, TABLE_NAME_NEW_BUMPS,_ID, LATITUDE, LONGTITUDE, INTENSITY,MANUAL,CREATED_AT,TYPE,TEXT);
         }
 
         @Override
@@ -89,7 +76,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
             String query;
             query = "DROP TABLE IF EXISTS " + TABLE_NAME_BUMPS;
             db.execSQL(query);
-            query = "DROP TABLE IF EXISTS " + TABLE_NAME_COLLISIONS;
+            query = "DROP TABLE IF EXISTS " + TABLE_NAME_NEW_BUMPS;
             db.execSQL(query);
             onCreate(db);
         }
