@@ -143,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ImageView searchLocation = null;
     private Integer numOfPicture = 0;
     private int select_iteam = 0;
+    private String select_iteam_text = null;
     private static final int PICK_IMAGE_ID = 234;
     private static final int PICK_IMAGE_ADD_ID = 233;
     public static String androidId =  null;
@@ -981,11 +982,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void onClick(DialogInterface dialog, int id) {
                         switch (select_iteam) {
                             case 0:
+                                select_iteam_text= "bump";
                                 choose_bump();
                                 break;
-                            default:
+                            case 1:
+                                select_iteam_text= "bin";
                                 intensity =0.f;
-                                // spustenie listenera na mapu
+                                allow_click=true;
+                                confirm.setVisibility(View.VISIBLE);
+                                add_button.setVisibility(View.INVISIBLE);
+                                break;
+                            case 2:
+                                select_iteam_text= "channel";
+                                intensity =0.f;
+                                allow_click=true;
+                                confirm.setVisibility(View.VISIBLE);
+                                add_button.setVisibility(View.INVISIBLE);
+                                break;
+                            case 3:
+                                final EditText regionNameEdit = new EditText(context);
+                                AlertDialog.Builder windowAlert = new AlertDialog.Builder(context);
+                                windowAlert.setPositiveButton(context.getResources().getString(R.string.confirm), null);
+                                windowAlert.setNegativeButton(context.getResources().getString(R.string.cancel), null);
+                                windowAlert.setView(regionNameEdit);
+                                windowAlert.setTitle("Other");
+                                final AlertDialog mAlertDialog = windowAlert.create();
+                                mAlertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                                    @Override
+                                    public void onShow(DialogInterface dialog) {
+                                        Button positive_btn = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                                        positive_btn.setOnClickListener(new View.OnClickListener() {
+
+                                            @Override
+                                            public void onClick(View view) {
+                                                select_iteam_text = regionNameEdit.getText().toString();
+                                                intensity =0.f;
+                                                allow_click=true;
+                                                confirm.setVisibility(View.VISIBLE);
+                                                add_button.setVisibility(View.INVISIBLE);
+                                                mAlertDialog.cancel();
+                                            }
+                                        });
+
+                                    }
+                                });
+                                mAlertDialog.show();
+                                break;
+                            default:
+                                select_iteam_text= "default";
+                                intensity =0.f;
                                 allow_click=true;
                                 confirm.setVisibility(View.VISIBLE);
                                 add_button.setVisibility(View.INVISIBLE);
@@ -1083,7 +1128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     location.setLatitude(round(convert_location.getLatitude(),7));
                     location.setLongitude(round(convert_location.getLongitude(),7));
                     convert_location  =null;
-                    add_bump(location, intensity,"bump" ,0 );
+                    add_bump(location, intensity,select_iteam_text ,select_iteam );
                 }
                 else
                     Log.d(TAG, " save button  null location !!!!!! " );
@@ -1240,7 +1285,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 final Location location = new Location("new");
                 location.setLatitude(Double.parseDouble(lat));
                 location.setLongitude(Double.parseDouble(ltn));
-                location.setLongitude(Double.parseDouble(ltn));
+
                 Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string. increase_number), Toast.LENGTH_LONG).show();
                 add_bump(location,6, "bump" ,0);
 

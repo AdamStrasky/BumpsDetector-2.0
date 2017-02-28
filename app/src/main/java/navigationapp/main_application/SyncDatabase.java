@@ -67,13 +67,13 @@ public class SyncDatabase {
         this.context = context;
         this.mapLayer =mapLayer;
         regular_update = true;
-        get_loaded_index(); // vytiahnutie maximálneho indexu z databázy
+      ///  get_loaded_index(); // vytiahnutie maximálneho indexu z databázy
         loadSaveDB(); // načítanie uložených výtlkov , ktoré neboli odoslané na server
         startGPS();
         new Timer().schedule(new Regular_upgrade(),3600000, 3600000);// 1 hodina == 3600000    // pravidelný update ak nemám povolený internet
     }
 
-    private void get_loaded_index() {
+ /*   private void get_loaded_index() {
         //  najvyššie uložený index po uspešnej transakcii collision
         SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
         if (sharedPref.contains("save")) {
@@ -88,7 +88,7 @@ public class SyncDatabase {
             loaded_index = 0;
             editor.commit();
         }
-    }
+    }*/
 
     private void loadSaveDB() {
         Log.d(TAG, "loadSaveDB start");
@@ -137,7 +137,7 @@ public class SyncDatabase {
                                         Log.d(TAG, "loadSaveDB longitude " + cursor.getDouble(1));
                                         Log.d(TAG, "loadSaveDB listType " + cursor.getInt(4));
                                         Log.d(TAG, "loadSaveDB listText " + cursor.getString(5));
-                                        Log.d(TAG, "loadSaveDB listdate " + getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss"));
+                                        Log.d(TAG, "loadSaveDB  " + getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss"));
                                     }
                                 } while (cursor.moveToNext());
                                 if (cursor != null) {
@@ -308,7 +308,8 @@ public class SyncDatabase {
                 regular_update = false;
                if (gps != null && gps.getCurrentLatLng() != null) {
                    Log.d(TAG, "getBumpsWithLevel prvé spustenie alebo pravidelný update");
-                   get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 0);
+                   syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 0);
+                  // get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 0);
                }
 
            } else { // ak mám síce internet ale nemám povolené stahovanie, tk načítam z databazy
@@ -336,595 +337,7 @@ public class SyncDatabase {
         }
     }
 
-    public void get_max_bumps(final Double langtitude, final Double longtitude, final Integer nets) {
-        Log.d(TAG, "get_max_bumps start ");
-        Thread t =   new Thread() {
-            public void run() {
-                while (true) {
-                    if (updatesLock.tryLock()) {
-                       try {
-                            SimpleDateFormat now, ago;
-                            Calendar cal = Calendar.getInstance();
-                            cal.setTime(new Date());
-                            now = new SimpleDateFormat("yyyy-MM-dd");
-                            String now_formated = now.format(cal.getTime());
-                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
-                            ago = new SimpleDateFormat("yyyy-MM-dd");
-                            String ago_formated = ago.format(cal.getTime());
-                            DatabaseOpenHelper databaseHelper =null;
-                            SQLiteDatabase database = null;
-                            try {
-                               databaseHelper = new DatabaseOpenHelper(context);
-                               database = databaseHelper.getReadableDatabase();
-                               checkIntegrityDB(database);
-                               database.beginTransaction();
-                               // vytiahnem najvyššie b_id z bumps
-                               String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
-                                       + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                       + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
-                                       + " ORDER BY b_id_bumps DESC LIMIT 1 ";
-                               Cursor cursor = null;
-                               try {
-                                   cursor = database.rawQuery(selectQuery, null);
-                                   if (cursor.moveToFirst()) {
-                                       do {
-                                           b_id_database = cursor.getInt(0);
-                                           Log.d(TAG, "get_max_bumps najvyšší index - " + b_id_database);
-                                       } while (cursor.moveToNext());
-                                   }
-                               } finally {
-                                   if (cursor != null)
-                                       cursor.close();
-                               }
-                               database.setTransactionSuccessful();
-                               database.endTransaction();
-                            } finally {
-                               if (database!=null) {
-                                   database.close();
-                                   databaseHelper.close();
-                               }
-                            }
-                            checkCloseDb(database);
-                       } finally {
-                           Log.d(TAG, "get_max_bumps unlock ");
-                           updatesLock.unlock();
-                           break;
-                       }
-                    } else {
-                        Log.d(TAG, "get_max_bumps try lock ");
-                        try {
-                            Random ran = new Random();
-                            int x = ran.nextInt(20) + 1;
-                            Thread.sleep(x);
-                        } catch (InterruptedException e) {
-                            e.getMessage();
-                        }
-                    }
-                }
-                net = nets;  // internet flag, či ide o pravidelný update alebo môžem sťahovať
-                lang_database = langtitude; // ukladam pozície, aby som všade pracoval s rovnakými
-                longt_database = longtitude;
-                Log.d(TAG, "get_max_bumps končí ");
-            }
-        };
-        t.start();
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        new Max_Bump_Number().execute();
-    }
 
-    class Max_Bump_Number extends AsyncTask<String, Void, JSONArray> {
-
-        protected JSONArray doInBackground(String... args) {
-            Log.d(TAG, "Max_Bump_Number start");
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
-            params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
-            params.add(new BasicNameValuePair("b_id", String.valueOf(b_id_database)));
-            params.add(new BasicNameValuePair("net", String.valueOf(net)));
-            Log.d(TAG, "Max_Bump_Number odosielam požiadavku na server");
-            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_bumps.php", "POST", params);
-            if (json == null) {
-                JSONArray response = new JSONArray();
-                try {
-                    Log.d(TAG, "Max_Bump_Number - error");
-                    response.put(0, "error");
-                } catch (JSONException e1) {
-                    e1.printStackTrace();
-                }
-                return response;
-            }
-            try {
-                int success = json.getInt("success");
-                JSONArray response = new JSONArray();
-                if (success == 0) {   // mam nove data na stiahnutie
-                    bumps = json.getJSONArray("bumps");
-                    Log.d(TAG, "Max_Bump_Number - new data");
-                    return bumps;
-                } else if (success == 1) {  // potrebujem potvrdit nove data na stiahnutie , nemám povolený net ale bol flag
-                    response.put(0, "update");
-                    Log.d(TAG, "Max_Bump_Number - need update");
-                    return response;
-                } else {
-                    Log.d(TAG, "Max_Bump_Number - no data");
-                    return null;
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                JSONArray response = new JSONArray();
-                try {
-                    response.put(0, "error");
-                } catch (JSONException e1) {
-                    e1.printStackTrace();
-                }
-                Log.d(TAG, "Max_Bump_Number - JSONException");
-                return response;
-            }
-        }
-       // Boolean errorQ = false;
-        protected void onPostExecute(JSONArray array) {
-            if (array == null) { // žiadne nové data v bumps, zisti collisons
-                Log.d(TAG, "Max_Bump_Number onPostExecute - no data");
-                get_max_collision(lang_database, longt_database, 0);
-                return;
-            }
-
-            try {
-                if (array.get(0).equals("error")) {
-                    Log.d(TAG, "Max_Bump_Number onPostExecute - error");
-                        if (gps != null && gps.getCurrentLatLng() != null) {
-                            context.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
-                            }
-                        });
-                        return;
-                    }
-                } else if (array.get(0).equals("update")) { // mam nove data, zistit aj collision a potom upozorni uživatela
-                    Log.d(TAG, "Max_Bump_Number onPostExecute - update");
-                    get_max_collision(lang_database, longt_database, 1);
-                } else {
-                    Log.d(TAG, "Max_Bump_Number onPostExecute - new data, update databazu");
-
-                    Thread t = new Thread() {    // insertujem nove data do databazy
-                        public void run() {
-
-                            Boolean error = false;
-                            while (true) {
-                                if (updatesLock.tryLock()) {
-                                    try {
-                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                        checkIntegrityDB(database);
-                                        database.beginTransaction();
-                                        for (int i = 0; i < bumps.length(); i++) {
-                                            JSONObject data = null;
-                                            try {
-                                                data = bumps.getJSONObject(i);
-                                            } catch (JSONException e) {
-                                                error = true;  // zle parsovanie dat, zaznamenám chybu, neuložim do databázy
-                                                e.printStackTrace();
-                                                break;
-                                            }
-                                            double latitude = 0, longitude = 0;
-                                            int count = 0, b_id = 0, rating = 0, manual = 0;
-                                            String last_modified = null;
-                                            if (data != null) {
-                                                try {   // zaznamenam do databazy
-                                                    latitude = data.getDouble("latitude");
-                                                    longitude = data.getDouble("longitude");
-                                                    Log.d(TAG, "Max_Bump_Number latitude " + latitude);
-                                                    Log.d(TAG, "Max_Bump_Number longitude" + longitude);
-                                                    count = data.getInt("count");
-                                                    b_id = data.getInt("b_id");
-                                                    Log.d(TAG, "Max_Bump_Number b_id" + b_id);
-                                                    max_number = b_id;
-                                                    rating = data.getInt("rating");
-                                                    last_modified = data.getString("last_modified");
-                                                    manual = data.getInt("manual");
-                                                    ContentValues contentValues = new ContentValues();
-                                                    contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
-                                                    contentValues.put(Provider.bumps_detect.COUNT, count);
-                                                    contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
-                                                    contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
-                                                    contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
-                                                    contentValues.put(Provider.bumps_detect.MANUAL, manual);
-                                                    contentValues.put(Provider.bumps_detect.RATING, rating);
-                                                    database.insert(TABLE_NAME_BUMPS, null, contentValues);
-                                                } catch (JSONException e) {
-                                                    error = true;
-                                                    e.printStackTrace();
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        if (!error) {  // insert prebehol v poriadku, ukonči transakciu
-                                            database.setTransactionSuccessful();
-                                            database.endTransaction();
-                                            database.close();
-                                            databaseHelper.close();
-                                            checkCloseDb(database);
-                                            Log.d(TAG, "Max_Bump_Number no error");
-                                        } else { // nastala chyba, načitaj uložene vytlky
-                                            Log.d(TAG, "Max_Bump_Number  error");
-                                        }
-                                        database.endTransaction();
-                                        database.close();
-                                        databaseHelper.close();
-                                        checkCloseDb(database);
-                                    } finally {
-                                        updatesLock.unlock();
-                                        break;
-                                    }
-                                } else {
-                                    Log.d(TAG, "Max_Bump_Number try lock");
-                                    try {
-                                        Random ran = new Random();
-                                        int x = ran.nextInt(20) + 1;
-                                        Thread.sleep(x);
-                                    } catch (InterruptedException e) {
-                                        e.getMessage();
-                                    }
-                                }
-                            }
-
-                            if (!error) {
-                                get_max_collision(lang_database, longt_database, 0);
-
-                            } else {  // nastala chyba, načitaj uložene vytlky
-                                if (gps != null && gps.getCurrentLatLng() != null) {
-                                    context.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
-                                        }
-                                    });
-                                }
-
-                            }
-                            Log.d(TAG, "Max_Bump_Number končí");
-                        }
-                    };
-                    t.start();
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void get_max_collision(final Double latitude, final Double longtitude, final Integer update) {
-        Log.d(TAG, "get_max_collision start");
-        Thread t = new Thread() {
-            public void run() {
-                while (true) {
-                    if (updatesLock.tryLock()) {
-                        try {
-                            SimpleDateFormat now, ago;
-                            Calendar cal = Calendar.getInstance();
-                            cal.setTime(new Date());
-                            now = new SimpleDateFormat("yyyy-MM-dd");
-                            String now_formated = now.format(cal.getTime());
-                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
-                            ago = new SimpleDateFormat("yyyy-MM-dd");
-                            String ago_formated = ago.format(cal.getTime());
-                            DatabaseOpenHelper databaseHelper =null;
-                            SQLiteDatabase database = null;
-                            try {
-                                 databaseHelper = new DatabaseOpenHelper(context);
-                                 database = databaseHelper.getReadableDatabase();
-                                checkIntegrityDB(database);
-                                database.beginTransaction();
-                                // max b_id_collisions z databazy
-                                String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
-                                        + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                        + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1)))"
-                                        + " ORDER BY c_id DESC LIMIT 1 ";
-                                Cursor cursor = null;
-                                try {
-                                    cursor = database.rawQuery(selectQuery, null);
-                                    if (cursor.moveToFirst()) {
-                                        do {
-                                            c_id_database = cursor.getInt(0);
-                                            Log.d(TAG, "get_max_collision c_id_database - " + c_id_database);
-                                        } while (cursor.moveToNext());
-                                    }
-                                } finally {
-                                    if (cursor != null)
-                                        cursor.close();
-                                }
-                                database.setTransactionSuccessful();
-                                database.endTransaction();
-                            } finally {
-                                if (database!=null) {
-                                    database.close();
-                                    databaseHelper.close();
-                                }
-                            }
-                            checkCloseDb(database);
-                        } finally {
-                            Log.d(TAG, "get_max_collision unlock " );
-                            updatesLock.unlock();
-                            break;
-                        }
-                    } else {
-                        Log.d(TAG, "get_max_collision try lock ");
-                        try {
-                            Random ran = new Random();
-                            int x = ran.nextInt(20) + 1;
-                            Thread.sleep(x);
-                        } catch (InterruptedException e) {
-                            e.getMessage();
-                        }
-                    }
-                }
-                updates = update;
-                Log.d(TAG, "get_max_collision finish");
-            }
-        };
-        t.start();
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        new Max_Collision_Number().execute();  // odošlem dáta najdenie nových
-    }
-
-    class Max_Collision_Number extends AsyncTask<String, Void, JSONArray> {
-
-        protected JSONArray doInBackground(String... args) {
-            Log.d(TAG, "Max_Collision_Number start");
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            Log.d("TTRREEE", "odosielam lang_database   v Max_Collision_Number " + lang_database);
-            Log.d("TTRREEE", "odosielam  longt_database v Max_Collision_Number " + longt_database);
-            params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
-            params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
-            params.add(new BasicNameValuePair("b_id", String.valueOf(b_id_database)));
-            params.add(new BasicNameValuePair("net", String.valueOf(net)));
-            params.add(new BasicNameValuePair("c_id", String.valueOf(c_id_database)));
-            Log.d(TAG, "Max_Collision_Number odosielam požiadavku");
-            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_collisions.php", "POST", params);
-            if (json == null) {
-                JSONArray response = new JSONArray();
-                try {
-                    response.put(0, "error");
-                } catch (JSONException e1) {
-                    e1.printStackTrace();
-                }
-                Log.d(TAG, "Max_Collision_Number - error");
-                return response;
-            }
-            try {
-                int success = json.getInt("success");
-
-                if (success == 0) { // mám povolene stahovať a mám vytlky
-                    bumps = json.getJSONArray("bumps");
-                    Log.d(TAG, "Max_Collision_Number - new data");
-                    return bumps;
-                } else if (success == 1) { // nemám povolene stahovať ale mám vytlky
-                    JSONArray response = new JSONArray();
-                    Log.d(TAG, "Max_Collision_Number - need update");
-                    response.put(0, "update");
-                    return response;
-                } else {  // nemám nove vytlky
-                    Log.d(TAG, "Max_Collision_Number - no data");
-                    return null;
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                JSONArray response = new JSONArray();
-                try {
-                    Log.d(TAG, "Max_Collision_Number - JSONException");
-                    response.put(0, "error");
-                } catch (JSONException e1) {
-                    e1.printStackTrace();
-                }
-                return response;
-            }
-        }
-
-        protected void onPostExecute(JSONArray array) {
-
-            if (array == null) {
-                Log.d(TAG, "Max_Collision_Number onPostExecute - null");
-                // collision nemaju update ale bumps ano
-                if (updates == 1 || regularUpdatesLock) {
-                    Log.d(TAG, "Max_Collision_Number onPostExecute - GetUpdateAction");
-                    GetUpdateAction();
-                } else {
-                    Log.d(TAG, "Max_Collision_Number onPostExecute - getAllBumps");
-                    // načítam vytlky na mapu
-                    if (gps != null && gps.getCurrentLatLng() != null) {
-                        context.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
-                            }
-                        });
-                    }
-                }
-                return;
-            }
-            try {
-                if (array.get(0).equals("error")) {
-                    Log.d(TAG, "Max_Collision_Number onPostExecute - error");
-                    // nastala chyba, nacitam mapu
-                    if (gps != null && gps.getCurrentLatLng() != null) {
-                        context.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                            mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
-                            }
-                        });
-                    }
-                    return;
-                } else if (array.get(0).equals("update")) {
-                    Log.d(TAG, "Max_Collision_Number onPostExecute -  GetUpdateAction");
-                    // mam vytlky na stiahnutie, ale potrebujem opravnenie od používateľa
-                    GetUpdateAction();
-                } else {
-                    new Thread() {
-                        public void run() {
-                            Log.d(TAG, "Max_Collision_Number onPostExecute -  updata DB");
-
-                            Boolean error = false;
-                            while (true) {
-                                if (updatesLock.tryLock()) {
-                                    try {
-                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                                        checkIntegrityDB(database);
-                                        database.beginTransaction();
-                                        for (int i = 0; i < bumps.length(); i++) {
-                                            JSONObject data = null;
-                                            try {
-                                                data = bumps.getJSONObject(i);
-                                            } catch (JSONException e) {
-                                                e.printStackTrace();
-                                                error = true;
-                                            }
-                                            int c_id = 0, b_id = 0;
-                                            double intensity = 0;
-                                            String created_at = null;
-                                            Log.d(TAG, "Max_Collision_Number b_id_database - " + b_id_database);
-                                            Log.d(TAG, "Max_Collision_Number loaded_index - " + loaded_index);
-                                            if (data != null) {
-                                                try {
-                                                    c_id = data.getInt("c_id");
-                                                    b_id = data.getInt("b_id");
-                                                    intensity = data.getDouble("intensity");
-                                                    created_at = data.getString("created_at");
-                                                    Log.d(TAG, "Max_Collision_Number c_id - " + c_id);
-                                                    Log.d(TAG, "Max_Collision_Number b_id - " + b_id);
-                                                    Log.d(TAG, "Max_Collision_Number intensity - " + intensity);
-                                                    Log.d(TAG, "Max_Collision_Number created_at - " + created_at);
-
-                                                    // ak nove collision updatuju stare  vytlky
-                                                    if (b_id <= loaded_index) {
-                                                        Log.d(TAG, "Max_Collision_Number nove collision update stare");
-                                                        int rating = 0;
-                                                        if (isBetween((float) intensity, 0, 6))
-                                                            rating = 1;
-                                                        if (isBetween((float) intensity, 6, 10))
-                                                            rating = 2;
-                                                        if (isBetween((float) intensity, 10, 10000))
-                                                            rating = 3;
-                                                        database.execSQL("UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id);
-                                                    }
-
-                                                    /* ak nastala chyba v transakcii,  musím upraviť udaje
-                                                    beriem od poslendej uspešnej transakcie collision po načitane max id z bumps
-                                                     */
-                                                    // nove collision aj nove update takže počet dávam od 1 a pripočítavam
-                                                    if (b_id <= b_id_database && loaded_index < b_id) {
-                                                        Log.d(TAG, "Max_Collision_Number nove collision aj bump");
-                                                        int rating = 0;
-                                                        if (isBetween((float) intensity, 0, 6))
-                                                            rating = 1;
-                                                        if (isBetween((float) intensity, 6, 10))
-                                                            rating = 2;
-                                                        if (isBetween((float) intensity, 10, 10000))
-                                                            rating = 3;
-                                                        Cursor cursor = null;
-                                                        String sql = "SELECT * FROM collisions WHERE b_id_collisions=" + b_id;
-
-                                                        try {
-                                                            cursor = database.rawQuery(sql, null);
-                                                            if (cursor.getCount() > 0) {
-                                                                Log.d(TAG, "Max_Collision_Number viac b_id");
-                                                                //  ak ich bolo viac pripičítam
-                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id;
-                                                            } else {
-                                                                Log.d(TAG, "Max_Collision_Number prvý nový b_id");
-                                                                // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
-                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1, last_modified='"+created_at+"'  WHERE b_id_bumps=" + b_id;
-                                                            }
-                                                            database.execSQL(sql);
-                                                        } finally {
-                                                            if (cursor != null)
-                                                                cursor.close();
-                                                        }
-                                                    }
-
-                                                    // insert novych udajov
-                                                    ContentValues contentValues = new ContentValues();
-                                                    contentValues.put(Provider.bumps_collision.C_ID, c_id);
-                                                    contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
-                                                    contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
-                                                    contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
-                                                    database.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
-
-                                                } catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                    // ak nastane chyba, tak si ju poznačim
-                                                    error = true;
-                                                }
-                                            }
-                                        }
-                                        if (!error) {
-                                            // ak nenastala chyba, transakci je uspešna
-                                            database.setTransactionSuccessful();
-                                            database.endTransaction();
-                                            database.close();
-                                            databaseHelper.close();
-                                            checkCloseDb(database);
-                                            // uložím najvyššie b_id  z bumps po uspešnej transakcii
-                                            SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
-                                            SharedPreferences.Editor editor = sharedPref.edit();
-                                            editor.putInt("save", max_number);
-                                            loaded_index = max_number;
-                                            editor.commit();
-                                            Log.d(TAG, "Max_Collision_Number no error, save max id - " + max_number);
-                                        } else {
-                                            // rollbacknem databazu
-                                            database.endTransaction();
-                                            database.close();
-                                            databaseHelper.close();
-                                            checkCloseDb(database);
-                                            Log.d(TAG, "Max_Collision_Number  error " );
-
-                                        }
-                                    } finally {
-                                        Log.d(TAG, "Max_Collision_Number  unlock " );
-                                        updatesLock.unlock();
-                                        break;
-                                    }
-                                } else {
-                                    Log.d(TAG, "Max_Collision_Number  try lock " );
-                                    try {
-                                        Random ran = new Random();
-                                        int x = ran.nextInt(20) + 1;
-                                        Thread.sleep(x);
-                                    } catch (InterruptedException e) {
-                                        e.getMessage();
-                                    }
-                                }
-                            }
-                            // načítam vytlky
-                            if (gps != null && gps.getCurrentLatLng() != null) {
-                                context.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
-                                    }
-                                });
-                            }
-                            Log.d(TAG, "Max_Collision_Number  končí " );
-
-                        }
-                    }.start();
-
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     private void GetUpdateAction() {
         Log.d(TAG, "GetUpdateAction  start " );
@@ -982,7 +395,8 @@ public class SyncDatabase {
                             Log.d(TAG, "GetUpdateAction updates == 1 v getupdate" );
                             updates = 0;
                             // ak povolim, stiahnem data
-                            get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
+                            syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                            //get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
                         }
                     }
                 });
@@ -1203,7 +617,8 @@ public class SyncDatabase {
                     updates = 0;
                     regularUpdatesLock = false;
                     lockHandler = false;
-                    get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
+                    syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                    //get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
 
                 } else if (lockHandler) {
                     lockHandler = false;
@@ -1315,6 +730,7 @@ public class SyncDatabase {
                         }
                     }
                 }
+                net = nets;
                 lang_database = langtitude; // ukladam pozície, aby som všade pracoval s rovnakými
                 longt_database = longtitude;
 
@@ -1330,13 +746,15 @@ int nummA=0 , nummB=0 ;
             Log.d(TAG, "UpdateList start");
             Log.d(TAG, "StringlistDate " + StringlistDate);
             List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+            params.add(new BasicNameValuePair("date", getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss")));
             params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
             params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
             params.add(new BasicNameValuePair("listID", StringlistID));
             params.add(new BasicNameValuePair("listDate", StringlistDate));
             params.add(new BasicNameValuePair("listCount", StringlistCount));
 
-            params.add(new BasicNameValuePair("net", String.valueOf(1)));
+            params.add(new BasicNameValuePair("net", String.valueOf(net)));
             Log.d(TAG, "UpdateList odosielam požiadavku na server");
             JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/sync_bump.php", "POST", params);
             if (json == null) {
@@ -1541,4 +959,604 @@ int nummA=0 , nummB=0 ;
             }
         }
     }
+
+
+
+
+    ///////////////////////////////////////////////////
+    // môžem asi zmazať
+
+    /* public void get_max_bumps(final Double langtitude, final Double longtitude, final Integer nets) {
+        Log.d(TAG, "get_max_bumps start ");
+        Thread t =   new Thread() {
+            public void run() {
+                while (true) {
+                    if (updatesLock.tryLock()) {
+                       try {
+                            SimpleDateFormat now, ago;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            now = new SimpleDateFormat("yyyy-MM-dd");
+                            String now_formated = now.format(cal.getTime());
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            String ago_formated = ago.format(cal.getTime());
+                            DatabaseOpenHelper databaseHelper =null;
+                            SQLiteDatabase database = null;
+                            try {
+                               databaseHelper = new DatabaseOpenHelper(context);
+                               database = databaseHelper.getReadableDatabase();
+                               checkIntegrityDB(database);
+                               database.beginTransaction();
+                               // vytiahnem najvyššie b_id z bumps
+                               String selectQuery = "SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                                       + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                       + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))"
+                                       + " ORDER BY b_id_bumps DESC LIMIT 1 ";
+                               Cursor cursor = null;
+                               try {
+                                   cursor = database.rawQuery(selectQuery, null);
+                                   if (cursor.moveToFirst()) {
+                                       do {
+                                           b_id_database = cursor.getInt(0);
+                                           Log.d(TAG, "get_max_bumps najvyšší index - " + b_id_database);
+                                       } while (cursor.moveToNext());
+                                   }
+                               } finally {
+                                   if (cursor != null)
+                                       cursor.close();
+                               }
+                               database.setTransactionSuccessful();
+                               database.endTransaction();
+                            } finally {
+                               if (database!=null) {
+                                   database.close();
+                                   databaseHelper.close();
+                               }
+                            }
+                            checkCloseDb(database);
+                       } finally {
+                           Log.d(TAG, "get_max_bumps unlock ");
+                           updatesLock.unlock();
+                           break;
+                       }
+                    } else {
+                        Log.d(TAG, "get_max_bumps try lock ");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
+                            e.getMessage();
+                        }
+                    }
+                }
+                net = nets;  // internet flag, či ide o pravidelný update alebo môžem sťahovať
+                lang_database = langtitude; // ukladam pozície, aby som všade pracoval s rovnakými
+                longt_database = longtitude;
+                Log.d(TAG, "get_max_bumps končí ");
+            }
+        };
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        new Max_Bump_Number().execute();
+    }*/
+
+  /*  class Max_Bump_Number extends AsyncTask<String, Void, JSONArray> {
+
+        protected JSONArray doInBackground(String... args) {
+            Log.d(TAG, "Max_Bump_Number start");
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
+            params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
+            params.add(new BasicNameValuePair("b_id", String.valueOf(b_id_database)));
+            params.add(new BasicNameValuePair("net", String.valueOf(net)));
+            Log.d(TAG, "Max_Bump_Number odosielam požiadavku na server");
+            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_bumps.php", "POST", params);
+            if (json == null) {
+                JSONArray response = new JSONArray();
+                try {
+                    Log.d(TAG, "Max_Bump_Number - error");
+                    response.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return response;
+            }
+            try {
+                int success = json.getInt("success");
+                JSONArray response = new JSONArray();
+                if (success == 0) {   // mam nove data na stiahnutie
+                    bumps = json.getJSONArray("bumps");
+                    Log.d(TAG, "Max_Bump_Number - new data");
+                    return bumps;
+                } else if (success == 1) {  // potrebujem potvrdit nove data na stiahnutie , nemám povolený net ale bol flag
+                    response.put(0, "update");
+                    Log.d(TAG, "Max_Bump_Number - need update");
+                    return response;
+                } else {
+                    Log.d(TAG, "Max_Bump_Number - no data");
+                    return null;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                JSONArray response = new JSONArray();
+                try {
+                    response.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                Log.d(TAG, "Max_Bump_Number - JSONException");
+                return response;
+            }
+        }
+        // Boolean errorQ = false;
+        protected void onPostExecute(JSONArray array) {
+            if (array == null) { // žiadne nové data v bumps, zisti collisons
+                Log.d(TAG, "Max_Bump_Number onPostExecute - no data");
+                get_max_collision(lang_database, longt_database, 0);
+                return;
+            }
+
+            try {
+                if (array.get(0).equals("error")) {
+                    Log.d(TAG, "Max_Bump_Number onPostExecute - error");
+                    if (gps != null && gps.getCurrentLatLng() != null) {
+                        context.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                            }
+                        });
+                        return;
+                    }
+                } else if (array.get(0).equals("update")) { // mam nove data, zistit aj collision a potom upozorni uživatela
+                    Log.d(TAG, "Max_Bump_Number onPostExecute - update");
+                    get_max_collision(lang_database, longt_database, 1);
+                } else {
+                    Log.d(TAG, "Max_Bump_Number onPostExecute - new data, update databazu");
+
+                    Thread t = new Thread() {    // insertujem nove data do databazy
+                        public void run() {
+
+                            Boolean error = false;
+                            while (true) {
+                                if (updatesLock.tryLock()) {
+                                    try {
+                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                        checkIntegrityDB(database);
+                                        database.beginTransaction();
+                                        for (int i = 0; i < bumps.length(); i++) {
+                                            JSONObject data = null;
+                                            try {
+                                                data = bumps.getJSONObject(i);
+                                            } catch (JSONException e) {
+                                                error = true;  // zle parsovanie dat, zaznamenám chybu, neuložim do databázy
+                                                e.printStackTrace();
+                                                break;
+                                            }
+                                            double latitude = 0, longitude = 0;
+                                            int count = 0, b_id = 0, rating = 0, manual = 0;
+                                            String last_modified = null;
+                                            if (data != null) {
+                                                try {   // zaznamenam do databazy
+                                                    latitude = data.getDouble("latitude");
+                                                    longitude = data.getDouble("longitude");
+                                                    Log.d(TAG, "Max_Bump_Number latitude " + latitude);
+                                                    Log.d(TAG, "Max_Bump_Number longitude" + longitude);
+                                                    count = data.getInt("count");
+                                                    b_id = data.getInt("b_id");
+                                                    Log.d(TAG, "Max_Bump_Number b_id" + b_id);
+                                                    max_number = b_id;
+                                                    rating = data.getInt("rating");
+                                                    last_modified = data.getString("last_modified");
+                                                    manual = data.getInt("manual");
+                                                    ContentValues contentValues = new ContentValues();
+                                                    contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);
+                                                    contentValues.put(Provider.bumps_detect.COUNT, count);
+                                                    contentValues.put(Provider.bumps_detect.LAST_MODIFIED, last_modified);
+                                                    contentValues.put(Provider.bumps_detect.LATITUDE, latitude);
+                                                    contentValues.put(Provider.bumps_detect.LONGTITUDE, longitude);
+                                                    contentValues.put(Provider.bumps_detect.MANUAL, manual);
+                                                    contentValues.put(Provider.bumps_detect.RATING, rating);
+                                                    database.insert(TABLE_NAME_BUMPS, null, contentValues);
+                                                } catch (JSONException e) {
+                                                    error = true;
+                                                    e.printStackTrace();
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        if (!error) {  // insert prebehol v poriadku, ukonči transakciu
+                                            database.setTransactionSuccessful();
+                                            database.endTransaction();
+                                            database.close();
+                                            databaseHelper.close();
+                                            checkCloseDb(database);
+                                            Log.d(TAG, "Max_Bump_Number no error");
+                                        } else { // nastala chyba, načitaj uložene vytlky
+                                            Log.d(TAG, "Max_Bump_Number  error");
+                                        }
+                                        database.endTransaction();
+                                        database.close();
+                                        databaseHelper.close();
+                                        checkCloseDb(database);
+                                    } finally {
+                                        updatesLock.unlock();
+                                        break;
+                                    }
+                                } else {
+                                    Log.d(TAG, "Max_Bump_Number try lock");
+                                    try {
+                                        Random ran = new Random();
+                                        int x = ran.nextInt(20) + 1;
+                                        Thread.sleep(x);
+                                    } catch (InterruptedException e) {
+                                        e.getMessage();
+                                    }
+                                }
+                            }
+
+                            if (!error) {
+                                get_max_collision(lang_database, longt_database, 0);
+
+                            } else {  // nastala chyba, načitaj uložene vytlky
+                                if (gps != null && gps.getCurrentLatLng() != null) {
+                                    context.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                                        }
+                                    });
+                                }
+
+                            }
+                            Log.d(TAG, "Max_Bump_Number končí");
+                        }
+                    };
+                    t.start();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }*/
+
+  /*  private void get_max_collision(final Double latitude, final Double longtitude, final Integer update) {
+        Log.d(TAG, "get_max_collision start");
+        Thread t = new Thread() {
+            public void run() {
+                while (true) {
+                    if (updatesLock.tryLock()) {
+                        try {
+                            SimpleDateFormat now, ago;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            now = new SimpleDateFormat("yyyy-MM-dd");
+                            String now_formated = now.format(cal.getTime());
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 280);
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            String ago_formated = ago.format(cal.getTime());
+                            DatabaseOpenHelper databaseHelper =null;
+                            SQLiteDatabase database = null;
+                            try {
+                                databaseHelper = new DatabaseOpenHelper(context);
+                                database = databaseHelper.getReadableDatabase();
+                                checkIntegrityDB(database);
+                                database.beginTransaction();
+                                // max b_id_collisions z databazy
+                                String selectQuery = "SELECT * FROM collisions where b_id_collisions in (SELECT b_id_bumps FROM " + TABLE_NAME_BUMPS
+                                        + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                        + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1)))"
+                                        + " ORDER BY c_id DESC LIMIT 1 ";
+                                Cursor cursor = null;
+                                try {
+                                    cursor = database.rawQuery(selectQuery, null);
+                                    if (cursor.moveToFirst()) {
+                                        do {
+                                            c_id_database = cursor.getInt(0);
+                                            Log.d(TAG, "get_max_collision c_id_database - " + c_id_database);
+                                        } while (cursor.moveToNext());
+                                    }
+                                } finally {
+                                    if (cursor != null)
+                                        cursor.close();
+                                }
+                                database.setTransactionSuccessful();
+                                database.endTransaction();
+                            } finally {
+                                if (database!=null) {
+                                    database.close();
+                                    databaseHelper.close();
+                                }
+                            }
+                            checkCloseDb(database);
+                        } finally {
+                            Log.d(TAG, "get_max_collision unlock " );
+                            updatesLock.unlock();
+                            break;
+                        }
+                    } else {
+                        Log.d(TAG, "get_max_collision try lock ");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
+                            e.getMessage();
+                        }
+                    }
+                }
+                updates = update;
+                Log.d(TAG, "get_max_collision finish");
+            }
+        };
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        new Max_Collision_Number().execute();  // odošlem dáta najdenie nových
+    }*/
+
+  /* class Max_Collision_Number extends AsyncTask<String, Void, JSONArray> {
+
+        protected JSONArray doInBackground(String... args) {
+            Log.d(TAG, "Max_Collision_Number start");
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            Log.d("TTRREEE", "odosielam lang_database   v Max_Collision_Number " + lang_database);
+            Log.d("TTRREEE", "odosielam  longt_database v Max_Collision_Number " + longt_database);
+            params.add(new BasicNameValuePair("latitude", String.valueOf(lang_database)));
+            params.add(new BasicNameValuePair("longitude", String.valueOf(longt_database)));
+            params.add(new BasicNameValuePair("b_id", String.valueOf(b_id_database)));
+            params.add(new BasicNameValuePair("net", String.valueOf(net)));
+            params.add(new BasicNameValuePair("c_id", String.valueOf(c_id_database)));
+            Log.d(TAG, "Max_Collision_Number odosielam požiadavku");
+            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/update_collisions.php", "POST", params);
+            if (json == null) {
+                JSONArray response = new JSONArray();
+                try {
+                    response.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                Log.d(TAG, "Max_Collision_Number - error");
+                return response;
+            }
+            try {
+                int success = json.getInt("success");
+
+                if (success == 0) { // mám povolene stahovať a mám vytlky
+                    bumps = json.getJSONArray("bumps");
+                    Log.d(TAG, "Max_Collision_Number - new data");
+                    return bumps;
+                } else if (success == 1) { // nemám povolene stahovať ale mám vytlky
+                    JSONArray response = new JSONArray();
+                    Log.d(TAG, "Max_Collision_Number - need update");
+                    response.put(0, "update");
+                    return response;
+                } else {  // nemám nove vytlky
+                    Log.d(TAG, "Max_Collision_Number - no data");
+                    return null;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                JSONArray response = new JSONArray();
+                try {
+                    Log.d(TAG, "Max_Collision_Number - JSONException");
+                    response.put(0, "error");
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return response;
+            }
+        }
+
+        protected void onPostExecute(JSONArray array) {
+
+            if (array == null) {
+                Log.d(TAG, "Max_Collision_Number onPostExecute - null");
+                // collision nemaju update ale bumps ano
+                if (updates == 1 || regularUpdatesLock) {
+                    Log.d(TAG, "Max_Collision_Number onPostExecute - GetUpdateAction");
+                    GetUpdateAction();
+                } else {
+                    Log.d(TAG, "Max_Collision_Number onPostExecute - getAllBumps");
+                    // načítam vytlky na mapu
+                    if (gps != null && gps.getCurrentLatLng() != null) {
+                        context.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                            }
+                        });
+                    }
+                }
+                return;
+            }
+            try {
+                if (array.get(0).equals("error")) {
+                    Log.d(TAG, "Max_Collision_Number onPostExecute - error");
+                    // nastala chyba, nacitam mapu
+                    if (gps != null && gps.getCurrentLatLng() != null) {
+                        context.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                            }
+                        });
+                    }
+                    return;
+                } else if (array.get(0).equals("update")) {
+                    Log.d(TAG, "Max_Collision_Number onPostExecute -  GetUpdateAction");
+                    // mam vytlky na stiahnutie, ale potrebujem opravnenie od používateľa
+                    GetUpdateAction();
+                } else {
+                    new Thread() {
+                        public void run() {
+                            Log.d(TAG, "Max_Collision_Number onPostExecute -  updata DB");
+
+                            Boolean error = false;
+                            while (true) {
+                                if (updatesLock.tryLock()) {
+                                    try {
+                                        DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                                        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                                        checkIntegrityDB(database);
+                                        database.beginTransaction();
+                                        for (int i = 0; i < bumps.length(); i++) {
+                                            JSONObject data = null;
+                                            try {
+                                                data = bumps.getJSONObject(i);
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
+                                                error = true;
+                                            }
+                                            int c_id = 0, b_id = 0;
+                                            double intensity = 0;
+                                            String created_at = null;
+                                            Log.d(TAG, "Max_Collision_Number b_id_database - " + b_id_database);
+                                            Log.d(TAG, "Max_Collision_Number loaded_index - " + loaded_index);
+                                            if (data != null) {
+                                                try {
+                                                    c_id = data.getInt("c_id");
+                                                    b_id = data.getInt("b_id");
+                                                    intensity = data.getDouble("intensity");
+                                                    created_at = data.getString("created_at");
+                                                    Log.d(TAG, "Max_Collision_Number c_id - " + c_id);
+                                                    Log.d(TAG, "Max_Collision_Number b_id - " + b_id);
+                                                    Log.d(TAG, "Max_Collision_Number intensity - " + intensity);
+                                                    Log.d(TAG, "Max_Collision_Number created_at - " + created_at);
+
+                                                    // ak nove collision updatuju stare  vytlky
+                                                    if (b_id <= loaded_index) {
+                                                        Log.d(TAG, "Max_Collision_Number nove collision update stare");
+                                                        int rating = 0;
+                                                        if (isBetween((float) intensity, 0, 6))
+                                                            rating = 1;
+                                                        if (isBetween((float) intensity, 6, 10))
+                                                            rating = 2;
+                                                        if (isBetween((float) intensity, 10, 10000))
+                                                            rating = 3;
+                                                        database.execSQL("UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id);
+                                                    }
+
+                                                   //ak nastala chyba v transakcii,  musím upraviť udaje
+                                                   // beriem od poslendej uspešnej transakcie collision po načitane max id z bumps
+
+                                                    // nove collision aj nove update takže počet dávam od 1 a pripočítavam
+                                                     if (b_id <= b_id_database && loaded_index < b_id) {
+                                                        Log.d(TAG, "Max_Collision_Number nove collision aj bump");
+                                                        int rating = 0;
+                                                        if (isBetween((float) intensity, 0, 6))
+                                                            rating = 1;
+                                                        if (isBetween((float) intensity, 6, 10))
+                                                            rating = 2;
+                                                        if (isBetween((float) intensity, 10, 10000))
+                                                            rating = 3;
+                                                        Cursor cursor = null;
+                                                        String sql = "SELECT * FROM collisions WHERE b_id_collisions=" + b_id;
+
+                                                        try {
+                                                            cursor = database.rawQuery(sql, null);
+                                                            if (cursor.getCount() > 0) {
+                                                                Log.d(TAG, "Max_Collision_Number viac b_id");
+                                                                //  ak ich bolo viac pripičítam
+                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", count=count +1, last_modified='"+created_at+"' WHERE b_id_bumps=" + b_id;
+                                                            } else {
+                                                                Log.d(TAG, "Max_Collision_Number prvý nový b_id");
+                                                                // ak bol prvý, nastavujem na 1 count a rating prvého prijateho
+                                                                sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=" + rating + ", count=1, last_modified='"+created_at+"'  WHERE b_id_bumps=" + b_id;
+                                                            }
+                                                            database.execSQL(sql);
+                                                        } finally {
+                                                            if (cursor != null)
+                                                                cursor.close();
+                                                        }
+                                                    }
+
+                                                    // insert novych udajov
+                                                    ContentValues contentValues = new ContentValues();
+                                                    contentValues.put(Provider.bumps_collision.C_ID, c_id);
+                                                    contentValues.put(Provider.bumps_collision.B_ID_COLLISIONS, b_id);
+                                                    contentValues.put(Provider.bumps_collision.CRETED_AT, created_at);
+                                                    contentValues.put(Provider.bumps_collision.INTENSITY, intensity);
+                                                    database.insert(Provider.bumps_collision.TABLE_NAME_COLLISIONS, null, contentValues);
+
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                    // ak nastane chyba, tak si ju poznačim
+                                                    error = true;
+                                                }
+                                            }
+                                        }
+                                        if (!error) {
+                                            // ak nenastala chyba, transakci je uspešna
+                                            database.setTransactionSuccessful();
+                                            database.endTransaction();
+                                            database.close();
+                                            databaseHelper.close();
+                                            checkCloseDb(database);
+                                            // uložím najvyššie b_id  z bumps po uspešnej transakcii
+                                            SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
+                                            SharedPreferences.Editor editor = sharedPref.edit();
+                                            editor.putInt("save", max_number);
+                                            loaded_index = max_number;
+                                            editor.commit();
+                                            Log.d(TAG, "Max_Collision_Number no error, save max id - " + max_number);
+                                        } else {
+                                            // rollbacknem databazu
+                                            database.endTransaction();
+                                            database.close();
+                                            databaseHelper.close();
+                                            checkCloseDb(database);
+                                            Log.d(TAG, "Max_Collision_Number  error " );
+
+                                        }
+                                    } finally {
+                                        Log.d(TAG, "Max_Collision_Number  unlock " );
+                                        updatesLock.unlock();
+                                        break;
+                                    }
+                                } else {
+                                    Log.d(TAG, "Max_Collision_Number  try lock " );
+                                    try {
+                                        Random ran = new Random();
+                                        int x = ran.nextInt(20) + 1;
+                                        Thread.sleep(x);
+                                    } catch (InterruptedException e) {
+                                        e.getMessage();
+                                    }
+                                }
+                            }
+                            // načítam vytlky
+                            if (gps != null && gps.getCurrentLatLng() != null) {
+                                context.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+                                    }
+                                });
+                            }
+                            Log.d(TAG, "Max_Collision_Number  končí " );
+
+                        }
+                    }.start();
+
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }*/
+
 }
+
+
+
