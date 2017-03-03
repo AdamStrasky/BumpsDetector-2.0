@@ -34,7 +34,6 @@ import static navigationapp.main_application.FragmentActivity.global_gps;
 import static com.google.maps.android.PolyUtil.isLocationOnEdge;
 import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
-import static navigationapp.main_application.MainActivity.round;
 
 public class Location {
 
@@ -286,9 +285,9 @@ public class Location {
                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
                                         checkIntegrityDB(database);
                                         database.beginTransaction();
-                                        String selectQuery = "SELECT latitude,longitude,count,manual FROM my_bumps WHERE " +
+                                        String selectQuery = "SELECT latitude,longitude FROM my_bumps WHERE " +
                                                 " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                                + " (ROUND(latitude,2)==ROUND(" + latitude + ",2) and ROUND(longitude,2)==ROUND(" + longitude + ",2)) ";
+                                                + " (ROUND(latitude,2)==ROUND(" + latitude + ",2) and ROUND(longitude,2)==ROUND(" + longitude + ",2)) AND type=0";
 
                                         Cursor cursor = null;
                                         try {

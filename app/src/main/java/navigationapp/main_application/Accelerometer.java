@@ -22,9 +22,7 @@ import android.widget.Toast;
 import navigationapp.R;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Timer;
@@ -79,7 +77,6 @@ public class Accelerometer extends Service implements SensorEventListener {
         BumpsManual = new ArrayList<>();
         typeDetect = new ArrayList<>();
         textDetect = new ArrayList<>();
-
     }
 
     private void startRecalibrate() {// spustenie pravidelneho rekalibrovania
