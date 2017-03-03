@@ -122,7 +122,10 @@
     <string name="button_download">Stiahnuť</string>
     <string name="button_back_on">Späť</string>
 
-    <string name="add_marker">Pridaný výtlk</string>
+    <string name="add_marker_bump">Pridaný výtlk</string>
+    <string name="add_marker_bin">Nahlasený plný kôš</string>
+    <string name="add_marker_channel">Nahlasený chýbajúci poklop</string>
+    <string name="add_marker_other">Iné hlásenie</string>
     <string name="list">Zoznam</string>
 
     <string name="error_download">Chyba,sťahovanie máp bolo prerušené</string>

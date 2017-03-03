@@ -5,7 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Looper;
+import android.location.Location;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.TimeZone;
 
 import static navigationapp.main_application.Bump.isBetween;
 import static navigationapp.main_application.FragmentActivity.checkCloseDb;
@@ -41,6 +42,7 @@ import static navigationapp.main_application.FragmentActivity.isEneableShowText;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.MainActivity.getDate;
 import static navigationapp.main_application.MainActivity.mapbox;
 
 
@@ -50,10 +52,12 @@ public class MapLayer {
     private final float ALL_BUMPS = 1.0f;   //level defaultne nastaveny pre zobrazovanie vsetkych vytlkov
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
+    private final static long MILLISECS_PER_DAY = 24 * 60 * 60 * 1000;
     public float level = ALL_BUMPS;
 
     private List<Feature> autoMarkerCoordinates = null;  // markery
     private List<Feature> manualMarkerCoordinates = null;
+    private List<Feature> reportMarkerCoordinates = null;
 
     boolean deleteMap = false;  // flag na mazanie mapy
     boolean clear = true; // flag či mazať celu mapu
@@ -75,9 +79,10 @@ public class MapLayer {
             public void run() {
 
                 Log.d(TAG, " gettAllBump zobrazenie markerov  spustene ");
-                int autoBumpSequence = 0, manualBumpSequence = 0;
+                int autoBumpSequence = 0, manualBumpSequence = 0, reportSequence = 0;
                 autoMarkerCoordinates = new ArrayList<>();
                 manualMarkerCoordinates = new ArrayList<>();
+                reportMarkerCoordinates = new ArrayList<>();
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {
@@ -94,9 +99,9 @@ public class MapLayer {
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             String ago_formated = ago.format(cal.getTime());
                             // seleknutie vytlk z oblasti a starych 280 dni
-                            String selectQuery = "SELECT latitude,longitude,count,manual,last_modified FROM my_bumps WHERE rating/count >=" + level + " AND " +
+                            String selectQuery = "SELECT latitude,longitude,count,manual,last_modified,info FROM my_bumps WHERE rating/count >=" + level + " AND " +
                                     " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)) ";
+                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1) AND type=0) ";
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
                             checkIntegrityDB(database);
@@ -124,6 +129,8 @@ public class MapLayer {
                                                     context.getResources().getString(R.string.modif) + " " + showFormatData);
                                             autoFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
                                             autoFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
+                                            autoFeature.addStringProperty("type", String.valueOf(0));
+                                            autoFeature.addStringProperty("text", String.valueOf( cursor.getString(5)));
                                             autoBumpSequence++;
                                         } else { // jednotkou je označený  manuálne detegovaný výtlk
                                             manualMarkerCoordinates.add(Feature.fromGeometry(
@@ -135,6 +142,8 @@ public class MapLayer {
                                                     context.getResources().getString(R.string.modif) + " " + showFormatData);
                                             manualFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
                                             manualFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
+                                            manualFeature.addStringProperty("type", String.valueOf(0));
+                                            manualFeature.addStringProperty("text", String.valueOf( cursor.getString(5)));
                                             manualBumpSequence++;
                                         }
                                     }
@@ -144,6 +153,56 @@ public class MapLayer {
                                 if (cursor != null)
                                     cursor.close();
                             }
+                            /////////////////////////////////////////////////////////////
+
+                            cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 3);  // posun od dnesneho dna o 280 dni
+                            ago = new SimpleDateFormat("yyyy-MM-dd");
+                            ago_formated = ago.format(cal.getTime());
+                            selectQuery = "SELECT latitude,longitude,count,last_modified,info,type FROM my_bumps WHERE " +
+                                    " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
+                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)  AND type>0) ";
+
+                            cursor = null;
+                            try {
+                                cursor = database.rawQuery(selectQuery, null);
+                                if (cursor.moveToFirst()) {
+                                    do {
+                                        try { // konvertujem datum
+                                            showFormatData = dataFormatShow.format(dataFormatDatabase.parse(cursor.getString(3).substring(0, 10)));
+                                        } catch (ParseException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        String select_iteam = cursor.getString(4);
+                                        switch (cursor.getInt(5)) {
+                                            case 1:
+                                                select_iteam = context.getResources().getString(R.string.type_problem_basket);
+                                                break;
+                                            case 2:
+                                                select_iteam = context.getResources().getString(R.string.type_problem_canstock);
+                                                break;
+                                        }
+
+                                            reportMarkerCoordinates.add(Feature.fromGeometry(
+                                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
+                                            ); //  zobrazované vlastnosti výtlku
+                                            Feature reportFeature = reportMarkerCoordinates.get(autoBumpSequence);
+                                            reportFeature.addStringProperty("property", select_iteam + "\n" +
+                                                    context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
+                                                    context.getResources().getString(R.string.modif) + " " + showFormatData);
+                                            reportFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
+                                            reportFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
+                                            reportFeature.addStringProperty("type", String.valueOf(cursor.getInt(5)));
+                                            reportFeature.addStringProperty("text", String.valueOf( cursor.getString(4)));
+                                            reportSequence++;
+                                    }
+                                    while (cursor.moveToNext());
+                                }
+                            } finally {
+                                if (cursor != null)
+                                    cursor.close();
+                            }
+                            ///////////////////////////////////////////////////////////
                             database.setTransactionSuccessful();
                             database.endTransaction();
                             database.close();
@@ -166,6 +225,8 @@ public class MapLayer {
 
                 ArrayList<HashMap<android.location.Location, Float>> bumpList = new ArrayList<HashMap<android.location.Location, Float>>();
                 ArrayList<Integer> bumpsManual = new ArrayList<Integer>();
+                ArrayList<Integer> detectType = new ArrayList<Integer>();
+                ArrayList<String> detectText = new ArrayList<String>();
                 while (true) {
                     if (lockAdd.tryLock()) {
                        try {
@@ -176,7 +237,9 @@ public class MapLayer {
                                            Log.d(TAG, " gettAllBump kopírujem zoznam ");
                                            bumpList.addAll(accelerometer.getPossibleBumps());
                                            bumpsManual.addAll(accelerometer.getBumpsManual());
-                                        }
+                                           detectType.addAll(accelerometer.gettypeDetect());
+                                           detectText.addAll(accelerometer.gettextDetect());
+                                    }
                                    } finally {
                                         lockZoznam.unlock();
                                         Log.d(TAG, " gettAllBump zoznam unlock ");
@@ -212,7 +275,7 @@ public class MapLayer {
                     }
                 }
                 // zobrazenie výtlkov , ktoré boli pridané automaticky / manuálne bez synchronizácie zo serverom
-                notSendBumps(bumpList, bumpsManual, autoBumpSequence, manualBumpSequence);
+                notSendBumps(bumpList, bumpsManual, autoBumpSequence, manualBumpSequence,reportSequence, detectType,detectText);
                 if (mapbox != null)
                     showNewMarker(); // zobrazenie markerov
                 deleteMap = true;
@@ -291,8 +354,17 @@ public class MapLayer {
                 e.getMessage();
             }
 
+            try {
+                if (mapbox.getSource("marker-source-report") != null)
+                    mapbox.removeSource("marker-source-report");
+            } catch (NoSuchSourceException e) {
+                e.printStackTrace();
+                e.getMessage();
+            }
+
             mapbox.removeImage("my-marker-image-auto");
             mapbox.removeImage("my-marker-image-manual");
+            mapbox.removeImage("my-marker-image-report");
 
             try {
                 if (mapbox.getLayer("marker-layer-auto") != null)
@@ -303,6 +375,12 @@ public class MapLayer {
             try {
                 if (mapbox.getLayer("marker-layer-manual") != null)
                     mapbox.removeLayer("marker-layer-manual");
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
+            try {
+                if (mapbox.getLayer("marker-layer-report") != null)
+                    mapbox.removeLayer("marker-layer-report");
             } catch (NoSuchLayerException e) {
                 e.getMessage();
             }
@@ -324,6 +402,14 @@ public class MapLayer {
             }
 
             try {
+                if (mapbox.getSource("selected-marker-report") != null)
+                    mapbox.removeSource("selected-marker-report");
+            } catch (NoSuchSourceException e) {
+                e.printStackTrace();
+                e.getMessage();
+            }
+
+            try {
                 if (mapbox.getLayer("selected-marker-layer-auto") != null)
                     mapbox.removeLayer("selected-marker-layer-auto");
             } catch (NoSuchLayerException e) {
@@ -336,10 +422,17 @@ public class MapLayer {
             } catch (NoSuchLayerException e) {
                 e.getMessage();
             }
+            try {
+                if (mapbox.getLayer("selected-marker-layer-report") != null)
+                    mapbox.removeLayer("selected-marker-layer-report");
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
         } catch (ConcurrentModificationException e) {
            e.printStackTrace();
            e.getMessage();
         }
+
 
         Log.d(TAG, "deleteOldMarker finish");
     }
@@ -356,6 +449,10 @@ public class MapLayer {
             Source geoJsonSourceManual = new GeoJsonSource("marker-source-manual", featureCollectionManual);
             mapbox.addSource(geoJsonSourceManual);
 
+            FeatureCollection featureCollectionReport = FeatureCollection.fromFeatures(reportMarkerCoordinates);
+            Source geoJsonSourceReport = new GeoJsonSource("marker-source-report", featureCollectionReport);
+            mapbox.addSource(geoJsonSourceReport);
+
             Bitmap iconAuto = BitmapFactory.decodeResource(context.getResources(), R.drawable.default_marker);
             mapbox.addImage("my-marker-image-auto", iconAuto);
 
@@ -370,6 +467,14 @@ public class MapLayer {
                     .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
             mapbox.addLayer(markersManual);
 
+            Bitmap iconReport = BitmapFactory.decodeResource(context.getResources(), R.drawable.detect);
+            mapbox.addImage("my-marker-image-report", iconReport);
+
+            SymbolLayer markersReport = new SymbolLayer("marker-layer-report", "marker-source-report")
+                    .withProperties(PropertyFactory.iconImage("my-marker-image-report"));
+            mapbox.addLayer(markersReport);
+
+
             FeatureCollection emptySourceAuto = FeatureCollection.fromFeatures(new Feature[]{});
             Source selectedMarkerSourceAuto = new GeoJsonSource("selected-marker-auto", emptySourceAuto);
             mapbox.addSource(selectedMarkerSourceAuto);
@@ -377,6 +482,10 @@ public class MapLayer {
             FeatureCollection emptySourceManual = FeatureCollection.fromFeatures(new Feature[]{});
             Source selectedMarkerSourceManual = new GeoJsonSource("selected-marker-manual", emptySourceManual);
             mapbox.addSource(selectedMarkerSourceManual);
+
+            FeatureCollection emptySourceReport = FeatureCollection.fromFeatures(new Feature[]{});
+            Source selectedMarkerSourceReport = new GeoJsonSource("selected-marker-report", emptySourceReport);
+            mapbox.addSource(selectedMarkerSourceReport);
 
             SymbolLayer selectedMarkerAuto = new SymbolLayer("selected-marker-layer-auto", "selected-marker-auto")
                     .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
@@ -386,6 +495,10 @@ public class MapLayer {
                     .withProperties(PropertyFactory.iconImage("my-marker-image-manual"));
             mapbox.addLayer(selectedMarkerManual);
 
+            SymbolLayer selectedMarkerReport = new SymbolLayer("selected-marker-layer-report", "selected-marker-report")
+                    .withProperties(PropertyFactory.iconImage("my-marker-image-report"));
+            mapbox.addLayer(selectedMarkerReport);
+
         } catch (ConcurrentModificationException e) {
             e.printStackTrace();
             e.getMessage();
@@ -394,55 +507,81 @@ public class MapLayer {
         Log.d(TAG, "showNewMarker finish");
     }
 
-    public void notSendBumps(ArrayList<HashMap<android.location.Location, Float>> bumps, ArrayList<Integer> bumpsManual, int autoSeq, int manulSeq) {
+    public void notSendBumps(ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual, int autoSeq, int manulSeq, int reportSequence, ArrayList<Integer> detectType, ArrayList<String> detectText) {
         Log.d(TAG, "notSendBumps dopnanie zoznamu");
         float rating = 1;
         int i = 0;
         if (bumps.size() > 0) {
             Log.d(TAG, "notSendBumps obsahuje zoznamy");
-            SimpleDateFormat now;
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(new Date());
-            now = new SimpleDateFormat("dd/MM/yyyy");
-            String now_formated = now.format(cal.getTime());
             for (HashMap<android.location.Location, Float> bump : bumps) {
                 Iterator it = bump.entrySet().iterator();
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
                     android.location.Location loc = (android.location.Location) pair.getKey();
-                    float data = (float) pair.getValue();
-                    rating = 1;
-                    if (isBetween(data, 0, 6)) rating = 1;
-                    if (isBetween(data, 6, 10)) rating = 1.5f;
-                    if (isBetween(data, 10, 10000)) rating = 2.5f;
-                    if (rating >= level) {
-                        if (bumpsManual.get(i) == 0) {
-                          if (autoMarkerCoordinates.size() == autoSeq) {
-                                autoMarkerCoordinates.add(Feature.fromGeometry(
+                    if (detectType.get(i) == 0 ) {
+                        float data = (float) pair.getValue();
+                        rating = 1;
+                        if (isBetween(data, 0, 6)) rating = 1;
+                        if (isBetween(data, 6, 10)) rating = 1.5f;
+                        if (isBetween(data, 10, 10000)) rating = 2.5f;
+                        if (rating >= level) {
+                            if (bumpsManual.get(i) == 0) {
+                                if (autoMarkerCoordinates.size() == autoSeq) {
+                                    autoMarkerCoordinates.add(Feature.fromGeometry(
+                                            Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
+                                    );
+                                    Feature autoFeature = autoMarkerCoordinates.get(autoSeq);
+                                    autoFeature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
+                                            context.getResources().getString(R.string.number_bump) + "1\n" +
+                                            context.getResources().getString(R.string.modif) + " " + getDate(loc.getTime(), "dd/MM/yyyy"));
+                                    autoFeature.addStringProperty("lat", String.valueOf(loc.getLatitude()));
+                                    autoFeature.addStringProperty("ltn", String.valueOf(loc.getLongitude()));
+                                    autoFeature.addStringProperty("type", String.valueOf(detectType.get(i)));
+                                    autoFeature.addStringProperty("text", String.valueOf( detectText.get(i)));
+                                    autoSeq++;
+                                }
+
+                            } else if (manualMarkerCoordinates.size() == manulSeq) {
+                                manualMarkerCoordinates.add(Feature.fromGeometry(
                                         Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
                                 );
-                                Feature autoFeature = autoMarkerCoordinates.get(autoSeq);
-                                autoFeature.addStringProperty("property", context.getResources().getString(R.string.auto_bump) + "\n" +
+                                Feature manualFeature = manualMarkerCoordinates.get(manulSeq);
+                                manualFeature.addStringProperty("property", context.getResources().getString(R.string.manual_bump) + "\n" +
                                         context.getResources().getString(R.string.number_bump) + "1\n" +
-                                        context.getResources().getString(R.string.modif) + " " + now_formated);
-                                autoFeature.addStringProperty("lat", String.valueOf(loc.getLatitude()));
-                                autoFeature.addStringProperty("ltn", String.valueOf(loc.getLongitude()));
-                                autoSeq++;
-                          }
-
-                        } else
-                           if (manualMarkerCoordinates.size() == manulSeq) {
-                            manualMarkerCoordinates.add(Feature.fromGeometry(
-                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude()))) // Boston Common Park
-                            );
-                            Feature manualFeature = manualMarkerCoordinates.get(manulSeq);
-                            manualFeature.addStringProperty("property",context.getResources().getString(R.string.manual_bump) + "\n" +
-                                        context.getResources().getString(R.string.number_bump) + "1\n" +
-                                        context.getResources().getString(R.string.modif) + " " + now_formated);
-                               manualFeature.addStringProperty("lat", String.valueOf(loc.getLatitude()));
-                               manualFeature.addStringProperty("ltn", String.valueOf(loc.getLongitude()));
-                            manulSeq++;
+                                        context.getResources().getString(R.string.modif) + " " + getDate(loc.getTime(), "dd/MM/yyyy"));
+                                manualFeature.addStringProperty("lat", String.valueOf(loc.getLatitude()));
+                                manualFeature.addStringProperty("ltn", String.valueOf(loc.getLongitude()));
+                                manualFeature.addStringProperty("type", String.valueOf(detectType.get(i)));
+                                manualFeature.addStringProperty("text", String.valueOf( detectText.get(i)));
+                                manulSeq++;
+                            }
                         }
+                    }else {
+                        if (getSignedDiffInDays(getGMTDate(loc.getTime()),new Date()) <=3) {
+                        String select_iteam = detectText.get(i);
+                            switch (detectType.get(i)) {
+                                case 1:
+                                    select_iteam = context.getResources().getString(R.string.type_problem_basket);
+                                    break;
+                                case 2:
+                                    select_iteam = context.getResources().getString(R.string.type_problem_canstock);
+                                    break;
+                            }
+                            reportMarkerCoordinates.add(Feature.fromGeometry(
+                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(loc.getLongitude(), loc.getLatitude())))
+                            );
+                            Feature reportFeature = reportMarkerCoordinates.get(reportSequence);
+
+                            reportFeature.addStringProperty("property", select_iteam + "\n" +
+                                    context.getResources().getString(R.string.number_bump) + "1\n" +
+                                    context.getResources().getString(R.string.modif) + " " + getDate(loc.getTime(), "dd/MM/yyyy"));
+                            reportFeature.addStringProperty("lat", String.valueOf(loc.getLatitude()));
+                            reportFeature.addStringProperty("ltn", String.valueOf(loc.getLongitude()));
+                            reportFeature.addStringProperty("type", String.valueOf(detectType.get(i)));
+                            reportFeature.addStringProperty("text", String.valueOf( detectText.get(i)));
+                            reportSequence++;
+                        }
+
                     }
                     i++;
                 }
@@ -450,6 +589,33 @@ public class MapLayer {
         }
         Log.d(TAG, "notSendBumps koniec");
 
+    }
+    private static long getDateToLong(Date date) {
+        return Date.UTC(date.getYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+    }
+
+
+    public static int getSignedDiffInDays(Date beginDate, Date endDate) {
+        long beginMS = getDateToLong(beginDate);
+        long endMS = getDateToLong(endDate);
+        long diff = (endMS - beginMS) / (MILLISECS_PER_DAY);
+        return (int)diff;
+    }
+    private Date getGMTDate(long date) {
+        SimpleDateFormat dateFormatGmt = new SimpleDateFormat(
+                "yyyy-MMM-dd HH:mm:ss");
+        dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
+        SimpleDateFormat dateFormatLocal = new SimpleDateFormat(
+                "yyyy-MMM-dd HH:mm:ss");
+
+        Date temp = new Date(date);
+
+        try {
+            return dateFormatLocal.parse(dateFormatGmt.format(temp));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return temp;
     }
 
     public void setClear(Marker marker) {

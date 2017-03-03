@@ -123,7 +123,10 @@
     <string name="button_download">Download</string>
     <string name="button_back_on">Back</string>
 
-    <string name="add_marker">Add bump</string>
+    <string name="add_marker_bump">Add bump</string>
+    <string name="add_marker_bin">Report full bin</string>
+    <string name="add_marker_channel">Report missing channel</string>
+    <string name="add_marker_other">Report other</string>
     <string name="list">List</string>
 
     <string name="error_download">Error, download of map was interrupted</string>

@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static MapboxAccountManager manager;
     private boolean markerSelectedAuto = false;
     private boolean markerSelectedManual = false;
+    private boolean markerSelectedReport = false;
     private Marker featureMarker =  null ;
     boolean allow_click= false;
     com.mapbox.mapboxsdk.geometry.LatLng  convert_location  =null;
@@ -197,9 +198,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
                                 Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.drawable.purple_marker);
                                 com.mapbox.mapboxsdk.annotations.Icon icons = iconFactory.fromDrawable(iconDrawable);
+                                String titleMarker = null;
+                                switch (select_iteam) {
+                                    case 0:
+                                        titleMarker = getApplication().getResources().getString(R.string.add_marker_bump);
+                                        break;
+                                    case 1:
+                                        titleMarker = getApplication().getResources().getString(R.string.add_marker_bin);
+                                        break;
+                                    case 2:
+                                        titleMarker = getApplication().getResources().getString(R.string.add_marker_channel);
+                                        break;
+                                    case 3:
+                                        titleMarker = getApplication().getResources().getString(R.string.add_marker_other);
+                                        break;
+                                    default:
+                                        break;
+                                }
+
                                 featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
                                         .position(point)
-                                        .title(getApplication().getResources().getString(R.string.add_marker))
+                                        .title(titleMarker)
                                         .icon(icons)
                                 );
                                 fragmentActivity.mapLayer.setClear(featureMarker);
@@ -226,12 +245,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         ////////////////////////////////////////////////////////////////
                         final SymbolLayer markerAuto = (SymbolLayer) mapbox.getLayer("selected-marker-layer-auto");
                         final SymbolLayer markerManual = (SymbolLayer) mapbox.getLayer("selected-marker-layer-manual");
+                        final SymbolLayer markerReport = (SymbolLayer) mapbox.getLayer("selected-marker-layer-report");
 
                         final PointF pixel = mapbox.getProjection().toScreenLocation(point);
                         List<Feature> featureAuto = mapbox.queryRenderedFeatures(pixel, "marker-layer-auto");
                         List<Feature> selectedFeatureAuto = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-auto");
                         List<Feature> featuresManual = mapbox.queryRenderedFeatures(pixel, "marker-layer-manual");
                         List<Feature> selectedFeatureManual = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-manual");
+                        List<Feature> featuresReport = mapbox.queryRenderedFeatures(pixel, "marker-layer-report");
+                        List<Feature> selectedFeatureReport = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-report");
 
                         if (selectedFeatureAuto.size() > 0 && markerSelectedAuto) {
                             return;
@@ -239,14 +261,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (selectedFeatureManual.size() > 0 && markerSelectedManual) {
                             return;
                         }
+                        if (selectedFeatureReport.size() > 0 && markerSelectedReport) {
+                            return;
+                        }
 
-                        if (featureAuto.isEmpty() || featuresManual.isEmpty()) {
+                        if (featureAuto.isEmpty() || featuresManual.isEmpty() || featuresReport.isEmpty()) {
                             if (markerSelectedAuto) {
                                 deselectMarker(markerAuto, 0);
                                 return;
                             }
                             if (markerSelectedManual) {
                                 deselectMarker(markerManual, 1);
+                                return;
+                            }
+                            if (markerSelectedReport) {
+                                deselectMarker(markerReport, 2);
                                 return;
                             }
                         }
@@ -265,6 +294,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if (sourceManual != null)
                                 sourceManual.setGeoJson(featureCollectionManual);
                         }
+                        if (featuresReport.size() > 0) {
+                            FeatureCollection featureCollectionReport = FeatureCollection.fromFeatures(
+                                    new Feature[]{Feature.fromGeometry(featuresReport.get(0).getGeometry())});
+                            GeoJsonSource sourceReport = mapbox.getSourceAs("selected-marker-report");
+                            if (sourceReport != null)
+                                sourceReport.setGeoJson(featureCollectionReport);
+                        }
 
                         if (markerSelectedAuto) {
                             deselectMarker(markerAuto, 0);
@@ -272,10 +308,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (markerSelectedManual) {
                             deselectMarker(markerManual, 1);
                         }
+                        if (markerSelectedReport) {
+                            deselectMarker(markerReport, 2);
+                        }
                         if (featureAuto.size() > 0) {
 
                             if (featureAuto.get(0).getStringProperty("property")!=null) {
-                                setPanel( featureAuto.get(0).getStringProperty("property"),featureAuto.get(0).getStringProperty("lat"),featureAuto.get(0).getStringProperty("ltn"));
+                                setPanel( featureAuto.get(0).getStringProperty("property"),featureAuto.get(0).getStringProperty("lat"),featureAuto.get(0).getStringProperty("ltn"),featureAuto.get(0).getStringProperty("type"),featureAuto.get(0).getStringProperty("text"));
                             }
                             selectMarker(markerAuto,  0);
                             return;
@@ -283,9 +322,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (featuresManual.size() > 0) {
 
                             if (featuresManual.get(0).getStringProperty("property")!=null) {
-                                setPanel( featuresManual.get(0).getStringProperty("property"),featuresManual.get(0).getStringProperty("lat"),featuresManual.get(0).getStringProperty("ltn"));
+                                setPanel( featuresManual.get(0).getStringProperty("property"),featuresManual.get(0).getStringProperty("lat"),featuresManual.get(0).getStringProperty("ltn"),featuresManual.get(0).getStringProperty("type"),featuresManual.get(0).getStringProperty("text"));
                             }
                             selectMarker(markerManual, 1);
+                            return;
+                        }
+                        if (featuresReport.size() > 0) {
+
+                            if (featuresReport.get(0).getStringProperty("property")!=null) {
+                                setPanel( featuresReport.get(0).getStringProperty("property"),featuresReport.get(0).getStringProperty("lat"),featuresReport.get(0).getStringProperty("ltn"),featuresReport.get(0).getStringProperty("type"),featuresReport.get(0).getStringProperty("text"));
+                            }
+                            selectMarker(markerReport, 2);
                             return;
                         }
                     }
@@ -876,11 +923,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 );
             }
         });
-        markerAnimator.start();
-        if (i==0)
+        if (i == 0) {
             markerSelectedAuto = true;
-        else
+            markerAnimator.start();
+        }
+        else if (i == 1) {
             markerSelectedManual = true;
+            markerAnimator.start();
+        }
+        else
+            markerSelectedReport = true;
     }
 
     private void deselectMarker(final SymbolLayer marker, int i) {
@@ -900,11 +952,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 );
             }
         });
+
+    if (i == 0) {
+        markerSelectedAuto = false;
         markerAnimator.start();
-        if (i == 0)
-            markerSelectedAuto = false;
+    }
+        else if (i == 1) {
+        markerSelectedManual = false;
+        markerAnimator.start();
+    }
         else
-            markerSelectedManual = false;
+            markerSelectedReport = false;
     }
 
     public void isEneableScreen() {
@@ -1015,7 +1073,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                             @Override
                                             public void onClick(View view) {
-                                                select_iteam_text = regionNameEdit.getText().toString();
+                                                if (!regionNameEdit.getText().toString().isEmpty())
+                                                    select_iteam_text = regionNameEdit.getText().toString();
+                                                else
+                                                    select_iteam_text = "Other";
                                                 intensity =0.f;
                                                 allow_click=true;
                                                 confirm.setVisibility(View.VISIBLE);
@@ -1027,13 +1088,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     }
                                 });
                                 mAlertDialog.show();
-                                break;
-                            default:
-                                select_iteam_text= "default";
-                                intensity =0.f;
-                                allow_click=true;
-                                confirm.setVisibility(View.VISIBLE);
-                                add_button.setVisibility(View.INVISIBLE);
                                 break;
                         }
                     }
@@ -1262,7 +1316,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return name;
     }
 
-    public void setPanel(String text, final String lat,final String ltn) {
+    public void setPanel(String text, final String lat, final String ltn, final String type,final  String info) {
 
         TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
@@ -1287,7 +1341,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 location.setLongitude(Double.parseDouble(ltn));
 
                 Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string. increase_number), Toast.LENGTH_LONG).show();
-                add_bump(location,6, "bump" ,0);
+                add_bump(location, 6, info ,Integer.parseInt(type));
 
             }
         });
