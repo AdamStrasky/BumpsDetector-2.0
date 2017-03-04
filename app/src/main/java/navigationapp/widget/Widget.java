@@ -9,11 +9,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.Handler;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.Display;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RemoteViews;
@@ -70,11 +66,11 @@ public class Widget extends AppWidgetProvider {
             if (flag) {
 
                 if (type == 0) {
-                    new Click(getApplicationContext(), type);
+                    new Click(getApplicationContext(), type, "bump");
                 } else if (type == 1) {
-                    new Click(getApplicationContext(), type);
+                    new Click(getApplicationContext(), type, "bin");
                 }  else if (type == 2) {
-                    new Click(getApplicationContext(), type);
+                    new Click(getApplicationContext(), type, "channel");
                 }
                 else if (type == 3) {
 
@@ -89,7 +85,10 @@ public class Widget extends AppWidgetProvider {
                                     .setPositiveButton(context.getResources().getString(R.string.confirm), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int id) {
-                                            new Click(getApplicationContext(), type);
+                                           String  select_iteam_text = "Other";
+                                            if (!edittext.getText().toString().isEmpty())
+                                                select_iteam_text = edittext.getText().toString();
+                                            new Click(getApplicationContext(), type, select_iteam_text);
                                             dialog.dismiss();
                                         }
                                     })

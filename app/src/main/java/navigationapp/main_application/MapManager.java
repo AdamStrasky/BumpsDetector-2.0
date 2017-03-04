@@ -124,7 +124,6 @@ public class MapManager extends Activity {
                     regionNameEdit.setText(region);
 
                 AlertDialog.Builder windowAlert = new AlertDialog.Builder(context);
-                windowAlert.setPositiveButton(context.getResources().getString(R.string.download), null);
                 windowAlert.setNegativeButton(context.getResources().getString(R.string.cancel), null);
                 // ak volím select, dať možnosť aj zobraziť mapu
                 if (which != 0)

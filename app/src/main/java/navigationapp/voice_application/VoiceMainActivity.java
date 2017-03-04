@@ -20,6 +20,9 @@ import navigationapp.main_application.CallBackReturn;
 import navigationapp.main_application.DatabaseOpenHelper;
 import navigationapp.main_application.Provider;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class VoiceMainActivity extends Activity  {
@@ -31,12 +34,13 @@ public class VoiceMainActivity extends Activity  {
     private Bump BumpHandler = null;
     private TextToSpeech talker = null;
     private final String TAG = "VoiceMainActivity";
+    String query= "";
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 
-        String query= "";
+
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             voice = isEneableVoice();
@@ -74,11 +78,12 @@ public class VoiceMainActivity extends Activity  {
         if(gps.canGetLocation()){ // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu
             final double longitude = gps.getLongitude();
+
             Log.d(TAG," mám polohu ");
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
-            BumpHandler = new Bump(loc, 6.0f, 0,0,"bump");
+            BumpHandler = new Bump(loc, 6.0f, 1,choiseType(query),query);
             BumpHandler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if (results.equals("success")) {
@@ -92,7 +97,11 @@ public class VoiceMainActivity extends Activity  {
                         contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
                         contentValues.put(Provider.new_bumps.MANUAL, 1);
                         contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                        contentValues.put(Provider.new_bumps.TYPE, choiseType(query));
+                        contentValues.put(Provider.new_bumps.TEXT, query);
+                        contentValues.put(Provider.new_bumps.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
                         sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+
                     }
                 }
            });
@@ -160,5 +169,35 @@ public class VoiceMainActivity extends Activity  {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         Log.d(TAG,"isEneableVoice stav "+prefs.getBoolean("voice_alarm", Boolean.parseBoolean(null)));
         return prefs.getBoolean("voice_alarm", Boolean.parseBoolean(null));
+    }
+
+    public  String getDate(long milliSeconds, String dateFormat)
+    {
+        // Create a DateFormatter object for displaying date in specified format.
+        SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+
+        // Create a calendar object that will convert the date and time value in milliseconds to date.
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(milliSeconds);
+        return formatter.format(calendar.getTime());
+    }
+
+    public Integer choiseType(String text) {
+        Integer type = 0;
+        switch (text) {
+            case "bump":
+                type = 0;
+                break;
+            case "bin":
+                type = 1;
+                break;
+            case "cover":
+                type = 2;
+                break;
+            case "other":
+                type =3;
+                break;
+        }
+        return type;
     }
 }

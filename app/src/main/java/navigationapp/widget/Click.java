@@ -10,6 +10,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import navigationapp.R;
 import navigationapp.main_application.Bump;
@@ -26,7 +29,7 @@ public class Click {
     private final String TAG = "Click";
     private Bump Handler = null;
 
-    public Click(final Context context, final Integer type) {
+    public Click(final Context context, final Integer type,final String text) {
         gps = new GPSPosition(context);
 
         if(gps.canGetLocation()) { // kontrola GPS
@@ -37,7 +40,7 @@ public class Click {
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
             if (gps.isNetworkAvailable(context)) {
-                Handler = new Bump(loc, 6.0f, 0,0,"bump");
+                Handler = new Bump(loc, 6.0f, 1,type,text);
                 Handler.getResponse(new CallBackReturn() {
                     public void callback(String results) {
                         if (results.equals("success")) {
@@ -52,6 +55,9 @@ public class Click {
                             contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
                             contentValues.put(Provider.new_bumps.MANUAL, 1);
                             contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                            contentValues.put(Provider.new_bumps.TYPE, type);
+                            contentValues.put(Provider.new_bumps.TEXT, text);
+                            contentValues.put(Provider.new_bumps.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
                             database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                             close_db();
                         }
@@ -108,5 +114,15 @@ public class Click {
     public void close_db(){
         database.close();
         databaseHelper.close();
+    }
+    public  String getDate(long milliSeconds, String dateFormat)
+    {
+        // Create a DateFormatter object for displaying date in specified format.
+        SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+
+        // Create a calendar object that will convert the date and time value in milliseconds to date.
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(milliSeconds);
+        return formatter.format(calendar.getTime());
     }
 }
