@@ -27,4 +27,13 @@ public interface Provider {
         public static final String TYPE = "type";
         public static final String TEXT = "text";
     }
+
+    public interface photo extends BaseColumns {
+        public static final String TABLE_NAME_PHOTO = "new_photo";
+        public static final String LATITUDE = "latitude";
+        public static final String LONGTITUDE = "longitude";
+        public static final String CREATED_AT = "created_at";
+        public static final String TYPE = "type";
+        public static final String PATH = "path";
+    }
 }

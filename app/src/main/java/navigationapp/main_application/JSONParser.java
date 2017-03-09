@@ -32,43 +32,43 @@ public class JSONParser {
 
     public JSONObject makeHttpRequest(String url, String method, List<NameValuePair> params) {
 
-            try {
-                if (method == "POST") {
-                    // request method is POST
-                    DefaultHttpClient httpClient = new DefaultHttpClient();
-                    HttpPost httpPost = new HttpPost(url);
-                    httpPost.setEntity(new UrlEncodedFormEntity(params));
-                    HttpResponse httpResponse = httpClient.execute(httpPost);
-                    HttpEntity httpEntity = httpResponse.getEntity();
-                    is = httpEntity.getContent();
-                }
-                if (method == "GET") {
-                    DefaultHttpClient httpClient = new DefaultHttpClient();
-                    HttpGet request = new HttpGet(url);
-                    HttpResponse response = httpClient.execute(request);
-                    HttpEntity httpEntity = response.getEntity();
-                    is = httpEntity.getContent();
-                }
-
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-                try {
-                    return null;
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            } catch (ClientProtocolException e) {
-                e.printStackTrace();
-                return null;
-            } catch(HttpHostConnectException e)
-            {
-                System.err.println("Unable to connect to the server");
-                e.printStackTrace();
-                return null;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
+        try {
+            if (method == "POST") {
+                // request method is POST
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+                HttpPost httpPost = new HttpPost(url);
+                httpPost.setEntity(new UrlEncodedFormEntity(params));
+                HttpResponse httpResponse = httpClient.execute(httpPost);
+                HttpEntity httpEntity = httpResponse.getEntity();
+                is = httpEntity.getContent();
             }
+            if (method == "GET") {
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+                HttpGet request = new HttpGet(url);
+                HttpResponse response = httpClient.execute(request);
+                HttpEntity httpEntity = response.getEntity();
+                is = httpEntity.getContent();
+            }
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            try {
+                return null;
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+            return null;
+        } catch(HttpHostConnectException e)
+        {
+            System.err.println("Unable to connect to the server");
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
 
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(is, "iso-8859-1"), 8);
@@ -92,6 +92,65 @@ public class JSONParser {
             return  null;
         }
         return jObj;
+    }
+
+
+    public String makeHttpRequest1(String url, String method, List<NameValuePair> params) {
+
+        try {
+            if (method == "POST") {
+                // request method is POST
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+                HttpPost httpPost = new HttpPost(url);
+                httpPost.setEntity(new UrlEncodedFormEntity(params));
+                HttpResponse httpResponse = httpClient.execute(httpPost);
+                HttpEntity httpEntity = httpResponse.getEntity();
+                is = httpEntity.getContent();
+            }
+            if (method == "GET") {
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+                HttpGet request = new HttpGet(url);
+                HttpResponse response = httpClient.execute(request);
+                HttpEntity httpEntity = response.getEntity();
+                is = httpEntity.getContent();
+            }
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            try {
+                return null;
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+            return null;
+        } catch(HttpHostConnectException e)
+        {
+            System.err.println("Unable to connect to the server");
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is, "iso-8859-1"), 8);
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+            is.close();
+            json = sb.toString();
+            return json;
+        } catch (Exception e) {
+            Log.e("Buffer Error", "Error converting result " + e.toString());
+            return  null;
+        }
+
+
     }
 
 }

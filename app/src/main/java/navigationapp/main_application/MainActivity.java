@@ -148,6 +148,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int PICK_IMAGE_ID = 234;
     private static final int PICK_IMAGE_ADD_ID = 233;
     public static String androidId =  null;
+    private String latitude_photo = null;
+    private String longitude_photo = null;
+    private String type_photo = null;
+    File f = null;
     @InjectView(R.id.location)
     PlacesAutocompleteTextView mAutocomplete;
     com.mapbox.mapboxsdk.geometry.LatLng points =null;
@@ -682,11 +686,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.clear_map:  // vyčistí mapu
                 close();
-                if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
+
+                        new GetImage(getApplicationContext(), "1");
+
+                /*if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     fragmentActivity.gps.remove_draw_road();
                     fragmentActivity.mapLayer.deleteOldMarker();
 
                 }
+                return true;*/
                 return true;
 
             case R.id.navigation:  // ukončuje navigáciu
@@ -694,7 +702,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 EditText text = (EditText) findViewById(R.id.location);
                 positionGPS =null;
                 text.setText("");
-                if ( fragmentActivity.gps!=null) {
+                if ( fragmentActivity.gps!=null && fragmentActivity.detection!=null ) {
 
                     fragmentActivity.gps.remove_draw_road();
                     fragmentActivity.detection.setRoad(false);
@@ -721,6 +729,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 close();
 
+                if (f!=null)
+                    f.delete();
+                f = null;
                 if (!fragmentActivity.checkGPSEnable()) { // nie je gps
                     if (isEneableShowText())
                         Toast.makeText(this,this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
@@ -747,7 +758,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.list:
                 close();
-
+                if (f!=null)
+                    f.delete();
+                f = null;
                 if ( fragmentActivity.mapLayer==null) { // nieje načítana mapa
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
@@ -760,6 +773,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.makeText(this,this.getResources().getString(R.string.map_not_load), Toast.LENGTH_LONG).show();
                     return true;
                 }
+
                 add_button.setVisibility(View.VISIBLE);  //  schovanie tlačidiel
                 mapConfirm.setVisibility(View.INVISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
@@ -1183,11 +1197,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     location.setLongitude(round(convert_location.getLongitude(),7));
                     convert_location  =null;
                     add_bump(location, intensity,select_iteam_text ,select_iteam );
+
+                    if (f != null)
+                        save_photo(String.valueOf(location.getLatitude()),String.valueOf(location.getLongitude()), String.valueOf(select_iteam) ,f.getPath());
+                    f = null;
                 }
                 else
                     Log.d(TAG, " save button  null location !!!!!! " );
                 break;
             case R.id.delete_btn:   // mazania označeného markeru
+
+                if (f!=null)
+                    f.delete();
+                f = null;
                 add_button.setVisibility(View.VISIBLE);
                 confirm.setVisibility(View.INVISIBLE);
                 allow_click=false;  // disable listener na klik
@@ -1320,13 +1342,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
-
+        latitude_photo = null;
+        longitude_photo = null;
+        type_photo = null;
         Button f = (Button) findViewById(R.id.add);
 
         f.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 freeMemory();
+                latitude_photo = lat;
+                longitude_photo = ltn;
+                type_photo = type;
                 onPickImage( getCurrentFocus(),PICK_IMAGE_ID);
             }
         });
@@ -1382,7 +1409,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (bitmap!=null) {
 
-                    File f = new File(context.getCacheDir(), bitmap.toString() + ".png");
+                    f = new File(context.getCacheDir(), bitmap.toString() + ".png");
                     try {
                         f.createNewFile();
                     } catch (IOException e) {
@@ -1438,13 +1465,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }, 150);
 
-
-
+                        save_photo(latitude_photo,longitude_photo, type_photo,f.getPath());
                 }
                 break;
 
             case PICK_IMAGE_ADD_ID:
                 Bitmap bitmapa = ImagePicker.getImageFromResult(this, resultCode, data);
+                if (bitmapa!=null) {
+
+                    f = new File(context.getCacheDir(), bitmapa.toString() + ".png");
+                    try {
+                        f.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    bitmapa.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+                    byte[] bitmapdata = bos.toByteArray();
+
+//write the bytes in file
+                    FileOutputStream fos = null;
+                    try {
+                        fos = new FileOutputStream(f);
+
+                        fos.write(bitmapdata);
+                        fos.flush();
+                        fos.close();
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 Dialog dialog = onCreateDialogSingleChoice();
                 dialog.show();
                 break;
@@ -1563,4 +1616,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         calendar.setTimeInMillis(milliSeconds);
         return formatter.format(calendar.getTime());
     }
+    public void save_photo(String latitude, String longitude,String type, String path) {
+        while (true) {
+        if (updatesLock.tryLock()) {
+            try {
+                Log.d(TAG, "save photo  from panel updatesLock lock");
+                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                SQLiteDatabase sb = databaseHelper.getWritableDatabase();
+                fragmentActivity.checkIntegrityDB(sb);
+                sb.beginTransaction();
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(Provider.photo.LATITUDE, latitude);
+                contentValues.put(Provider.photo.LONGTITUDE, longitude);
+                contentValues.put(Provider.photo.TYPE, type);
+                contentValues.put(Provider.photo.PATH, path);
+                contentValues.put(Provider.photo.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
+                sb.insert(Provider.photo.TABLE_NAME_PHOTO, null, contentValues);
+                sb.setTransactionSuccessful();
+                sb.endTransaction();
+                sb.close();
+                databaseHelper.close();
+                fragmentActivity.checkCloseDb(sb);
+                f = null;
+            }
+            finally {
+                Log.d(TAG, " save photo from panel updatesLock unlock  ");
+                updatesLock.unlock();
+                break;
+            }
+        }  else {
+            Log.d(TAG, " save photo from panel updatesLock try lock");
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                e.getMessage();
+            }
+        }
+    }}
 }

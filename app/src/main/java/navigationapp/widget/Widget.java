@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
+import android.provider.Settings;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RemoteViews;
@@ -64,13 +65,14 @@ public class Widget extends AppWidgetProvider {
 
             RemoteViews updateViews=new RemoteViews(context.getPackageName(), R.layout.widget_horizontal);
             if (flag) {
-
+                String ANDROID_ID = Settings.Secure.getString(getContentResolver(),
+                        Settings.Secure.ANDROID_ID);
                 if (type == 0) {
-                    new Click(getApplicationContext(), type, "bump");
+                    new Click(getApplicationContext(), type, "bump",ANDROID_ID);
                 } else if (type == 1) {
-                    new Click(getApplicationContext(), type, "bin");
+                    new Click(getApplicationContext(), type, "bin",ANDROID_ID);
                 }  else if (type == 2) {
-                    new Click(getApplicationContext(), type, "channel");
+                    new Click(getApplicationContext(), type, "channel",ANDROID_ID);
                 }
                 else if (type == 3) {
 
@@ -88,7 +90,9 @@ public class Widget extends AppWidgetProvider {
                                            String  select_iteam_text = "Other";
                                             if (!edittext.getText().toString().isEmpty())
                                                 select_iteam_text = edittext.getText().toString();
-                                            new Click(getApplicationContext(), type, select_iteam_text);
+                                            String ANDROID_ID = Settings.Secure.getString(getContentResolver(),
+                                                    Settings.Secure.ANDROID_ID);
+                                            new Click(getApplicationContext(), type, select_iteam_text,ANDROID_ID);
                                             dialog.dismiss();
                                         }
                                     })

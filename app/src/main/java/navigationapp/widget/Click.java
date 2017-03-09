@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -29,7 +30,7 @@ public class Click {
     private final String TAG = "Click";
     private Bump Handler = null;
 
-    public Click(final Context context, final Integer type,final String text) {
+    public Click(final Context context, final Integer type,final String text, final String deviceID) {
         gps = new GPSPosition(context);
 
         if(gps.canGetLocation()) { // kontrola GPS
@@ -39,8 +40,9 @@ public class Click {
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
+            loc.setTime(new Date().getTime());
             if (gps.isNetworkAvailable(context)) {
-                Handler = new Bump(loc, 6.0f, 1,type,text);
+                Handler = new Bump(loc, 6.0f, 1,type,text,deviceID);
                 Handler.getResponse(new CallBackReturn() {
                     public void callback(String results) {
                         if (results.equals("success")) {
@@ -73,6 +75,9 @@ public class Click {
                 contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
                 contentValues.put(Provider.new_bumps.MANUAL, 1);
                 contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                contentValues.put(Provider.new_bumps.TYPE, type);
+                contentValues.put(Provider.new_bumps.TEXT, text);
+                contentValues.put(Provider.new_bumps.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
                 database.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                 close_db();
             }

@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 import android.speech.tts.TextToSpeech;
@@ -83,7 +84,9 @@ public class VoiceMainActivity extends Activity  {
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());
-            BumpHandler = new Bump(loc, 6.0f, 1,choiseType(query),query);
+            loc.setTime(new Date().getTime());
+            BumpHandler = new Bump(loc, 6.0f, 1,choiseType(query),query, Settings.Secure.getString(getContentResolver(),
+                    Settings.Secure.ANDROID_ID));
             BumpHandler.getResponse(new CallBackReturn() {
                 public void callback(String results) {
                     if (results.equals("success")) {

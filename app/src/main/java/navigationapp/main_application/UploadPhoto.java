@@ -24,9 +24,20 @@ public class UploadPhoto {
     String encodedString;
     private static int RESULT_LOAD_IMG = 1;
     Context context =null;
+    String date, latitude, longitude, type ,path; 
 
     public UploadPhoto(Context context) {
         this.context = context ;
+        encodeImagetoString();
+    }
+
+    public UploadPhoto(Context context, String latitude, String longitude, String type, String date, String path) {
+        this.context = context ;
+        this.latitude = latitude ;
+        this.longitude = longitude ;
+        this.type = type ;
+        this.date = date ;
+        this.path = path ;
         encodeImagetoString();
     }
 
@@ -44,7 +55,7 @@ public class UploadPhoto {
                 BitmapFactory.Options options = null;
                 options = new BitmapFactory.Options();
                 options.inSampleSize = 3;
-                bitmap = BitmapFactory.decodeFile(imgPath,
+                bitmap = BitmapFactory.decodeFile(path,
                         options);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 // Must compress the Image to reduce image size to make upload easy
@@ -59,6 +70,12 @@ public class UploadPhoto {
             protected void onPostExecute(String msg) {
                 // Put converted Image string into Async Http Post param
                 params.put("image", encodedString);
+                params.put("latitude", latitude);
+                params.put("longitude", longitude);
+                params.put("type", type);
+                params.put("date", date);
+                params.put("filename", path+".jpg");
+
 
                 // Trigger Image upload
                 triggerImageUpload();
@@ -74,7 +91,7 @@ public class UploadPhoto {
     public void makeHTTPCall() {
         AsyncHttpClient client = new AsyncHttpClient();
         // Don't forget to change the IP address to your LAN address. Port no as well.
-        client.post("http://192.168.2.5:9000/imgupload/upload_image.php",
+        client.post("http://sport.fiit.ngnlab.eu/update_image.php",
                 params, new AsyncHttpResponseHandler() {
 
                     /// / When the response returned by REST has Http

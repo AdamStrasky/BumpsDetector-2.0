@@ -23,6 +23,8 @@ import static navigationapp.main_application.Provider.new_bumps.CREATED_AT;
 import static navigationapp.main_application.Provider.new_bumps.INTENSITY;
 import static  navigationapp.main_application.Provider.new_bumps.TABLE_NAME_NEW_BUMPS;
 import static navigationapp.main_application.Provider.new_bumps.TEXT;
+import static navigationapp.main_application.Provider.photo.PATH;
+import static navigationapp.main_application.Provider.photo.TABLE_NAME_PHOTO;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
         public final String TAG = "DatabaseOpenHelper";
@@ -38,7 +40,8 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
             Log.d(TAG, "onCreate SQLiteDatabase");
             db.execSQL(createTableSqlBumps());
             db.execSQL(createTableSqlNewBump());
-         }
+            db.execSQL(createTableSqlPhoto());
+        }
 
         private String createTableSqlBumps() {
             Log.d(TAG, "onCreate createTableSqlBumps");
@@ -71,12 +74,26 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
             return String.format(sqlTemplate, TABLE_NAME_NEW_BUMPS,_ID, LATITUDE, LONGTITUDE, INTENSITY,MANUAL,CREATED_AT,TYPE,TEXT);
         }
 
+    private String createTableSqlPhoto() {
+        String sqlTemplate = "CREATE TABLE IF NOT EXISTS %s ("
+                + "%s INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "%s DOUBLE,"
+                + "%s DOUBLE,"
+                + "%s DATETIME,"
+                + "%s INTEGER,"
+                + "%s STRING"
+                + ")";
+        return String.format(sqlTemplate, TABLE_NAME_PHOTO,_ID, LATITUDE, LONGTITUDE,CREATED_AT,TYPE,PATH);
+    }
+
         @Override
          public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             String query;
             query = "DROP TABLE IF EXISTS " + TABLE_NAME_BUMPS;
             db.execSQL(query);
             query = "DROP TABLE IF EXISTS " + TABLE_NAME_NEW_BUMPS;
+            db.execSQL(query);
+            query = "DROP TABLE IF EXISTS " + TABLE_NAME_PHOTO;
             db.execSQL(query);
             onCreate(db);
         }

@@ -186,7 +186,7 @@ public class MapLayer {
                                             reportMarkerCoordinates.add(Feature.fromGeometry(
                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
                                             ); //  zobrazované vlastnosti výtlku
-                                            Feature reportFeature = reportMarkerCoordinates.get(autoBumpSequence);
+                                            Feature reportFeature = reportMarkerCoordinates.get(reportSequence);
                                             reportFeature.addStringProperty("property", select_iteam + "\n" +
                                                     context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
                                                     context.getResources().getString(R.string.modif) + " " + showFormatData);

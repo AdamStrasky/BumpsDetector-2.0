@@ -42,6 +42,7 @@ import static navigationapp.main_application.FragmentActivity.isNetworkAvailable
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
+import static navigationapp.main_application.MainActivity.androidId;
 import static navigationapp.main_application.MainActivity.getDate;
 import static navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
 
@@ -170,7 +171,7 @@ public class SyncDatabase {
     }
 
     private void startGPS() {
-        new Timer().schedule(new SyncDb(), 0, 300000);  //300000    60000
+        new Timer().schedule(new SyncDb(), 0, 60000);  //300000    60000
         Log.d(TAG, " start regular update SyncDb");
     }
 
@@ -273,7 +274,9 @@ public class SyncDatabase {
                 regular_update = false;
                 if (gps != null && gps.getCurrentLatLng() != null) {
                     Log.d(TAG, "getBumpsWithLevel mam povolenie alebo som na wifi");
-                    syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+
+                   syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                    save_photo();
                     //get_max_bumps(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                 }
            } else if (regular_update) {  // ak je to prve spustenie alebo pravidelný update
@@ -283,7 +286,7 @@ public class SyncDatabase {
                 regular_update = false;
                if (gps != null && gps.getCurrentLatLng() != null) {
                    Log.d(TAG, "getBumpsWithLevel prvé spustenie alebo pravidelný update");
-                   syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 0);
+             /////////////////////////////////      syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 0);
                   // get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 0);
                }
 
@@ -370,7 +373,7 @@ public class SyncDatabase {
                             Log.d(TAG, "GetUpdateAction updates == 1 v getupdate" );
                             updates = 0;
                             // ak povolim, stiahnem data
-                            syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                     /////////////////////       syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                             //get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
                         }
                     }
@@ -395,6 +398,7 @@ public class SyncDatabase {
     }
 
     private Bump Handler;
+    private UploadPhoto HandlerPhoto;
     private boolean lock = true;
     private ArrayList<HashMap< android.location.Location, Float>> listHelp = null;
     private ArrayList<Integer> bumpsManualHelp = null;
@@ -420,7 +424,7 @@ public class SyncDatabase {
                             HashMap.Entry pair = (HashMap.Entry) it.next();
                             final  android.location.Location  loc = ( android.location.Location) pair.getKey();
                             final float data = (float) pair.getValue();
-                            Handler = new Bump(loc, data, bumpsManualHelp.get(poradie),bumpsTypeHelp.get(poradie),bumpsTextlHelp.get(poradie));
+                            Handler = new Bump(loc, data, bumpsManualHelp.get(poradie),bumpsTypeHelp.get(poradie),bumpsTextlHelp.get(poradie),androidId);
                             Handler.getResponse(new CallBackReturn() {
                                 public void callback(String results) {
                                     if (results.equals("success")) {
@@ -592,7 +596,7 @@ public class SyncDatabase {
                     updates = 0;
                     regularUpdatesLock = false;
                     lockHandler = false;
-                    syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                   ///////////////////////////////// syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                     //get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
 
                 } else if (lockHandler) {
@@ -912,4 +916,66 @@ public class SyncDatabase {
         Runtime.getRuntime().gc();
         System.gc();
     }
+
+    public void save_photo() {
+        ArrayList<String> listLatitude = new ArrayList<String>();
+        ArrayList<String> listLongitude = new ArrayList<String>();
+        ArrayList<String> listType = new ArrayList<String>();
+        ArrayList<String> listDate = new ArrayList<String>();
+        ArrayList<String> listPath= new ArrayList<String>();
+        while (true) {
+            if (updatesLock.tryLock()) {
+                try {
+                    Log.d(TAG, "save_photo start ");
+                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                    checkIntegrityDB(database);
+                    database.beginTransaction();
+                    String selectQuery = "SELECT latitude,longitude,type,created_at,path FROM new_photo ";
+                    Cursor cursor = database.rawQuery(selectQuery, null);
+                    if (cursor != null && cursor.moveToFirst()) {
+                        do {
+                            listLatitude.add(cursor.getString(0));
+                            listLongitude.add(cursor.getString(1));
+                            listType.add(cursor.getString(2));
+                            listDate.add(cursor.getString(3));
+                            listPath.add(cursor.getString(4));
+                        } while (cursor.moveToNext());
+                    }
+                    database.setTransactionSuccessful();
+                    database.endTransaction();
+                    database.close();
+                    databaseHelper.close();
+                    checkCloseDb(database);
+                } finally {
+                    updatesLock.unlock();
+                    break;
+                }
+            } else {
+                Log.d(TAG, "save_photo try lock");
+                try {
+                    Random ran = new Random();
+                    int x = ran.nextInt(20) + 1;
+                    Thread.sleep(x);
+                } catch (InterruptedException e) {
+                    e.getMessage();
+                }
+            }
+        }
+        for (int i = 0; i < listLatitude.size(); i ++) {
+          /*  HandlerPhoto = */
+            new UploadPhoto(context,listLatitude.get(i),listLongitude.get(i), listType.get(i), listDate.get(i),listPath.get(i));
+          /*  Handler.getResponse(new CallBackReturn() {
+                public void callback(String results) {
+                    if (results.equals("success")) {
+                        Log.d(TAG, "UploadPhoto success ");
+                    } else {
+                        Log.d(TAG, "UploadPhoto error ");
+                    }
+                }
+            });*/
+        }
+
+        // priadať  remove na fotku
+     }
 }
