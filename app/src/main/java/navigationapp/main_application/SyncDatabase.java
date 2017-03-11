@@ -24,8 +24,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -56,14 +54,12 @@ public class SyncDatabase {
     private GPSLocator gps = null;
     private Activity context = null;
     private MapLayer mapLayer = null;
-    private boolean regular_update = false;  // flag na pravidelný update
+    private boolean regular_update = false;
     private boolean regularUpdatesLock = false;
     private boolean lockHandler = false;
     private double lang_database = 0 , longt_database = 0;
     private int net, updates = 0;
     private final String TAG = "SyncDatabase";
-    
-    /// len na testovanie
     int numRecord =0 , numUpdate =0 ;
 
     public SyncDatabase(Accelerometer accelerometer, GPSLocator gps, Activity context, MapLayer mapLayer) {

@@ -17,15 +17,14 @@ import java.util.concurrent.ExecutionException;
 
 import cz.msebera.android.httpclient.Header;
 
-import static navigationapp.main_application.FragmentActivity.updatesLock;
-
 public class UploadPhoto {
     public  final String TAG = "UploadPhoto";
     private RequestParams params = new RequestParams();
     private Bitmap bitmap = null;
     private String encodedString = null;
-    private Context context =null;
+    private Context context = null;
     private String date = null, latitude = null, longitude = null, type = null ,path = null;
+    String responseCallBack=  "error";
 
     public UploadPhoto(Context context, String latitude, String longitude, String type, String date, String path) {
         this.context = context ;
@@ -46,15 +45,14 @@ public class UploadPhoto {
             e.printStackTrace();
         }
         if (response != null)
-            Log.d(TAG,"bla bla vla " +  response);
+            Log.d(TAG,"response " +  response);
         else
             Log.d(TAG, "return null");
         returnMethod.callback(response);
     }
 
     class CreateNewBump extends AsyncTask<Void, Void, String> {
-
-           @Override
+            @Override
             protected String doInBackground(Void... args) {
                 BitmapFactory.Options options = null;
                 options = new BitmapFactory.Options();
@@ -76,13 +74,10 @@ public class UploadPhoto {
 
             @Override
             protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-
-        }
-
+                super.onPostExecute(result);
+            }
     }
-    String aaa=  "success1";
-// AsyncHttpResponseHandler
+
     public String makeHTTPCall() {
 
         SyncHttpClient client = new SyncHttpClient();
@@ -91,7 +86,7 @@ public class UploadPhoto {
 
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                        aaa=  "success";
+                        responseCallBack=  "success";
                     }
                     @Override
                     public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
@@ -99,18 +94,19 @@ public class UploadPhoto {
                             Toast.makeText(context,
                                     "Requested resource not found",
                                     Toast.LENGTH_LONG).show();
+                            responseCallBack=  "error";
                         }
                         else if (statusCode == 500) {
                             Toast.makeText(context,
                                     "Something went wrong at server end",
                                     Toast.LENGTH_LONG).show();
                         }
-                        // When Http response code other than 404, 500
                         else {
                             Toast.makeText(context,"Error: "+ statusCode, Toast.LENGTH_LONG).show();
+                            responseCallBack=  "error";
                         }
                     }
                 });
-        return aaa;
+        return responseCallBack;
     }
 }

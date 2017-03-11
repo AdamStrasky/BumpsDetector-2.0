@@ -9,10 +9,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -84,8 +81,6 @@ public class Bump {
             params.add(new BasicNameValuePair("actual_date", getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss")));
             params.add(new BasicNameValuePair("info", text));
 
-
-
             JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
 
             if (json==null) {
@@ -105,7 +100,6 @@ public class Bump {
                 return "error";
         }
     }
-
 }
 
 

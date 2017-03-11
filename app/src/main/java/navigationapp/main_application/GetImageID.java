@@ -4,13 +4,10 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.daimajia.slider.library.SliderLayout;
-import com.daimajia.slider.library.SliderTypes.BaseSliderView;
-import com.daimajia.slider.library.SliderTypes.TextSliderView;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -22,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import navigationapp.R;
-import navigationapp.share.ShareActivity;
-
 
 public class GetImageID   {
     ProgressDialog pDialog = null;
@@ -35,9 +30,9 @@ public class GetImageID   {
     Context context = null ;
     SliderLayout mDemoSlider = null;
     Activity activity = null;
+    public  final String TAG = "GetImageID";
 
     public  GetImageID(final Activity activity, final Context context, String latitude, String longitude, String type, SliderLayout mDemoSlider) {
-        Log.d(TAG, "GetAllImage constructor");
         this.latitude = latitude;
         this.longitude = longitude;
         this.type = type;
@@ -54,18 +49,15 @@ public class GetImageID   {
         new GetAllImage().execute();
     }
 
-    public  final String TAG = "GetImageID";
-
     class GetAllImage extends AsyncTask<String, Void, JSONArray> {
 
         protected JSONArray doInBackground(String... args) {
-            Log.d(TAG, "GetAllImage start");
+
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("latitude", String.valueOf(latitude)));
             params.add(new BasicNameValuePair("longitude", String.valueOf(longitude)));
             params.add(new BasicNameValuePair("type", String.valueOf(type)));
-
-            Log.d(TAG, "GetAllImage odosielam požiadavku na server");
+            Log.d(TAG, " odosielam požiadavku na server");
             JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/get_image_id.php", "POST", params);
             if (json == null) {
                 JSONArray response = new JSONArray();
@@ -104,7 +96,7 @@ public class GetImageID   {
         }
 
         protected void onPostExecute(JSONArray array) {
-            if (array == null) { // žiadne nové data v bumps, zisti collisons
+            if (array == null) {
                 Log.d(TAG, "GetAllImage onPostExecute - no data");
                 message(context.getResources().getString(R.string.image_no_data));
                 return;
@@ -115,7 +107,7 @@ public class GetImageID   {
                     Log.d(TAG, "GetAllImage onPostExecute - error");
                     message(context.getResources().getString(R.string.image_interent));
                     return;
-                } else if (bumps!=null) { // mam nove data, zistit aj collision a potom upozorni uživatela
+                } else if (bumps!=null) {
                     Log.d(TAG, "GetAllImage onPostExecute - new_data");
 
                     for (int i = 0; i < bumps.length(); i++) {
@@ -127,16 +119,12 @@ public class GetImageID   {
                             e.printStackTrace();
                             break;
                         }
-                        String  aaa= data.getString("id");
-                        Log.d(TAG, "GetAllImage onPostExecute  - id hladane" + aaa);
-                        new GetImage(context, aaa, mDemoSlider);
+                        new GetImage(context, data.getString("id"), mDemoSlider);
                     }
-
                 }else {
                     Log.d(TAG, "GetAllImage onPostExecute - no data");
                     message(context.getResources().getString(R.string.image_no_data));
                     return;
-
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -147,7 +135,6 @@ public class GetImageID   {
                     pDialog.dismiss();
                 }
             });
-
         }
     }
 
@@ -159,5 +146,4 @@ public class GetImageID   {
              }
          });
      }
-
 }

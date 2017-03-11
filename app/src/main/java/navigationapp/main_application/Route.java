@@ -1,14 +1,8 @@
 package navigationapp.main_application;
-
-/**
- * Created by monikas on 24. 3. 2015.
- */
-
 //inspiraciu som cerpala zo zdroja https://docs.google.com/uc?export=download&confirm=no_antivirus&id=0B0MdROeR0jbvNXpnVXdKaktMSjA
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.DoubleBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
