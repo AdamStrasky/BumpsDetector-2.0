@@ -146,6 +146,7 @@
     <string name="share_check">Please, choose one type of report</string>
     <string name="share_was_send">Report was send</string>
     <string name="share_gps">Not found position, please turn on your GPS</string>
+    <string name="share_upload">Upload report</string>
 
     <string name="increase_number">The count was increased</string>
 

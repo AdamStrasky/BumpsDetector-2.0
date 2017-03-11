@@ -1,11 +1,13 @@
 package navigationapp.share;
 
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -46,11 +48,11 @@ public class ShareActivity extends AppCompatActivity {
     private final String TAG = "ShareActivity";
     private SQLiteDatabase sb = null;
     private DatabaseOpenHelper databaseHelper = null;
-    String text = null;
+    private UploadPhoto HandlerPhoto = null;
     Integer typeIndex = 0;
     File f = null;
     Bitmap bitmap = null;
-
+    ProgressDialog pDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +75,6 @@ public class ShareActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 check = true;
-
                 if (checkedId == R.id.other) {
                     editText.setEnabled(true);
                 } else
@@ -81,18 +82,20 @@ public class ShareActivity extends AppCompatActivity {
             }
         });
 
-
         sendButton.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
             @Override
             public void onClick(final View v) {
                 initialization_database();
                 gps = new GPSPosition(ShareActivity.this);
-                Log.d("rretyujtr", gps.canGetLocation() + " getLatitude " + gps.getLatitude() + " getLongitude " + gps.getLongitude());
+                Log.d(TAG, gps.canGetLocation() + " getLatitude " + gps.getLatitude() + " getLongitude " + gps.getLongitude());
                 if (gps.canGetLocation() && gps.getLatitude() != 0 && gps.getLongitude() != 0) {
                     final double latitude = gps.getLatitude(); // vratim si polohu
                     final double longitude = gps.getLongitude();
 
                     if (check) {
+                        pDialog = new ProgressDialog(ShareActivity.this);
+                        pDialog.setMessage(getApplication().getString(R.string.share_upload));
+                        pDialog.show();
                         typeIndex = radioGroup.indexOfChild(findViewById(radioGroup.getCheckedRadioButtonId()));
                         Location loc = new Location("Location");
                         loc.setLatitude(gps.getLatitude());
@@ -100,12 +103,22 @@ public class ShareActivity extends AppCompatActivity {
                         loc.setTime(new Date().getTime());
                         BumpHandler = new Bump(loc, 6.0f, 1, typeIndex, choiseType(typeIndex), Settings.Secure.getString(getContentResolver(),
                                 Settings.Secure.ANDROID_ID));
-                        create_file_photo();
-                        new UploadPhoto(getBaseContext(),String.valueOf(latitude), String.valueOf(longitude), String.valueOf(typeIndex), getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"), f.getPath());
-
                         BumpHandler.getResponse(new CallBackReturn() {
                             public void callback(String results) {
                                 if (results.equals("success")) {
+                                    create_file_photo();
+                                    HandlerPhoto = new UploadPhoto(getBaseContext(),String.valueOf(latitude), String.valueOf(longitude), String.valueOf(typeIndex), getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"), f.getPath());
+                                    HandlerPhoto.getResponse(new CallBackReturn() {
+                                        public void callback(String results) {
+                                            if (results.equals("success")) {
+                                                    Log.d(TAG, "UploadPhoto success ");
+                                                    f.delete();
+                                            } else {
+                                                Log.d(TAG, "UploadPhoto errror ");
+                                                save_photo(String.valueOf(latitude),String.valueOf(longitude),String.valueOf(typeIndex),f.getPath());
+                                            }
+                                        }
+                                    });
                                     Log.d(TAG, "success handler");
                                 } else {
                                     Log.d(TAG, "error handler, zapisujem do db");
@@ -121,9 +134,9 @@ public class ShareActivity extends AppCompatActivity {
                                     contentValues.put(Provider.new_bumps.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
                                     sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
                                     create_file_photo();
-                                    save_photo(String.valueOf(latitude), String.valueOf(longitude), String.valueOf(typeIndex), f.getPath());
+                                    save_photo(String.valueOf(latitude),String.valueOf(longitude),String.valueOf(typeIndex),f.getPath());
                                 }
-
+                                pDialog.dismiss();
                             }
                         });
                         Toast.makeText(getApplication(), getApplication().getString(R.string.share_was_send), Toast.LENGTH_LONG).show();
@@ -136,17 +149,12 @@ public class ShareActivity extends AppCompatActivity {
                     Toast.makeText(getApplication(), getApplication().getString(R.string.share_gps), Toast.LENGTH_LONG).show();
                     gps.stopUsingGPS();
                 }
-
             }
-
         });
     }
 
     public String getDate(long milliSeconds, String dateFormat) {
-        // Create a DateFormatter object for displaying date in specified format.
         SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
-
-        // Create a calendar object that will convert the date and time value in milliseconds to date.
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(milliSeconds);
         return formatter.format(calendar.getTime());
@@ -158,7 +166,6 @@ public class ShareActivity extends AppCompatActivity {
             ImagePicker aa = new ImagePicker();
             bitmap = aa.getImage(getApplicationContext(), imageUri);
             ImageView myImage = (ImageView) findViewById(R.id.imageView);
-
             myImage.setImageBitmap(bitmap);
         }
     }
@@ -188,7 +195,6 @@ public class ShareActivity extends AppCompatActivity {
         return text;
     }
 
-
     public void save_photo(String latitude, String longitude, String type, String path) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(Provider.photo.LATITUDE, latitude);
@@ -201,7 +207,13 @@ public class ShareActivity extends AppCompatActivity {
 
     public void create_file_photo() {
         if (bitmap != null) {
-            f = new File(getApplicationContext().getCacheDir(), bitmap.toString() + ".png");
+            File sdCard = Environment.getExternalStorageDirectory();
+            File dir = new File(sdCard.getAbsolutePath() + "/Detector");
+            if(!dir.exists()){
+                dir.mkdirs();
+            }
+
+            f = new File(new File(String.valueOf(dir)), bitmap.toString() + ".png");
             try {
                 f.createNewFile();
             } catch (IOException e) {
@@ -223,7 +235,6 @@ public class ShareActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
     }
 }

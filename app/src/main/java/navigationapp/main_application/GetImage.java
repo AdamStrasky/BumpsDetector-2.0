@@ -16,14 +16,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
 
+import com.daimajia.slider.library.SliderLayout;
+import com.daimajia.slider.library.SliderTypes.BaseSliderView;
+import com.daimajia.slider.library.SliderTypes.TextSliderView;
 import com.google.common.base.Charsets;
 
 
@@ -31,23 +38,27 @@ public class GetImage {
 
     private JSONParser jsonParser = new JSONParser();
     Context context =null;
-    JSONArray address =null;
-    String image = null;
-    Bitmap bmp  = null;
+    String id = null ;
 
-    public GetImage(Context context, String ID) {
+    SliderLayout mDemoSlider = null;
+
+    public GetImage(Context context, String id, SliderLayout mDemoSlider) {
         this.context = context;
+        this.id = id;
+        this.mDemoSlider = mDemoSlider;
         Log.d("imagefff ", "f.GetImage start ");
-        new imaga().execute();
+        new ImageByID().execute();
+
     }
 
 
-    class imaga extends AsyncTask<String, Void, String> {
+    class ImageByID extends AsyncTask<String, Void, String> {
 
         protected String doInBackground(String... args) {
             Log.d("imagefff ", "f.GetImage AsyncTask ");
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("id", "5"));
+            Log.d("imagefff ", "f.GetImage AsyncTask  id" + id);
+            params.add(new BasicNameValuePair("id", id));
             String json = jsonParser.makeHttpRequest1("http://sport.fiit.ngnlab.eu/get_image.php", "POST", params);
             Log.d("imagefff ", "f.GetImage json return ");
             return json;
@@ -64,13 +75,7 @@ public class GetImage {
             if (decodedByte != null) {
                 Log.d("imagefff ", "decodedByte not null ");
 
-                File sdCard = Environment.getExternalStorageDirectory();
-                File dir = new File(sdCard.getAbsolutePath() + "/Detector");
-                if(!dir.exists()){
-                    dir.mkdirs();
-                }
-
-                File f = new File(String.valueOf(dir), decodedByte.toString() + ".png");
+                File f = new File(context.getCacheDir(), decodedByte.toString() + ".png");
                 try {
                     f.createNewFile();
                 } catch (IOException e) {
@@ -94,6 +99,26 @@ public class GetImage {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+                String date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+                HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
+                file_maps.put(date, decodedByte.describeContents());
+
+                TextSliderView textSliderView = new TextSliderView(context);
+                // initialize a SliderLayout
+                textSliderView
+                        .description(date)
+                        .image(f)
+                        .setScaleType(BaseSliderView.ScaleType.Fit);
+                 //       .setOnSliderClickListener(this);
+
+                //add your extra information
+                textSliderView.bundle(new Bundle());
+                textSliderView.getBundle()
+                        .putString("extra", date);
+
+                mDemoSlider.addSlider(textSliderView);
+                //f.delete();
 
 
             } else

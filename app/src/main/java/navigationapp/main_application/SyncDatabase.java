@@ -23,6 +23,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -195,6 +198,10 @@ public class SyncDatabase {
                 @Override
                 public void run() {
                     freeMemory();
+
+                    ////////////////////
+
+                    ////////////////
                     lockHandler = true;
                     if (isNetworkAvailable(context)) {  //  ak je pripojenie na internet
                         if (!(isEneableDownload() && !isConnectedWIFI())) { // povolené sťahovanie
@@ -274,9 +281,8 @@ public class SyncDatabase {
                 regular_update = false;
                 if (gps != null && gps.getCurrentLatLng() != null) {
                     Log.d(TAG, "getBumpsWithLevel mam povolenie alebo som na wifi");
+                    syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
 
-                   syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
-                    save_photo();
                     //get_max_bumps(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                 }
            } else if (regular_update) {  // ak je to prve spustenie alebo pravidelný update
@@ -286,7 +292,7 @@ public class SyncDatabase {
                 regular_update = false;
                if (gps != null && gps.getCurrentLatLng() != null) {
                    Log.d(TAG, "getBumpsWithLevel prvé spustenie alebo pravidelný update");
-             /////////////////////////////////      syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 0);
+             syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 0);
                   // get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 0);
                }
 
@@ -373,7 +379,7 @@ public class SyncDatabase {
                             Log.d(TAG, "GetUpdateAction updates == 1 v getupdate" );
                             updates = 0;
                             // ak povolim, stiahnem data
-                     /////////////////////       syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                     syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                             //get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
                         }
                     }
@@ -596,7 +602,7 @@ public class SyncDatabase {
                     updates = 0;
                     regularUpdatesLock = false;
                     lockHandler = false;
-                   ///////////////////////////////// syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
+                   syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                     //get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
 
                 } else if (lockHandler) {
@@ -746,6 +752,7 @@ public class SyncDatabase {
                         }
                     });
                 }
+                save_photo();
                 return;
             }
 
@@ -757,8 +764,10 @@ public class SyncDatabase {
                             @Override
                             public void run() {
                                 mapLayer.getAllBumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude);
+
                             }
                         });
+                        save_photo();
                         return;
                     }
                 } else if (array.get(0).equals("update")) { // mam nove data, zistit aj collision a potom upozorni uživatela
@@ -879,6 +888,7 @@ public class SyncDatabase {
                                      }
                                  });
                              }
+                             save_photo();
                              Log.d(TAG, "UpdateList končí");
                              Log.d(TAG, "UpdateList numRecord- " + numRecord + " numUpdate- " + numUpdate);
                          }
@@ -917,65 +927,121 @@ public class SyncDatabase {
         System.gc();
     }
 
+    ArrayList<String> listLatitude = new ArrayList<String>();
+    ArrayList<String> listLongitude = new ArrayList<String>();
+    ArrayList<String> listType = new ArrayList<String>();
+    ArrayList<String> listDate = new ArrayList<String>();
+    ArrayList<String> listPath = new ArrayList<String>();
+    int por_photo = 0;
+
     public void save_photo() {
-        ArrayList<String> listLatitude = new ArrayList<String>();
-        ArrayList<String> listLongitude = new ArrayList<String>();
-        ArrayList<String> listType = new ArrayList<String>();
-        ArrayList<String> listDate = new ArrayList<String>();
-        ArrayList<String> listPath= new ArrayList<String>();
+
+        new Thread() {
+            public void run() {
+                while (true) {
+                    if (updatesLock.tryLock()) {
+                        try {
+                            Log.d(TAG, "save_photo start ");
+                            DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
+                            SQLiteDatabase database = databaseHelper.getWritableDatabase();
+                            checkIntegrityDB(database);
+                            database.beginTransaction();
+                            String selectQuery = "SELECT latitude,longitude,type,created_at,path FROM new_photo ";
+                            Cursor cursor = database.rawQuery(selectQuery, null);
+                            if (cursor != null && cursor.moveToFirst()) {
+                                do {
+                                    listLatitude.add(cursor.getString(0));
+                                    listLongitude.add(cursor.getString(1));
+                                    listType.add(cursor.getString(2));
+                                    listDate.add(cursor.getString(3));
+                                    listPath.add(cursor.getString(4));
+                                } while (cursor.moveToNext());
+                            }
+                            database.setTransactionSuccessful();
+                            database.endTransaction();
+                            database.close();
+                            databaseHelper.close();
+                            checkCloseDb(database);
+                        } finally {
+                            updatesLock.unlock();
+                            break;
+                        }
+                    } else {
+                        Log.d(TAG, "save_photo try lock");
+                        try {
+                            Random ran = new Random();
+                            int x = ran.nextInt(20) + 1;
+                            Thread.sleep(x);
+                        } catch (InterruptedException e) {
+                            e.getMessage();
+                        }
+                    }
+                }
+
+                for (por_photo = 0; por_photo < listLatitude.size(); por_photo++ ) {
+                    File file = new File(listPath.get(por_photo));
+                    if (file.exists()) {
+                        HandlerPhoto = new UploadPhoto(context, listLatitude.get(por_photo), listLongitude.get(por_photo), listType.get(por_photo), listDate.get(por_photo), listPath.get(por_photo));
+                        HandlerPhoto.getResponse(new CallBackReturn() {
+                            public void callback(String results) {
+                                if (results.equals("success")) {
+                                    Log.d(TAG, "UploadPhoto success ");
+                                    delete_db_photo ();
+
+
+                                } else
+                                    Log.d(TAG, "UploadPhoto errror ");
+                            }
+                        });
+                    }else
+                        delete_db_photo ();
+                }
+                listLatitude.clear();
+                listLongitude.clear();
+                listType.clear();
+                listDate.clear();
+                listPath.clear();
+            }
+        }.start();
+    }
+
+
+    public void  delete_db_photo () {
+        File file = new File(listPath.get(por_photo));
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            Log.d(TAG, "file delete  " + deleted);
+        }
+
+        Log.d(TAG, "UploadPhoto success ");
         while (true) {
             if (updatesLock.tryLock()) {
                 try {
-                    Log.d(TAG, "save_photo start ");
-                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
-                    SQLiteDatabase database = databaseHelper.getWritableDatabase();
-                    checkIntegrityDB(database);
-                    database.beginTransaction();
-                    String selectQuery = "SELECT latitude,longitude,type,created_at,path FROM new_photo ";
-                    Cursor cursor = database.rawQuery(selectQuery, null);
-                    if (cursor != null && cursor.moveToFirst()) {
-                        do {
-                            listLatitude.add(cursor.getString(0));
-                            listLongitude.add(cursor.getString(1));
-                            listType.add(cursor.getString(2));
-                            listDate.add(cursor.getString(3));
-                            listPath.add(cursor.getString(4));
-                        } while (cursor.moveToNext());
+                    DatabaseOpenHelper databaseHelper = null;
+                    SQLiteDatabase database = null;
+                    try {
+                        databaseHelper = new DatabaseOpenHelper(context);
+                        database = databaseHelper.getWritableDatabase();
+                        checkIntegrityDB(database);
+                        database.beginTransaction();
+                        database.execSQL("DELETE FROM new_photo WHERE path='" + listPath.get(por_photo) + "' ");
+                        Log.d(TAG, " save_photo mazem");
+                        database.setTransactionSuccessful();
+                        database.endTransaction();
+                    } finally {
+                        if (database != null) {
+                            database.close();
+                            databaseHelper.close();
+                        }
                     }
-                    database.setTransactionSuccessful();
-                    database.endTransaction();
-                    database.close();
-                    databaseHelper.close();
                     checkCloseDb(database);
+
                 } finally {
+                    Log.d(TAG, "save_photo unlock ");
                     updatesLock.unlock();
                     break;
                 }
-            } else {
-                Log.d(TAG, "save_photo try lock");
-                try {
-                    Random ran = new Random();
-                    int x = ran.nextInt(20) + 1;
-                    Thread.sleep(x);
-                } catch (InterruptedException e) {
-                    e.getMessage();
-                }
             }
         }
-        for (int i = 0; i < listLatitude.size(); i ++) {
-          /*  HandlerPhoto = */
-            new UploadPhoto(context,listLatitude.get(i),listLongitude.get(i), listType.get(i), listDate.get(i),listPath.get(i));
-          /*  Handler.getResponse(new CallBackReturn() {
-                public void callback(String results) {
-                    if (results.equals("success")) {
-                        Log.d(TAG, "UploadPhoto success ");
-                    } else {
-                        Log.d(TAG, "UploadPhoto error ");
-                    }
-                }
-            });*/
-        }
-
-        // priadať  remove na fotku
-     }
+    }
 }

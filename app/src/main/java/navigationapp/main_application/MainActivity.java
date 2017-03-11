@@ -25,6 +25,7 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -102,6 +103,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
+import static navigationapp.main_application.FragmentActivity.isNetworkAvailable;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
 import static navigationapp.main_application.FragmentActivity.updatesLock;
@@ -225,7 +227,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         .title(titleMarker)
                                         .icon(icons)
                                 );
-                                fragmentActivity.mapLayer.setClear(featureMarker);
+                                if (fragmentActivity.mapLayer !=null)
+                                    fragmentActivity.mapLayer.setClear(featureMarker);
                                 convert_location = point;
                                 Log.d(TAG," point click "+ convert_location.getLongitude() +" " +convert_location.getLatitude() );
                             }
@@ -523,6 +526,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (item.getItemId()) {
 
             case R.id.position:   // nastavenie aktualnej polohy a zoomu po kliku na ikonu
+
+              //  GetImageID aaa =  new GetImageID(getApplicationContext(), "", "", "", mDemoSlider);
                 if (!fragmentActivity.checkGPSEnable()) {
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
@@ -686,15 +691,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.clear_map:  // vyčistí mapu
                 close();
-
-                        new GetImage(getApplicationContext(), "1");
-
-                /*if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
+                new GetImage(getApplicationContext(), "1", mDemoSlider);
+                if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     fragmentActivity.gps.remove_draw_road();
                     fragmentActivity.mapLayer.deleteOldMarker();
-
                 }
-                return true;*/
                 return true;
 
             case R.id.navigation:  // ukončuje navigáciu
@@ -921,6 +922,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void selectMarker(final SymbolLayer marker, int i) {
         // animácia na vybraný marker - zväčšenie
+
         if (marker==null)
             return;
         mLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
@@ -1340,6 +1342,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void setPanel(String text, final String lat, final String ltn, final String type,final  String info) {
 
+        mDemoSlider.removeAllSliders();
+        Log.d(TAG, "setPanel start");
+        if (isNetworkAvailable(context)) {
+            new Thread() {
+                public void run() {
+                    Log.d(TAG, "GetImageID start");
+            GetImageID aaa =  new GetImageID(getApplicationContext(), lat, ltn, type, mDemoSlider);
+                }
+            }.start();
+        } else
+            no_data();
+
+
         TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
         latitude_photo = null;
@@ -1373,8 +1388,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-        mDemoSlider.removeAllSliders();
-        HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
+
+      /*  HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
         file_maps.put("27/07/2016",R.drawable.bump_1);
         file_maps.put("19/10/2016",R.drawable.bump_2);
         file_maps.put("09/12/2016",R.drawable.bump_3);
@@ -1393,7 +1408,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             textSliderView.getBundle()
                     .putString("extra",name);
             mDemoSlider.addSlider(textSliderView);
-        }
+        }*/
     }
 
     public void onPickImage(View view,Integer id) {
@@ -1409,7 +1424,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (bitmap!=null) {
 
-                    f = new File(context.getCacheDir(), bitmap.toString() + ".png");
+                    File sdCard = Environment.getExternalStorageDirectory();
+                    File dir = new File(sdCard.getAbsolutePath() + "/Detector");
+                    if(!dir.exists()){
+                        dir.mkdirs();
+                    }
+
+
+
+                    f = new File(new File(String.valueOf(dir)), bitmap.toString() + ".png");
                     try {
                         f.createNewFile();
                     } catch (IOException e) {
@@ -1473,7 +1496,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Bitmap bitmapa = ImagePicker.getImageFromResult(this, resultCode, data);
                 if (bitmapa!=null) {
 
-                    f = new File(context.getCacheDir(), bitmapa.toString() + ".png");
+                    File sdCard = Environment.getExternalStorageDirectory();
+                    File dir = new File(sdCard.getAbsolutePath() + "/Detector");
+                    if(!dir.exists()){
+                        dir.mkdirs();
+                    }
+
+                    f = new File(new File(String.valueOf(dir)), bitmapa.toString() + ".png");
                     try {
                         f.createNewFile();
                     } catch (IOException e) {
@@ -1653,4 +1682,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }}
+
+    public void no_data() {
+        Log.d(TAG,"  get image nemam internet");
+        TextSliderView textSliderView = new TextSliderView(context);
+        textSliderView
+                .description("14/01/2017")
+                .image(R.drawable.no_internet)
+                .setScaleType(BaseSliderView.ScaleType.Fit);
+        //.setOnSliderClickListener(this);
+        textSliderView.bundle(new Bundle());
+        textSliderView.getBundle()
+                .putString("extra", "14/01/2017");
+        mDemoSlider.addSlider(textSliderView);
+
+        TextSliderView textSliderViewa = new TextSliderView(context);
+        textSliderViewa
+                .description("14/01/2017")
+                .image(R.drawable.no_image)
+                .setScaleType(BaseSliderView.ScaleType.Fit);
+        //.setOnSliderClickListener(this);
+        textSliderViewa.bundle(new Bundle());
+        textSliderViewa.getBundle()
+                .putString("extra", "14/01/2017");
+        mDemoSlider.addSlider(textSliderViewa);
+
+    }
+
 }
