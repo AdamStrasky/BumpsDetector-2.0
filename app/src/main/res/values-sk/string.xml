@@ -154,4 +154,8 @@
     <string name="type_problem_basket">Plný kôš</string>
     <string name="type_problem_canstock">Chýbajúci poklop</string>
     <string name="type_problem_other">Iné</string>
+
+
+    <string name="load_photo">Načítanie</string>
+
 </resources>

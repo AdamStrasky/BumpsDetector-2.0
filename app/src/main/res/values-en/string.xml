@@ -158,6 +158,8 @@
     <string name="type_problem_canstock">Missing channel</string>
     <string name="type_problem_other">Other</string>
 
+    <string name="load_photo">Loading</string>
+
 
 
 </resources>

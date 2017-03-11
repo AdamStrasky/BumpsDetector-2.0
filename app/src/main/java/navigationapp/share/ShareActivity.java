@@ -208,7 +208,7 @@ public class ShareActivity extends AppCompatActivity {
     public void create_file_photo() {
         if (bitmap != null) {
             File sdCard = Environment.getExternalStorageDirectory();
-            File dir = new File(sdCard.getAbsolutePath() + "/Detector");
+            File dir = new File(sdCard.getAbsolutePath() + "/.Detector");
             if(!dir.exists()){
                 dir.mkdirs();
             }

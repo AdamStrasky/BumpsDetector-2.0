@@ -476,6 +476,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drawerToggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+
+        mLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
+
+            }
+
+            @Override
+            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+                Log.i(TAG, "onPanelStateChanged " + newState);
+                if (newState == SlidingUpPanelLayout.PanelState.EXPANDED ) {
+                    if (aaa) {
+                        aaa = false;
+                        if (isNetworkAvailable(context)) {
+                            new Thread() {
+                                public void run() {
+                                    Looper.prepare();
+                                    Log.d(TAG, "GetImageID start" + latitude_photo);
+
+                                    GetImageID aaa = new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
+                                    Looper.loop();
+                                }
+                            }.start();
+                        } else
+                            no_data();
+                    }
+
+                }
+            }
+        });
+
     }
 
     synchronized  public  void show () {
@@ -512,6 +544,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {   // zovbrezenie menu s ikonami
         getMenuInflater().inflate(R.menu.activity_main, menu);
@@ -527,7 +560,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.position:   // nastavenie aktualnej polohy a zoomu po kliku na ikonu
 
-              //  GetImageID aaa =  new GetImageID(getApplicationContext(), "", "", "", mDemoSlider);
+
                 if (!fragmentActivity.checkGPSEnable()) {
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
@@ -691,7 +724,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.clear_map:  // vyčistí mapu
                 close();
-                new GetImage(getApplicationContext(), "1", mDemoSlider);
                 if (mapbox!=null && fragmentActivity!=null && fragmentActivity.gps!=null) {
                     fragmentActivity.gps.remove_draw_road();
                     fragmentActivity.mapLayer.deleteOldMarker();
@@ -952,6 +984,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void deselectMarker(final SymbolLayer marker, int i) {
+        mDemoSlider.removeAllSliders();
         // animácia na vybraný marker - zmenšenie
         if (marker==null)
             return;
@@ -1339,36 +1372,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG,"getLanguage stav - "+name);
         return name;
     }
-
+    Boolean aaa = true;
     public void setPanel(String text, final String lat, final String ltn, final String type,final  String info) {
 
-        mDemoSlider.removeAllSliders();
+
+
         Log.d(TAG, "setPanel start");
-        if (isNetworkAvailable(context)) {
-            new Thread() {
-                public void run() {
-                    Log.d(TAG, "GetImageID start");
-            GetImageID aaa =  new GetImageID(getApplicationContext(), lat, ltn, type, mDemoSlider);
-                }
-            }.start();
-        } else
-            no_data();
+
 
 
         TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
-        latitude_photo = null;
-        longitude_photo = null;
-        type_photo = null;
+        latitude_photo = lat;
+        longitude_photo = ltn;
+        type_photo = type;
+        aaa = true;
         Button f = (Button) findViewById(R.id.add);
 
         f.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "f setOnClickListener");
                 freeMemory();
-                latitude_photo = lat;
-                longitude_photo = ltn;
-                type_photo = type;
+
                 onPickImage( getCurrentFocus(),PICK_IMAGE_ID);
             }
         });
@@ -1425,7 +1451,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (bitmap!=null) {
 
                     File sdCard = Environment.getExternalStorageDirectory();
-                    File dir = new File(sdCard.getAbsolutePath() + "/Detector");
+                    File dir = new File(sdCard.getAbsolutePath() + "/.Detector");
                     if(!dir.exists()){
                         dir.mkdirs();
                     }
@@ -1497,7 +1523,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (bitmapa!=null) {
 
                     File sdCard = Environment.getExternalStorageDirectory();
-                    File dir = new File(sdCard.getAbsolutePath() + "/Detector");
+                    File dir = new File(sdCard.getAbsolutePath() + "/.Detector");
                     if(!dir.exists()){
                         dir.mkdirs();
                     }

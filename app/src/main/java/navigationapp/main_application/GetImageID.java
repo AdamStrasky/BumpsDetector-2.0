@@ -1,5 +1,7 @@
 package navigationapp.main_application;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,16 +18,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import navigationapp.R;
+import navigationapp.share.ShareActivity;
 
-/**
- * Created by Adam on 9.3.2017.
- */
 
-public class GetImageID {
+public class GetImageID   {
+    ProgressDialog pDialog = null;
     String latitude = null;
     String longitude = null;
     String type = null;
@@ -33,14 +33,23 @@ public class GetImageID {
     private JSONArray bumps = null;
     Context context = null ;
     SliderLayout mDemoSlider = null;
+    Activity activity = null;
 
-    public  GetImageID (Context context, String latitude , String longitude , String type, SliderLayout mDemoSlider) {
+    public  GetImageID(final Activity activity, final Context context, String latitude, String longitude, String type, SliderLayout mDemoSlider) {
         Log.d(TAG, "GetAllImage constructor");
         this.latitude = latitude;
         this.longitude = longitude;
         this.type = type;
         this.context = context;
+        this.activity = activity;
         this.mDemoSlider = mDemoSlider;
+        activity.runOnUiThread(new Runnable() {
+            public void run() {
+                pDialog = new ProgressDialog(activity);
+                pDialog.setMessage(activity.getResources().getString(R.string.load_photo));
+                pDialog.show();
+            }
+        });
         new GetAllImage().execute();
     }
 
@@ -122,28 +131,22 @@ public class GetImageID {
                         new GetImage(context, aaa, mDemoSlider);
                     }
 
-
-
-
-                       /* try {
-                            data = bumps.getJSONObject(i).getJSONObject("bumps");
-                             new GetImage(context, data.getString("id"), mDemoSlider);
-
-                        } catch (JSONException e) {
-                            Log.d(TAG, "GetAllImage onPostExecute - JSONException error");
-                            e.printStackTrace();
-
-
-                        }*/
-
                 }else {
                     Log.d(TAG, "GetAllImage onPostExecute - no data");
                     no_data();
+                    return;
 
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
+
             }
+            activity.runOnUiThread(new Runnable() {
+                public void run() {
+                    pDialog.dismiss();
+                }
+            });
+
         }
     }
 
@@ -158,6 +161,12 @@ public class GetImageID {
          textSliderView.getBundle()
                  .putString("extra", "14/01/2017");
          mDemoSlider.addSlider(textSliderView);
+
+         activity.runOnUiThread(new Runnable() {
+             public void run() {
+                 pDialog.dismiss();
+             }
+         });
      }
 
 

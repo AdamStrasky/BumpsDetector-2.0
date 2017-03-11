@@ -48,7 +48,7 @@ public class ExceptionHandler implements Thread.UncaughtExceptionHandler {
         }
         report += "-------------------------------\n\n";
         File sdCard = Environment.getExternalStorageDirectory();
-        File dir = new File(sdCard.getAbsolutePath() + "/Detector");
+        File dir = new File(sdCard.getAbsolutePath() + "/Logger");
         if(!dir.exists()){
            dir.mkdirs();
         }
