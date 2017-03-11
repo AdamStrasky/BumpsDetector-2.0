@@ -8,6 +8,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -52,21 +53,35 @@ public class GetImage {
     }
 
 
-    class ImageByID extends AsyncTask<String, Void, String> {
+    class ImageByID extends AsyncTask<String, Void, JSONObject> {
 
-        protected String doInBackground(String... args) {
+        protected JSONObject doInBackground(String... args) {
             Log.d("imagefff ", "f.GetImage AsyncTask ");
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             Log.d("imagefff ", "f.GetImage AsyncTask  id" + id);
             params.add(new BasicNameValuePair("id", id));
-            String json = jsonParser.makeHttpRequest1("http://sport.fiit.ngnlab.eu/get_image.php", "POST", params);
+            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/get_image.php", "POST", params);
             Log.d("imagefff ", "f.GetImage json return ");
             return json;
         }
 
-        protected void onPostExecute(String array) {
-            Log.d("imagefff ", array);
-            byte[] data = Base64.decode(array, Base64.DEFAULT);
+        protected void onPostExecute(JSONObject array) {
+
+            String date = null;
+            try {
+                date = array.getString("date");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            String image = null;
+            try {
+                image = array.getString("file");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Log.d("imagefff ", image);
+            byte[] data = Base64.decode(image, Base64.DEFAULT);
             Bitmap decodedByte = BitmapFactory.decodeByteArray(data, 0, data.length);
 
             if (decodedByte != null) {
@@ -97,7 +112,7 @@ public class GetImage {
                     e.printStackTrace();
                 }
 
-                String date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+              //  String date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
                 HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
                 file_maps.put(date, decodedByte.describeContents());
 
