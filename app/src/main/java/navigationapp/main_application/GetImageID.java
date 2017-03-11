@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.daimajia.slider.library.SliderLayout;
 import com.daimajia.slider.library.SliderTypes.BaseSliderView;
@@ -105,14 +106,14 @@ public class GetImageID   {
         protected void onPostExecute(JSONArray array) {
             if (array == null) { // žiadne nové data v bumps, zisti collisons
                 Log.d(TAG, "GetAllImage onPostExecute - no data");
-                no_data();
+                message(context.getResources().getString(R.string.image_no_data));
                 return;
             }
 
             try {
                 if (array.get(0).equals("error")) {
                     Log.d(TAG, "GetAllImage onPostExecute - error");
-                    no_data();
+                    message(context.getResources().getString(R.string.image_interent));
                     return;
                 } else if (bumps!=null) { // mam nove data, zistit aj collision a potom upozorni uživatela
                     Log.d(TAG, "GetAllImage onPostExecute - new_data");
@@ -133,7 +134,7 @@ public class GetImageID   {
 
                 }else {
                     Log.d(TAG, "GetAllImage onPostExecute - no data");
-                    no_data();
+                    message(context.getResources().getString(R.string.image_no_data));
                     return;
 
                 }
@@ -150,26 +151,13 @@ public class GetImageID   {
         }
     }
 
-     public void no_data() {
-         TextSliderView textSliderView = new TextSliderView(context);
-         textSliderView
-                 .description("14/01/2017")
-                 .image(R.drawable.no_internet)
-                 .setScaleType(BaseSliderView.ScaleType.Fit);
-         //.setOnSliderClickListener(this);
-         textSliderView.bundle(new Bundle());
-         textSliderView.getBundle()
-                 .putString("extra", "14/01/2017");
-         mDemoSlider.addSlider(textSliderView);
-
+     public void message( String text) {
+         Toast.makeText(context,text, Toast.LENGTH_LONG).show();
          activity.runOnUiThread(new Runnable() {
              public void run() {
                  pDialog.dismiss();
              }
          });
      }
-
-
-
 
 }

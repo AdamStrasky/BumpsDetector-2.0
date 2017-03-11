@@ -157,5 +157,8 @@
 
 
     <string name="load_photo">Načítanie</string>
+    <string name="image_interent">Problémy s internetovým spojením</string>
+    <string name="image_no_data">Žiadne obrázky</string>
+
 
 </resources>

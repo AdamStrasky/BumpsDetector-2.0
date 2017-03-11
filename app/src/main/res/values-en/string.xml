@@ -160,6 +160,9 @@
 
     <string name="load_photo">Loading</string>
 
+    <string name="image_interent">Problem with internet conncetion </string>
+    <string name="image_no_data">No images</string>
+
 
 
 </resources>

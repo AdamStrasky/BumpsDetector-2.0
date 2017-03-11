@@ -174,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDemoSlider.setDuration(8000);
         mDemoSlider.addOnPageChangeListener(this);
         mDemoSlider.setPresetTransformer(SliderLayout.Transformer.RotateDown);
+
         ButterKnife.inject(this);
         context = this;
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
@@ -479,18 +480,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         mLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+
+
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
-
+                Log.i(TAG, "onPanelSlide " );
+                mDemoSlider.moveNextPosition();
             }
 
             @Override
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
                 Log.i(TAG, "onPanelStateChanged " + newState);
                 if (newState == SlidingUpPanelLayout.PanelState.EXPANDED ) {
-                    if (aaa) {
-                        aaa = false;
-                        if (isNetworkAvailable(context)) {
+                    if ((isNetworkAvailable(context) && aaa)) {
+                        if (aaa) {
+                            aaa = false;
+
                             new Thread() {
                                 public void run() {
                                     Looper.prepare();
@@ -500,9 +505,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     Looper.loop();
                                 }
                             }.start();
-                        } else
-                            no_data();
-                    }
+                        }
+                    }  else if (!isNetworkAvailable(context) && aaa)
+                        Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.image_interent), Toast.LENGTH_LONG).show();
+
 
                 }
             }
@@ -1043,6 +1049,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 boolean isConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
                 if (isConnected) {
+
+                    if (mLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED && aaa) {
+                        new Thread() {
+                            public void run() {
+                                Looper.prepare();
+                                Log.d(TAG, "GetImageID start" + latitude_photo);
+
+                                GetImageID aaa = new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
+                                Looper.loop();
+                            }
+                        }.start();
+                    }
+
+
+
+
                     if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
                         Log.d(TAG, "netReceiver TYPE_WIFI ");
                         manager.setConnected(true);
@@ -1414,27 +1436,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-
-      /*  HashMap<String,Integer> file_maps = new HashMap<String, Integer>();
-        file_maps.put("27/07/2016",R.drawable.bump_1);
-        file_maps.put("19/10/2016",R.drawable.bump_2);
-        file_maps.put("09/12/2016",R.drawable.bump_3);
-        file_maps.put("14/01/2017", R.drawable.bump_4);
-
-        numOfPicture =0 ;
-        for(String name : file_maps.keySet()){
-            numOfPicture++;
-            TextSliderView textSliderView = new TextSliderView(this);
-            textSliderView
-                    .description(name)
-                    .image(file_maps.get(name))
-                    .setScaleType(BaseSliderView.ScaleType.Fit)
-                    .setOnSliderClickListener(this);
-            textSliderView.bundle(new Bundle());
-            textSliderView.getBundle()
-                    .putString("extra",name);
-            mDemoSlider.addSlider(textSliderView);
-        }*/
     }
 
     public void onPickImage(View view,Integer id) {
@@ -1482,7 +1483,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-
                     String date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
                     HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
                     file_maps.put(date, bitmap.describeContents());
@@ -1514,7 +1514,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }, 150);
 
-                        save_photo(latitude_photo,longitude_photo, type_photo,f.getPath());
+                       save_photo(latitude_photo,longitude_photo, type_photo,f.getPath());
                 }
                 break;
 
@@ -1708,31 +1708,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }}
-
-    public void no_data() {
-        Log.d(TAG,"  get image nemam internet");
-        TextSliderView textSliderView = new TextSliderView(context);
-        textSliderView
-                .description("14/01/2017")
-                .image(R.drawable.no_internet)
-                .setScaleType(BaseSliderView.ScaleType.Fit);
-        //.setOnSliderClickListener(this);
-        textSliderView.bundle(new Bundle());
-        textSliderView.getBundle()
-                .putString("extra", "14/01/2017");
-        mDemoSlider.addSlider(textSliderView);
-
-        TextSliderView textSliderViewa = new TextSliderView(context);
-        textSliderViewa
-                .description("14/01/2017")
-                .image(R.drawable.no_image)
-                .setScaleType(BaseSliderView.ScaleType.Fit);
-        //.setOnSliderClickListener(this);
-        textSliderViewa.bundle(new Bundle());
-        textSliderViewa.getBundle()
-                .putString("extra", "14/01/2017");
-        mDemoSlider.addSlider(textSliderViewa);
-
-    }
 
 }

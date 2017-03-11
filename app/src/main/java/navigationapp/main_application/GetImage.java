@@ -69,9 +69,6 @@ public class GetImage {
             byte[] data = Base64.decode(array, Base64.DEFAULT);
             Bitmap decodedByte = BitmapFactory.decodeByteArray(data, 0, data.length);
 
-
-
-
             if (decodedByte != null) {
                 Log.d("imagefff ", "decodedByte not null ");
 
@@ -117,6 +114,9 @@ public class GetImage {
                 textSliderView.getBundle()
                         .putString("extra", date);
 
+
+
+              //  int  position = mDemoSlider.getCurrentPosition();
                 mDemoSlider.addSlider(textSliderView);
                 //f.delete();
 
