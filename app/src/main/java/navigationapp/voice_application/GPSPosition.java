@@ -16,7 +16,6 @@ import android.location.LocationManager;
 
 import navigationapp.Error.ExceptionHandler;
 
-
 public class GPSPosition extends Service implements LocationListener {
 
     private Context mContext = null;

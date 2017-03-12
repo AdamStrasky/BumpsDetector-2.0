@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -39,7 +40,13 @@ public class GetImage {
         this.id = id;
         this.mDemoSlider = mDemoSlider;
         Log.d(TAG, "GetImage start ");
-        new ImageByID().execute();
+        try {
+            new ImageByID().execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     class ImageByID extends AsyncTask<String, Void, JSONObject> {
@@ -63,7 +70,7 @@ public class GetImage {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
+            Log.d(TAG, "image" + image);
             byte[] data = Base64.decode(image, Base64.DEFAULT);
             Bitmap decodedByte = BitmapFactory.decodeByteArray(data, 0, data.length);
 

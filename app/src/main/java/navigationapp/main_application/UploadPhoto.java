@@ -60,7 +60,7 @@ public class UploadPhoto {
                 bitmap = BitmapFactory.decodeFile(path,
                         options);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 50, stream);
                 byte[] byte_arr = stream.toByteArray();
                 encodedString = Base64.encodeToString(byte_arr, 0);
                 params.put("image", encodedString);

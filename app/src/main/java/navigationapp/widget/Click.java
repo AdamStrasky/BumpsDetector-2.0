@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -120,8 +119,7 @@ public class Click {
         database.close();
         databaseHelper.close();
     }
-    public  String getDate(long milliSeconds, String dateFormat)
-    {
+    public  String getDate(long milliSeconds, String dateFormat) {
         // Create a DateFormatter object for displaying date in specified format.
         SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 

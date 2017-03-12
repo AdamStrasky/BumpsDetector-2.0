@@ -24,7 +24,6 @@ public class Widget extends AppWidgetProvider {
         if ( intent.getAction()==null || ( intent.getExtras()!=null && intent.getExtras().containsKey("type"))) {
 
             Integer type = 0;
-
             if (intent.getExtras()!=null  && intent.getExtras().containsKey("type"))
                 type = intent.getExtras().getInt("type",0);
 
@@ -132,7 +131,5 @@ public class Widget extends AppWidgetProvider {
 
             return(updateViews);
         }
-
-
     }
 }

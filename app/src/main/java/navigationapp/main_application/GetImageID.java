@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -43,6 +44,8 @@ public class GetImageID   {
             public void run() {
                 pDialog = new ProgressDialog(activity);
                 pDialog.setMessage(activity.getResources().getString(R.string.load_photo));
+                pDialog.setCancelable(false);
+                pDialog.setCanceledOnTouchOutside(false);
                 pDialog.show();
             }
         });
@@ -109,18 +112,32 @@ public class GetImageID   {
                     return;
                 } else if (bumps!=null) {
                     Log.d(TAG, "GetAllImage onPostExecute - new_data");
+                    new Thread() {
+                        public void run() {
+                            Looper.prepare();
+                            for (int i = 0; i < bumps.length(); i++) {
+                                JSONObject data = null;
+                                try {
+                                    data = bumps.getJSONObject(i);
+                                } catch (JSONException e) {
 
-                    for (int i = 0; i < bumps.length(); i++) {
-                        JSONObject data = null;
-                        try {
-                            data = bumps.getJSONObject(i);
-                        } catch (JSONException e) {
-
-                            e.printStackTrace();
-                            break;
+                                    e.printStackTrace();
+                                    break;
+                                }
+                                try {
+                                    new GetImage(context, data.getString("id"), mDemoSlider);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            activity.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    pDialog.dismiss();
+                                }
+                            });
+                            Looper.loop();
                         }
-                        new GetImage(context, data.getString("id"), mDemoSlider);
-                    }
+                    }.start();
                 }else {
                     Log.d(TAG, "GetAllImage onPostExecute - no data");
                     message(context.getResources().getString(R.string.image_no_data));
@@ -128,13 +145,12 @@ public class GetImageID   {
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
-
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        pDialog.dismiss();
+                    }
+                });
             }
-            activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    pDialog.dismiss();
-                }
-            });
         }
     }
 

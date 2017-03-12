@@ -102,7 +102,6 @@ import java.util.List;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 import static navigationapp.main_application.FragmentActivity.isNetworkAvailable;
 import static navigationapp.main_application.FragmentActivity.lockAdd;
 import static navigationapp.main_application.FragmentActivity.lockZoznam;
@@ -154,6 +153,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String longitude_photo = null;
     private String type_photo = null;
     File f = null;
+    Boolean panelState = true;
     @InjectView(R.id.location)
     PlacesAutocompleteTextView mAutocomplete;
     com.mapbox.mapboxsdk.geometry.LatLng points =null;
@@ -447,7 +447,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Looper.loop();
                     }
                 }.start();
-
             }
         });
 
@@ -462,6 +461,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .add(fragmentActivity, FRAGMENTACTIVITY_TAG)
                     .commit();
         }
+
         SpannableString spannable = new SpannableString( this.getResources().getString(R.string.app_name));
         spannable.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), 0, spannable.length(),  Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         getSupportActionBar().setTitle(spannable);
@@ -478,13 +478,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-
         mLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
-
-
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
-                Log.i(TAG, "onPanelSlide " );
                 mDemoSlider.moveNextPosition();
             }
 
@@ -492,28 +488,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
                 Log.i(TAG, "onPanelStateChanged " + newState);
                 if (newState == SlidingUpPanelLayout.PanelState.EXPANDED ) {
-                    if ((isNetworkAvailable(context) && aaa)) {
-                        if (aaa) {
-                            aaa = false;
-
+                    if ((isNetworkAvailable(context) && panelState)) {
+                        if (panelState) {
+                            panelState = false;
                             new Thread() {
                                 public void run() {
                                     Looper.prepare();
                                     Log.d(TAG, "GetImageID start" + latitude_photo);
-
-                                    GetImageID aaa = new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
+                                    new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
                                     Looper.loop();
                                 }
                             }.start();
                         }
-                    }  else if (!isNetworkAvailable(context) && aaa)
-                        Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.image_interent), Toast.LENGTH_LONG).show();
-
-
+                    }  else if (!isNetworkAvailable(context) && panelState)
+                            Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.image_interent), Toast.LENGTH_LONG).show();
                 }
             }
         });
-
     }
 
     synchronized  public  void show () {
@@ -550,7 +541,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {   // zovbrezenie menu s ikonami
         getMenuInflater().inflate(R.menu.activity_main, menu);
@@ -565,8 +555,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (item.getItemId()) {
 
             case R.id.position:   // nastavenie aktualnej polohy a zoomu po kliku na ikonu
-
-
                 if (!fragmentActivity.checkGPSEnable()) {
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
@@ -674,26 +662,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             public void onClick(DialogInterface dialog, int select) {
                                 switch (select) {
                                     case 0:
-
                                         fragmentActivity.mapLayer.level = ALL_BUMPS;
                                         LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
                                         fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
-
                                         break;
-
                                     case 1:
-
                                         fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
                                         LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
                                         fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
-
                                         break;
                                     case 2:
-
                                         fragmentActivity.mapLayer.level = LARGE_BUMPS;
                                         LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
                                         fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
-
                                         break;
                                 }
                             }
@@ -715,7 +696,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-
             case R.id.calibrate:  // spusti prekalibrovanie aplikácie
                 close();
                 if ( fragmentActivity.accelerometer!=null) {
@@ -742,29 +722,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 positionGPS =null;
                 text.setText("");
                 if ( fragmentActivity.gps!=null && fragmentActivity.detection!=null ) {
-
                     fragmentActivity.gps.remove_draw_road();
                     fragmentActivity.detection.setRoad(false);
                     fragmentActivity.detection.stop_collison_navigate();
-
                 }
                 return true;
-
-
             case R.id.action_settings: // presun do seeting activity
                 close();
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
 
             case R.id.download:
-
                 if (fragmentActivity!=null &&  mapManager!=null) {
                     if (mapManager.isMapTitleExceeded()) {  // upozornenie na prekročenie kapacity map
                         if (isEneableShowText())
                             Toast.makeText(this, this.getResources().getString(R.string.map_exceeded), Toast.LENGTH_LONG).show();
                         return true;
                     }
-
                 }
                 close();
 
@@ -826,7 +800,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mapManager.downloadedRegionList();
                 return true;
 
-         /*  case R.id.error:
+            /* case R.id.error:
                int number = Integer.parseInt("number");
                return true;*/
 
@@ -921,7 +895,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
                 return true;
-
         }
     }
 
@@ -947,20 +920,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private  class LatLngEvaluator implements TypeEvaluator<com.mapbox.mapboxsdk.geometry.LatLng> {
         // animácia na pohyb markeru
-        private com.mapbox.mapboxsdk.geometry.LatLng  psoition = new com.mapbox.mapboxsdk.geometry.LatLng();
+        private com.mapbox.mapboxsdk.geometry.LatLng  pos = new com.mapbox.mapboxsdk.geometry.LatLng();
         @Override
         public com.mapbox.mapboxsdk.geometry.LatLng evaluate(float fraction, com.mapbox.mapboxsdk.geometry.LatLng startValue, com.mapbox.mapboxsdk.geometry.LatLng endValue) {
-            psoition.setLatitude(startValue.getLatitude()
+            pos.setLatitude(startValue.getLatitude()
                     + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
-            psoition.setLongitude(startValue.getLongitude()
+            pos.setLongitude(startValue.getLongitude()
                     + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
-            return psoition;
+            return pos;
         }
     }
 
     private void selectMarker(final SymbolLayer marker, int i) {
         // animácia na vybraný marker - zväčšenie
-
         if (marker==null)
             return;
         mLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
@@ -1011,13 +983,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     if (i == 0) {
         markerSelectedAuto = false;
         markerAnimator.start();
-    }
-        else if (i == 1) {
+    } else if (i == 1) {
         markerSelectedManual = false;
         markerAnimator.start();
-    }
-        else
-            markerSelectedReport = false;
+    }  else
+        markerSelectedReport = false;
     }
 
     public void isEneableScreen() {
@@ -1034,8 +1004,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG, "save click stav - " + save_click );
         if (!save_click && featureMarker!=null )
             featureMarker.remove();
-        featureMarker=null;
-        allow_click=false;
+        featureMarker = null;
+        allow_click = false;
     }
 
     private BroadcastReceiver netReceiver  = new BroadcastReceiver() {
@@ -1050,20 +1020,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 boolean isConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
                 if (isConnected) {
 
-                    if (mLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED && aaa) {
+                    if (mLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED && panelState) {
                         new Thread() {
                             public void run() {
                                 Looper.prepare();
                                 Log.d(TAG, "GetImageID start" + latitude_photo);
-
-                                GetImageID aaa = new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
+                                new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
                                 Looper.loop();
                             }
                         }.start();
                     }
-
-
-
 
                     if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
                         Log.d(TAG, "netReceiver TYPE_WIFI ");
@@ -1092,6 +1058,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public Dialog onCreateDialogSingleChoice() {
+        freeMemory();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         CharSequence[] array = {
                 getApplicationContext().getResources().getString(R.string.type_problem_bump),
@@ -1394,48 +1361,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG,"getLanguage stav - "+name);
         return name;
     }
-    Boolean aaa = true;
+
     public void setPanel(String text, final String lat, final String ltn, final String type,final  String info) {
-
-
-
         Log.d(TAG, "setPanel start");
-
-
-
+        freeMemory();
         TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
         latitude_photo = lat;
         longitude_photo = ltn;
         type_photo = type;
-        aaa = true;
-        Button f = (Button) findViewById(R.id.add);
-
-        f.setOnClickListener(new View.OnClickListener() {
+        panelState = true;
+        Button add = (Button) findViewById(R.id.add);
+        add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "f setOnClickListener");
-                freeMemory();
-
-                onPickImage( getCurrentFocus(),PICK_IMAGE_ID);
+               onPickImage( getCurrentFocus(),PICK_IMAGE_ID);
             }
         });
 
-        Button i = (Button) findViewById(R.id.increase);
-
-        i.setOnClickListener(new View.OnClickListener() {
+        Button increase = (Button) findViewById(R.id.increase);
+        increase.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final Location location = new Location("new");
                 location.setLatitude(Double.parseDouble(lat));
                 location.setLongitude(Double.parseDouble(ltn));
-
                 Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string. increase_number), Toast.LENGTH_LONG).show();
                 add_bump(location, 6, info ,Integer.parseInt(type));
-
             }
         });
-
     }
 
     public void onPickImage(View view,Integer id) {
@@ -1448,30 +1402,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch(requestCode) {
             case PICK_IMAGE_ID:
                 Bitmap bitmap = ImagePicker.getImageFromResult(this, resultCode, data);
-
                 if (bitmap!=null) {
-
                     File sdCard = Environment.getExternalStorageDirectory();
                     File dir = new File(sdCard.getAbsolutePath() + "/.Detector");
                     if(!dir.exists()){
                         dir.mkdirs();
                     }
-
-
-
                     f = new File(new File(String.valueOf(dir)), bitmap.toString() + ".png");
                     try {
                         f.createNewFile();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-
-
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
                     byte[] bitmapdata = bos.toByteArray();
 
-//write the bytes in file
                     FileOutputStream fos = null;
                     try {
                         fos = new FileOutputStream(f);
@@ -1486,18 +1432,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     String date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
                     HashMap<String, Integer> file_maps = new HashMap<String, Integer>();
                     file_maps.put(date, bitmap.describeContents());
-
-
-
                     TextSliderView textSliderView = new TextSliderView(this);
-                    // initialize a SliderLayout
                     textSliderView
                             .description(date)
                             .image(f)
                             .setScaleType(BaseSliderView.ScaleType.Fit)
                             .setOnSliderClickListener(this);
-
-                    //add your extra information
                     textSliderView.bundle(new Bundle());
                     textSliderView.getBundle()
                             .putString("extra", date);
@@ -1521,7 +1461,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case PICK_IMAGE_ADD_ID:
                 Bitmap bitmapa = ImagePicker.getImageFromResult(this, resultCode, data);
                 if (bitmapa!=null) {
-
                     File sdCard = Environment.getExternalStorageDirectory();
                     File dir = new File(sdCard.getAbsolutePath() + "/.Detector");
                     if(!dir.exists()){
@@ -1535,12 +1474,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         e.printStackTrace();
                     }
 
-
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     bitmapa.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
                     byte[] bitmapdata = bos.toByteArray();
 
-//write the bytes in file
                     FileOutputStream fos = null;
                     try {
                         fos = new FileOutputStream(f);
@@ -1585,7 +1522,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     Log.d(TAG," save button lockZoznam lock ");
                                     try {
                                         Log.d(TAG," save button pridal do zoznamu");
-
                                         fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                         fragmentActivity.accelerometer.addBumpsManual(1);
                                         fragmentActivity.accelerometer.addtextDetect(text);
@@ -1629,7 +1565,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         lockZoznam.unlock();
                                     }
                                 }
-                                else{   Log.d(TAG," loczoznam");}
+                                else{   Log.d(TAG," lockkzoznam");}
                             }
                             finally {
                                 Log.d(TAG," save button lockAdd unlock");
@@ -1661,52 +1597,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }.start();
     }
 
-    public static String getDate(long milliSeconds, String dateFormat)
-    {
-        // Create a DateFormatter object for displaying date in specified format.
+    public static String getDate(long milliSeconds, String dateFormat)  {
         SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
-
-        // Create a calendar object that will convert the date and time value in milliseconds to date.
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(milliSeconds);
         return formatter.format(calendar.getTime());
     }
+
     public void save_photo(String latitude, String longitude,String type, String path) {
         while (true) {
-        if (updatesLock.tryLock()) {
-            try {
-                Log.d(TAG, "save photo  from panel updatesLock lock");
-                DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
-                SQLiteDatabase sb = databaseHelper.getWritableDatabase();
-                fragmentActivity.checkIntegrityDB(sb);
-                sb.beginTransaction();
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(Provider.photo.LATITUDE, latitude);
-                contentValues.put(Provider.photo.LONGTITUDE, longitude);
-                contentValues.put(Provider.photo.TYPE, type);
-                contentValues.put(Provider.photo.PATH, path);
-                contentValues.put(Provider.photo.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
-                sb.insert(Provider.photo.TABLE_NAME_PHOTO, null, contentValues);
-                sb.setTransactionSuccessful();
-                sb.endTransaction();
-                sb.close();
-                databaseHelper.close();
-                fragmentActivity.checkCloseDb(sb);
-                f = null;
-            }
-            finally {
-                Log.d(TAG, " save photo from panel updatesLock unlock  ");
-                updatesLock.unlock();
-                break;
-            }
-        }  else {
-            Log.d(TAG, " save photo from panel updatesLock try lock");
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException e) {
-                e.getMessage();
+            if (updatesLock.tryLock()) {
+                try {
+                    Log.d(TAG, "save photo  from panel updatesLock lock");
+                    DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
+                    SQLiteDatabase sb = databaseHelper.getWritableDatabase();
+                    fragmentActivity.checkIntegrityDB(sb);
+                    sb.beginTransaction();
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(Provider.photo.LATITUDE, latitude);
+                    contentValues.put(Provider.photo.LONGTITUDE, longitude);
+                    contentValues.put(Provider.photo.TYPE, type);
+                    contentValues.put(Provider.photo.PATH, path);
+                    contentValues.put(Provider.photo.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
+                    sb.insert(Provider.photo.TABLE_NAME_PHOTO, null, contentValues);
+                    sb.setTransactionSuccessful();
+                    sb.endTransaction();
+                    sb.close();
+                    databaseHelper.close();
+                    fragmentActivity.checkCloseDb(sb);
+                    f = null;
+                }
+                finally {
+                    Log.d(TAG, " save photo from panel updatesLock unlock  ");
+                    updatesLock.unlock();
+                    break;
+                }
+            }  else {
+                Log.d(TAG, " save photo from panel updatesLock try lock");
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException e) {
+                    e.getMessage();
+                }
             }
         }
-    }}
-
+    }
 }

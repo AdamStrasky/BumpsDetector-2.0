@@ -41,7 +41,6 @@ public class VoiceMainActivity extends Activity  {
         super.onCreate(savedInstanceState);
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 
-
         if (getIntent().getAction() != null && getIntent().getAction().equals("com.google.android.gms.actions.SEARCH_ACTION")) {
             query = getIntent().getStringExtra(SearchManager.QUERY);
             voice = isEneableVoice();
@@ -104,7 +103,6 @@ public class VoiceMainActivity extends Activity  {
                         contentValues.put(Provider.new_bumps.TEXT, query);
                         contentValues.put(Provider.new_bumps.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
                         sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-
                     }
                 }
            });
@@ -174,8 +172,7 @@ public class VoiceMainActivity extends Activity  {
         return prefs.getBoolean("voice_alarm", Boolean.parseBoolean(null));
     }
 
-    public  String getDate(long milliSeconds, String dateFormat)
-    {
+    public  String getDate(long milliSeconds, String dateFormat) {
         // Create a DateFormatter object for displaying date in specified format.
         SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 

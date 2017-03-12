@@ -194,10 +194,6 @@ public class SyncDatabase {
                 @Override
                 public void run() {
                     freeMemory();
-
-                    ////////////////////
-
-                    ////////////////
                     lockHandler = true;
                     if (isNetworkAvailable(context)) {  //  ak je pripojenie na internet
                         if (!(isEneableDownload() && !isConnectedWIFI())) { // povolené sťahovanie
@@ -278,8 +274,6 @@ public class SyncDatabase {
                 if (gps != null && gps.getCurrentLatLng() != null) {
                     Log.d(TAG, "getBumpsWithLevel mam povolenie alebo som na wifi");
                     syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
-
-                    //get_max_bumps(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                 }
            } else if (regular_update) {  // ak je to prve spustenie alebo pravidelný update
                 if (accelerometer != null && accelerometer.getPossibleBumps() != null && accelerometer.getPossibleBumps().size() > 0) {
@@ -288,11 +282,9 @@ public class SyncDatabase {
                 regular_update = false;
                if (gps != null && gps.getCurrentLatLng() != null) {
                    Log.d(TAG, "getBumpsWithLevel prvé spustenie alebo pravidelný update");
-             syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 0);
-                  // get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 0);
+                    syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 0);
                }
-
-           } else { // ak mám síce internet ale nemám povolené stahovanie, tk načítam z databazy
+            } else { // ak mám síce internet ale nemám povolené stahovanie, tk načítam z databazy
                 regular_update = false;
                 if (gps != null && gps.getCurrentLatLng() != null) {
                    Log.d(TAG, "getBumpsWithLevel mám internet, ale nepovolený");
@@ -316,8 +308,6 @@ public class SyncDatabase {
             }
         }
     }
-
-
 
     private void GetUpdateAction() {
         Log.d(TAG, "GetUpdateAction  start " );
@@ -479,11 +469,9 @@ public class SyncDatabase {
                                                     e.getMessage();
                                                 }
                                             }
-
                                         }
                                         lock = true;
                                     } else {
-                                        // nastala chyba, nemažem
                                         Log.d(TAG, "saveBump error" );
                                         int num = poradie;
                                         num++;
@@ -598,9 +586,7 @@ public class SyncDatabase {
                     updates = 0;
                     regularUpdatesLock = false;
                     lockHandler = false;
-                   syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
-                    //get_max_bumps(gps.getCurrentLatLng().latitude, gps.getCurrentLatLng().longitude, 1);
-
+                    syncList(gps.getCurrentLatLng().latitude,gps.getCurrentLatLng().longitude, 1);
                 } else if (lockHandler) {
                     lockHandler = false;
                     getBumpsWithLevel();
@@ -931,7 +917,6 @@ public class SyncDatabase {
     int por_photo = 0;
 
     public void save_photo() {
-
         new Thread() {
             public void run() {
                 while (true) {
@@ -983,8 +968,6 @@ public class SyncDatabase {
                                 if (results.equals("success")) {
                                     Log.d(TAG, "UploadPhoto success ");
                                     delete_db_photo ();
-
-
                                 } else
                                     Log.d(TAG, "UploadPhoto errror ");
                             }
@@ -1001,7 +984,6 @@ public class SyncDatabase {
         }.start();
     }
 
-
     public void  delete_db_photo () {
         File file = new File(listPath.get(por_photo));
         if (file.exists()) {
@@ -1009,7 +991,6 @@ public class SyncDatabase {
             Log.d(TAG, "file delete  " + deleted);
         }
 
-        Log.d(TAG, "UploadPhoto success ");
         while (true) {
             if (updatesLock.tryLock()) {
                 try {
@@ -1021,7 +1002,7 @@ public class SyncDatabase {
                         checkIntegrityDB(database);
                         database.beginTransaction();
                         database.execSQL("DELETE FROM new_photo WHERE path='" + listPath.get(por_photo) + "' ");
-                        Log.d(TAG, " save_photo mazem");
+                        Log.d(TAG, " save_photo delete from DB");
                         database.setTransactionSuccessful();
                         database.endTransaction();
                     } finally {
