@@ -170,7 +170,7 @@ public class SyncDatabase {
     }
 
     private void startGPS() {
-        new Timer().schedule(new SyncDb(), 0, 300000);  //300000    60000
+        new Timer().schedule(new SyncDb(), 0, 60000);  //300000    60000
         Log.d(TAG, " start regular update SyncDb");
     }
 
