@@ -119,8 +119,10 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
         Log.d(TAG, " change GPS position");
         if (location!=null && location.hasAccuracy())
             mCurrentLocation = location;
+        else if (mapbox!= null && mapbox.getMyLocation()!=null)
+            mCurrentLocation=mapbox.getMyLocation();
         else
-            mCurrentLocation=null;
+            mCurrentLocation = null;
 
       if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {   // nastavujem kameru ak zmenim pozíciu
             try {

@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     LinearLayout confirm = null;
     Button  save_button, delete_button,downloand_button,back_button;
     public  static MapView mapView = null;
+    LinearLayout layoutNavigation = null;
     public static LinearLayout mapConfirm;
     public static Button navig_on,add_button;
     public static MapboxMap mapbox = null;
@@ -358,6 +359,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mapConfirm = (LinearLayout) findViewById(R.id.mapConfirm);
         confirm = (LinearLayout) findViewById(R.id.confirm);
         searchLocation = (ImageView) findViewById(R.id.search_img);
+        layoutNavigation = (LinearLayout) findViewById(R.id.laytbtns);
         navig_on.setVisibility(View.INVISIBLE);
         confirm.setVisibility(View.INVISIBLE);
         mapConfirm.setVisibility(View.INVISIBLE);
@@ -524,8 +526,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
+
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            layoutNavigation.setVisibility(View.INVISIBLE);
+           //. Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            layoutNavigation.setVisibility(View.VISIBLE);
+           // Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
+        }
         drawerToggle.onConfigurationChanged(newConfig);
+        super.onConfigurationChanged(newConfig);
+
     }
 
     @Override
@@ -555,12 +566,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (item.getItemId()) {
 
             case R.id.position:   // nastavenie aktualnej polohy a zoomu po kliku na ikonu
-                if (!fragmentActivity.checkGPSEnable()) {
+                if (!fragmentActivity.checkGPSEnable() && mapbox.getMyLocation()==null) {
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
                 }
-                if (fragmentActivity.gps != null)
+                if (fragmentActivity.gps != null || mapbox.getMyLocation()!=null)
                     fragmentActivity.gps.getOnPosition();
                 else {
                     if (isEneableShowText())
@@ -574,7 +585,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.makeText(this,this.getResources().getString(R.string.change_map_style), Toast.LENGTH_LONG).show();
                     return true;
                 }
-                if (fragmentActivity==null || fragmentActivity.mapLayer==null ) {
+                if ((fragmentActivity==null || fragmentActivity.mapLayer==null) && mapbox.getMyLocation()==null ) {
                     if (isEneableShowText())
                         Toast.makeText(this,this.getResources().getString(R.string.no_gps), Toast.LENGTH_LONG).show();
                     return true;
@@ -605,17 +616,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     case 0:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/light-v9");
                                         LatLng lightBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        if (lightBumps == null) {
+                                            lightBumps = new LatLng(mapbox.getMyLocation().getLatitude(),mapbox.getMyLocation().getLatitude());
+                                        }
                                         fragmentActivity.mapLayer.getAllBumps(lightBumps.latitude, lightBumps.longitude);
                                         break;
 
                                     case 1:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
                                         LatLng satelliteBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        if (satelliteBumps == null) {
+                                            satelliteBumps = new LatLng(mapbox.getMyLocation().getLatitude(),mapbox.getMyLocation().getLatitude());
+                                        }
                                         fragmentActivity.mapLayer.getAllBumps(satelliteBumps.latitude, satelliteBumps.longitude);
                                         break;
                                     case 2:
                                         mapbox.setStyleUrl("mapbox://styles/mapbox/outdoors-v9");
                                         LatLng outdoorsBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        if (outdoorsBumps == null) {
+                                            outdoorsBumps = new LatLng(mapbox.getMyLocation().getLatitude(),mapbox.getMyLocation().getLatitude());
+                                        }
                                         fragmentActivity.mapLayer.getAllBumps(outdoorsBumps.latitude, outdoorsBumps.longitude);
 
                                         break;
@@ -626,7 +646,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
             case R.id.filter: // zobrayenie typu výtlkov
-                if (!fragmentActivity.checkGPSEnable()) {
+                if (!fragmentActivity.checkGPSEnable() && mapbox.getMyLocation()==null) {
                     if (isEneableShowText())
                         Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
                     return true;
@@ -664,16 +684,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     case 0:
                                         fragmentActivity.mapLayer.level = ALL_BUMPS;
                                         LatLng allBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        if (allBumps == null) {
+                                            allBumps = new LatLng(mapbox.getMyLocation().getLatitude(),mapbox.getMyLocation().getLatitude());
+                                        }
                                         fragmentActivity.mapLayer.getAllBumps(allBumps.latitude, allBumps.longitude);
                                         break;
                                     case 1:
                                         fragmentActivity.mapLayer.level = MEDIUM_BUMPS;
                                         LatLng mediumBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        if (mediumBumps == null) {
+                                            mediumBumps = new LatLng(mapbox.getMyLocation().getLatitude(),mapbox.getMyLocation().getLatitude());
+                                        }
                                         fragmentActivity.mapLayer.getAllBumps(mediumBumps.latitude, mediumBumps.longitude);
                                         break;
                                     case 2:
                                         fragmentActivity.mapLayer.level = LARGE_BUMPS;
                                         LatLng largeBumps = fragmentActivity.gps.getCurrentLatLng();
+                                        if (largeBumps == null) {
+                                            largeBumps = new LatLng(mapbox.getMyLocation().getLatitude(),mapbox.getMyLocation().getLatitude());
+                                        }
                                         fragmentActivity.mapLayer.getAllBumps(largeBumps.latitude, largeBumps.longitude);
                                         break;
                                 }

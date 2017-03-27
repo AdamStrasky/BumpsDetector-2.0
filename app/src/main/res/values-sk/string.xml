@@ -15,7 +15,7 @@
     <string name="lar_bumps">Veľké výtlky</string>
     <string name="calibrate">Váš telefon bol kalibrovaný</string>
     <string name="gps_calibrate">Poveľte GPS pred kalibráciou</string>
-    <string name="navig">Navigovať do ...</string>
+    <string name="navig"> Navigovať do ...</string>
     <string name="map_not_load">Nenačítaná mapa</string>
     <string name="download_run">Momentálne sťahujete, nemôžte sťahovať viacero súčasne</string>
     <string name="download_run_list">Momentálne sťahujete, nemožte pristupiť k stiahnutým mapám</string>
@@ -160,5 +160,5 @@
     <string name="image_interent">Problémy s internetovým spojením</string>
     <string name="image_no_data">Žiadne obrázky</string>
 
-
+    <string name="detect_bump">Detegovaný výtlk</string>
 </resources>

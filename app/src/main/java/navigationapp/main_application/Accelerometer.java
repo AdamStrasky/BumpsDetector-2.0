@@ -243,7 +243,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getApplicationContext(), result,Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), fragment_context.getResources().getString(R.string.detect_bump),Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -339,7 +339,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                     }
                                     isToClose = true;
                                 }
-                                else {
+                              /*  else {
                                     double distance = getDistance((float) location.getLatitude(), (float) location.getLongitude(),
                                             (float) hashLocation.getLatitude(), (float) hashLocation.getLongitude());
                                     //nie je to novy bump, pretoze z jeho okolia uz jeden pridavam (okolie 2m)
@@ -377,7 +377,7 @@ public class Accelerometer extends Service implements SensorEventListener {
                                         }
                                         isToClose = true;
                                     }
-                                }
+                                }*/
                             }
 
                         }

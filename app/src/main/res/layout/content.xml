@@ -17,17 +17,48 @@
         android:id="@+id/mapboxMarkerMapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        mapbox:style_url="mapbox://styles/mapbox/streets-v9"
-        mapbox:zoom="2"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:visibility="visible"
         mapbox:center_latitude="49.2066418"
         mapbox:center_longitude="18.8746749"
-        android:layout_below="@+id/laytbtns">
-    </com.mapbox.mapboxsdk.maps.MapView>
+        mapbox:style_url="mapbox://styles/mapbox/streets-v9"
+        mapbox:zoom="2"></com.mapbox.mapboxsdk.maps.MapView>
+
+    <LinearLayout
+        android:id="@+id/laytbtns"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <com.seatgeek.placesautocomplete.PlacesAutocompleteTextView
+            android:id="@+id/location"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@+id/search_img"
+            android:layout_toStartOf="@+id/search_img"
+            android:layout_weight="5"
+            android:background="#FFFFFF"
+            android:hint="@string/navig"
+            android:paddingLeft="20dp"
+            android:minHeight="50dp"
+            app:pacv_googleMapsApiKey="AIzaSyA_L4Y03zBnAh6u9y6Lq2WcpcXkig_N0xs" />
+
+        <ImageView
+            android:id="@+id/search_img"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:background="#FFFFFF"
+            android:layout_weight="1"
+            android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -119,33 +150,5 @@
         android:layout_alignBottom="@+id/mapConfirm"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
-
-    <LinearLayout
-        android:id="@+id/laytbtns"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-
-        <com.seatgeek.placesautocomplete.PlacesAutocompleteTextView
-            android:id="@+id/location"
-            android:hint="@string/navig"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:minHeight="50dp"
-            app:pacv_googleMapsApiKey="AIzaSyA_L4Y03zBnAh6u9y6Lq2WcpcXkig_N0xs"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_toLeftOf="@+id/search_img"
-            android:layout_toStartOf="@+id/search_img"
-            android:layout_weight="5"/>
-
-        <ImageView
-            android:id="@+id/search_img"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_weight="1"/>
-    </LinearLayout>
 
 </RelativeLayout>

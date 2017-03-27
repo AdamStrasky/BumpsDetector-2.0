@@ -15,7 +15,7 @@
     <string name="lar_bumps">Large bumps</string>
     <string name="calibrate">Your phone was calibrated.</string>
     <string name="gps_calibrate">Turn on your GPS before calibrate</string>
-    <string name="navig">Navigate to ...</string>
+    <string name="navig"> Navigate to ...</string>
     <string name="map_not_load">Map is not loaded</string>
     <string name="download_run">Now download, can be downloaded at once more</string>
     <string name="download_run_list">Currently downloading, you can not access to download maps</string>
@@ -163,6 +163,6 @@
     <string name="image_interent">Problem with internet conncetion </string>
     <string name="image_no_data">No images</string>
 
-
+    <string name="detect_bump">Detected bump</string>
 
 </resources>
