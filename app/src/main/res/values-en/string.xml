@@ -26,7 +26,7 @@
 
     <string name="bump_add">Report was added</string>
     <string name="trasht_add">Full basket was reported</string>
-    <string name="canstock_add">Missing channel was reported</string>
+    <string name="canstock_add">Missing shaft was reported</string>
     <string name="select_add">Problem was reported</string>
 
     <string name="fnd_location">Finding location ...</string>
@@ -125,7 +125,7 @@
 
     <string name="add_marker_bump">Add bump</string>
     <string name="add_marker_bin">Report full bin</string>
-    <string name="add_marker_channel">Report missing channel</string>
+    <string name="add_marker_channel">Report missing shaft</string>
     <string name="add_marker_other">Report other</string>
     <string name="list">List</string>
 
@@ -139,7 +139,7 @@
 
     <string name="share_bump">Bump</string>
     <string name="share_trash">Full basket </string>
-    <string name="share_canstock">Missing channel</string>
+    <string name="share_canstock">Missing shaft</string>
     <string name="share_other">Other problem</string>
     <string name="share_text">Type of problem</string>
     <string name="share_send">Send</string>
@@ -155,7 +155,7 @@
     <string name="type_problem">Type of problem</string>
     <string name="type_problem_bump">Add bump</string>
     <string name="type_problem_basket">Full bin</string>
-    <string name="type_problem_canstock">Missing channel</string>
+    <string name="type_problem_canstock">Missing shaft</string>
     <string name="type_problem_other">Other</string>
 
     <string name="load_photo">Loading</string>
@@ -164,5 +164,7 @@
     <string name="image_no_data">No images</string>
 
     <string name="detect_bump">Detected bump</string>
+
+
 
 </resources>

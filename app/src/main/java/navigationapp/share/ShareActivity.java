@@ -186,7 +186,7 @@ public class ShareActivity extends AppCompatActivity {
                 text = "bin";
                 break;
             case 2:
-                text = "cover";
+                text = "shaft";
                 break;
             case 3:
                 text = editText.toString();

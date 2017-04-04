@@ -1118,7 +1118,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 add_button.setVisibility(View.INVISIBLE);
                                 break;
                             case 2:
-                                select_iteam_text= "channel";
+                                select_iteam_text= "shaft";
                                 intensity =0.f;
                                 allow_click=true;
                                 confirm.setVisibility(View.VISIBLE);
