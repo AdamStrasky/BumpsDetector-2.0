@@ -21,6 +21,8 @@ import java.util.List;
 
 import navigationapp.R;
 
+import static navigationapp.server.Connection.get_image_id;
+
 public class GetImageID   {
     ProgressDialog pDialog = null;
     String latitude = null;
@@ -61,7 +63,7 @@ public class GetImageID   {
             params.add(new BasicNameValuePair("longitude", String.valueOf(longitude)));
             params.add(new BasicNameValuePair("type", String.valueOf(type)));
             Log.d(TAG, " odosielam požiadavku na server");
-            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/get_image_id.php", "POST", params);
+            JSONObject json = jsonParser.makeHttpRequest(get_image_id, "POST", params);
             if (json == null) {
                 JSONArray response = new JSONArray();
                 try {

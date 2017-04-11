@@ -46,6 +46,7 @@ import static navigationapp.main_application.FragmentActivity.updatesLock;
 import static navigationapp.main_application.MainActivity.androidId;
 import static navigationapp.main_application.MainActivity.getDate;
 import static navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
+import static navigationapp.server.Connection.sync_bump;
 
 public class SyncDatabase {
     private JSONArray bumps = null;
@@ -683,7 +684,7 @@ public class SyncDatabase {
             params.add(new BasicNameValuePair("listCount", StringlistCount));
             params.add(new BasicNameValuePair("net", String.valueOf(net)));
             Log.d(TAG, "UpdateList odosielam požiadavku na server");
-            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/sync_bump.php", "POST", params);
+            JSONObject json = jsonParser.makeHttpRequest(sync_bump, "POST", params);
             if (json == null) {
                 JSONArray response = new JSONArray();
                 try {

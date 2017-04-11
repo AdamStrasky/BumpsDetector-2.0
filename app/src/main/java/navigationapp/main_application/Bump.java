@@ -15,11 +15,11 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static navigationapp.main_application.MainActivity.getDate;
+import static navigationapp.server.Connection.create_bump;
 
 public class Bump {
 
     JSONParser jsonParser = new JSONParser();
-    private static String url_create_product = "http://sport.fiit.ngnlab.eu/create_bump.php";
     private float intensity;
     private Location location;
     private int rating;
@@ -81,7 +81,7 @@ public class Bump {
             params.add(new BasicNameValuePair("actual_date", getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss")));
             params.add(new BasicNameValuePair("info", text));
 
-            JSONObject json = jsonParser.makeHttpRequest(url_create_product, "POST", params);
+            JSONObject json = jsonParser.makeHttpRequest(create_bump, "POST", params);
 
             if (json==null) {
                 return "error";

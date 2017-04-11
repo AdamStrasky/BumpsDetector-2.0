@@ -27,6 +27,8 @@ import com.daimajia.slider.library.SliderLayout;
 import com.daimajia.slider.library.SliderTypes.BaseSliderView;
 import com.daimajia.slider.library.SliderTypes.TextSliderView;
 
+import static navigationapp.server.Connection.get_image;
+
 public class GetImage {
 
     private JSONParser jsonParser = new JSONParser();
@@ -54,7 +56,7 @@ public class GetImage {
         protected JSONObject doInBackground(String... args) {
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("id", id));
-            JSONObject json = jsonParser.makeHttpRequest("http://sport.fiit.ngnlab.eu/get_image.php", "POST", params);
+            JSONObject json = jsonParser.makeHttpRequest(get_image, "POST", params);
             return json;
         }
         protected void onPostExecute(JSONObject array) {

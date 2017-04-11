@@ -17,6 +17,8 @@ import java.util.concurrent.ExecutionException;
 
 import cz.msebera.android.httpclient.Header;
 
+import static navigationapp.server.Connection.update_image;
+
 public class UploadPhoto {
     public  final String TAG = "UploadPhoto";
     private RequestParams params = new RequestParams();
@@ -81,7 +83,7 @@ public class UploadPhoto {
     public String makeHTTPCall() {
 
         SyncHttpClient client = new SyncHttpClient();
-        client.post("http://sport.fiit.ngnlab.eu/update_image.php",
+        client.post(update_image,
                 params, new AsyncHttpResponseHandler() {
 
                     @Override
