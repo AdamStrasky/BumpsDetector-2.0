@@ -136,6 +136,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean markerSelectedAuto = false;
     private boolean markerSelectedManual = false;
     private boolean markerSelectedReport = false;
+    private boolean markerSelectedReportRepaired = false;
+    private boolean markerSelectedBumpRepaired = false;
     private Marker featureMarker =  null ;
     boolean allow_click= false;
     com.mapbox.mapboxsdk.geometry.LatLng  convert_location  =null;
@@ -255,6 +257,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         final SymbolLayer markerAuto = (SymbolLayer) mapbox.getLayer("selected-marker-layer-auto");
                         final SymbolLayer markerManual = (SymbolLayer) mapbox.getLayer("selected-marker-layer-manual");
                         final SymbolLayer markerReport = (SymbolLayer) mapbox.getLayer("selected-marker-layer-report");
+                        final SymbolLayer markerBumpRepaired = (SymbolLayer) mapbox.getLayer("selected-marker-layer-bump-repaired");
+                        final SymbolLayer markerReportRepaired = (SymbolLayer) mapbox.getLayer("selected-marker-layer-report-repaired");
 
                         final PointF pixel = mapbox.getProjection().toScreenLocation(point);
                         List<Feature> featureAuto = mapbox.queryRenderedFeatures(pixel, "marker-layer-auto");
@@ -263,7 +267,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         List<Feature> selectedFeatureManual = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-manual");
                         List<Feature> featuresReport = mapbox.queryRenderedFeatures(pixel, "marker-layer-report");
                         List<Feature> selectedFeatureReport = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-report");
-
+                        List<Feature> featuresBumpRepaired = mapbox.queryRenderedFeatures(pixel, "marker-layer-bump-repaired");
+                        List<Feature> selectedFeatureBumpRepaired = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-bump-repaired");
+                        List<Feature> featuresReportRepaired = mapbox.queryRenderedFeatures(pixel, "marker-layer-report-repaired");
+                        List<Feature> selectedFeatureReportRepaired = mapbox.queryRenderedFeatures(pixel, "selected-marker-layer-report-repaired");
                         if (selectedFeatureAuto.size() > 0 && markerSelectedAuto) {
                             return;
                         }
@@ -273,8 +280,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (selectedFeatureReport.size() > 0 && markerSelectedReport) {
                             return;
                         }
+                        if (selectedFeatureReportRepaired.size() > 0 && markerSelectedReportRepaired) {
+                            return;
+                        }
 
-                        if (featureAuto.isEmpty() || featuresManual.isEmpty() || featuresReport.isEmpty()) {
+                        if (selectedFeatureBumpRepaired.size() > 0 && markerSelectedBumpRepaired) {
+                            return;
+                        }
+
+                        if (featureAuto.isEmpty() || featuresManual.isEmpty() || featuresReport.isEmpty()
+                                || featuresReportRepaired.isEmpty() || featuresBumpRepaired.isEmpty()) {
                             if (markerSelectedAuto) {
                                 deselectMarker(markerAuto, 0);
                                 return;
@@ -285,6 +300,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             }
                             if (markerSelectedReport) {
                                 deselectMarker(markerReport, 2);
+                                return;
+                            }
+                            if (markerSelectedBumpRepaired) {
+                                deselectMarker(markerBumpRepaired, 3);
+                                return;
+                            }
+                            if (markerSelectedReportRepaired) {
+                                deselectMarker(markerReport, 4);
                                 return;
                             }
                         }
@@ -310,6 +333,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if (sourceReport != null)
                                 sourceReport.setGeoJson(featureCollectionReport);
                         }
+                        if (featuresBumpRepaired.size() > 0) {
+                            FeatureCollection featureCollectionBumpRepaired = FeatureCollection.fromFeatures(
+                                    new Feature[]{Feature.fromGeometry(featuresBumpRepaired.get(0).getGeometry())});
+                            GeoJsonSource sourceBumpRepaired = mapbox.getSourceAs("selected-marker-bump-repaired");
+                            if (sourceBumpRepaired != null)
+                                sourceBumpRepaired.setGeoJson(featureCollectionBumpRepaired);
+                        }
+                        if (featuresReportRepaired.size() > 0) {
+                            FeatureCollection featureCollectionReportRepaired = FeatureCollection.fromFeatures(
+                                    new Feature[]{Feature.fromGeometry(featuresReportRepaired.get(0).getGeometry())});
+                            GeoJsonSource sourceReportRepaired = mapbox.getSourceAs("selected-marker-report-repaired");
+                            if (sourceReportRepaired != null)
+                                sourceReportRepaired.setGeoJson(featureCollectionReportRepaired);
+                        }
 
                         if (markerSelectedAuto) {
                             deselectMarker(markerAuto, 0);
@@ -319,6 +356,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         if (markerSelectedReport) {
                             deselectMarker(markerReport, 2);
+                        }
+                        if (markerSelectedBumpRepaired) {
+                            deselectMarker(markerBumpRepaired, 3);
+                        }
+                        if (markerSelectedReportRepaired) {
+                            deselectMarker(markerReportRepaired, 4);
                         }
                         if (featureAuto.size() > 0) {
 
@@ -342,6 +385,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 setPanel( featuresReport.get(0).getStringProperty("property"),featuresReport.get(0).getStringProperty("lat"),featuresReport.get(0).getStringProperty("ltn"),featuresReport.get(0).getStringProperty("type"),featuresReport.get(0).getStringProperty("text"));
                             }
                             selectMarker(markerReport, 2);
+                            return;
+                        }
+                        if (featuresBumpRepaired.size() > 0) {
+
+                            if (featuresBumpRepaired.get(0).getStringProperty("property")!=null) {
+                                setPanel( featuresBumpRepaired.get(0).getStringProperty("property"),featuresBumpRepaired.get(0).getStringProperty("lat"),featuresBumpRepaired.get(0).getStringProperty("ltn"),featuresBumpRepaired.get(0).getStringProperty("type"),featuresBumpRepaired.get(0).getStringProperty("text"));
+                            }
+                            selectMarker(markerBumpRepaired, 3);
+                            return;
+                        }
+                        if (featuresReportRepaired.size() > 0) {
+
+                            if (featuresReportRepaired.get(0).getStringProperty("property")!=null) {
+                                setPanel( featuresReportRepaired.get(0).getStringProperty("property"),featuresReportRepaired.get(0).getStringProperty("lat"),featuresReportRepaired.get(0).getStringProperty("ltn"),featuresReportRepaired.get(0).getStringProperty("type"),featuresReportRepaired.get(0).getStringProperty("text"));
+                            }
+                            selectMarker(markerReportRepaired, 4);
                             return;
                         }
                     }
@@ -382,7 +441,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onSuccess(final PlaceDetails details) {
                         positionGPS = details.geometry.location;
-                        Log.d(TAG," Autocomplete positionGPS.lat;"+  positionGPS.lat +" positionGPS.lng "+positionGPS.lng);
                     }
 
                     @Override
@@ -416,11 +474,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (fragmentActivity.isNetworkAvailable(context)) {
                             try {
                                 if (positionGPS == null) {
-                                    Log.d(TAG, "searchLocation positionGPS bola null");
                                     address = Route.findLocality(location, getApplicationContext());
                                     position = new LatLng(address.getLatitude(), address.getLongitude());
                                 } else {
-                                    Log.d(TAG, "searchLocation positionGPS not null");
                                     position = new LatLng(positionGPS.lat, positionGPS.lng);
                                 }
 
@@ -488,7 +544,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
-                Log.i(TAG, "onPanelStateChanged " + newState);
                 if (newState == SlidingUpPanelLayout.PanelState.EXPANDED ) {
                     if ((isNetworkAvailable(context) && panelState)) {
                         if (panelState) {
@@ -496,7 +551,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             new Thread() {
                                 public void run() {
                                     Looper.prepare();
-                                    Log.d(TAG, "GetImageID start" + latitude_photo);
                                     new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
                                     Looper.loop();
                                 }
@@ -838,12 +892,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (fragmentActivity.accelerometer!=null) {
                     while (true) {
                         if (updatesLock.tryLock()) {
-                            Log.d(TAG," exit updatesLock lock");
                             try  {
                                 while (true) {
                                     if (lockZoznam.tryLock()) {
                                         try {
-                                            Log.d(TAG," exit lockzoznam lock");
                                             ArrayList<HashMap<Location, Float>> list = fragmentActivity.accelerometer.getPossibleBumps();
                                             ArrayList<Integer> bumpsManual = fragmentActivity.accelerometer.getBumpsManual();
                                             ArrayList<Integer> bumpsType = fragmentActivity.accelerometer.gettypeDetect();
@@ -866,7 +918,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                     bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
                                                     Cursor cursor = sb.rawQuery(sql, null);
                                                     if (cursor.getCount() == 0) {
-                                                        Log.d(TAG, "exit ukladam data ");
                                                         ContentValues contentValues = new ContentValues();
                                                         contentValues.put(Provider.new_bumps.LATITUDE, loc.getLatitude());
                                                         contentValues.put(Provider.new_bumps.LONGTITUDE, loc.getLongitude());
@@ -887,12 +938,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             fragmentActivity.checkCloseDb(sb);
 
                                         } finally {
-                                            Log.d(TAG, " exit lockZoznam unlock  ");
                                             lockZoznam.unlock();
                                             break;
                                         }
                                     } else {
-                                        Log.d(TAG, " exit lockZoznam try lock  ");
                                         try {
                                             Thread.sleep(20);
                                         } catch (InterruptedException e) {
@@ -902,12 +951,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 }
                             }
                             finally {
-                                Log.d(TAG, " exit updatesLock unlock  ");
                                 updatesLock.unlock();
                                 break;
                             }
                         } else {
-                            Log.d(TAG, " exit updatesLock try lock");
                             try {
                                 Thread.sleep(20);
                             } catch (InterruptedException e) {
@@ -986,14 +1033,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             markerSelectedManual = true;
             markerAnimator.start();
         }
-        else
+        else  if (i == 2)
             markerSelectedReport = true;
+        else  if (i == 3) {
+            markerSelectedBumpRepaired = true;
+            markerAnimator.start();
+        } else  if (i == 4)
+            markerSelectedReportRepaired = true;
     }
 
     private void deselectMarker(final SymbolLayer marker, int i) {
         mDemoSlider.removeAllSliders();
         // animácia na vybraný marker - zmenšenie
-        if (marker==null)
+        if (marker == null)
             return;
         mLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         ValueAnimator markerAnimator = new ValueAnimator();
@@ -1009,20 +1061,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-    if (i == 0) {
-        markerSelectedAuto = false;
-        markerAnimator.start();
-    } else if (i == 1) {
-        markerSelectedManual = false;
-        markerAnimator.start();
-    }  else
-        markerSelectedReport = false;
+        if (i == 0) {
+            markerSelectedAuto = false;
+            markerAnimator.start();
+        } else if (i == 1) {
+            markerSelectedManual = false;
+            markerAnimator.start();
+        } else if (i == 2) {
+            markerSelectedReport = false;
+        } else if (i == 3) {
+            markerSelectedBumpRepaired = false;
+            markerAnimator.start();
+        }else if (i == 4) {
+            markerSelectedReportRepaired = false;
+        }
     }
 
     public void isEneableScreen() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         Boolean screen = prefs.getBoolean("screen", Boolean.parseBoolean(null));
-        Log.d(TAG, "isEneableScreen stav - "+String.valueOf(screen));
         if (screen)
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else
@@ -1030,7 +1087,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void save(boolean save_click) {
-        Log.d(TAG, "save click stav - " + save_click );
         if (!save_click && featureMarker!=null )
             featureMarker.remove();
         featureMarker = null;
@@ -1053,7 +1109,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         new Thread() {
                             public void run() {
                                 Looper.prepare();
-                                Log.d(TAG, "GetImageID start" + latitude_photo);
                                 new GetImageID(fragmentActivity.getActivity(), getApplicationContext(), latitude_photo, longitude_photo, type_photo, mDemoSlider);
                                 Looper.loop();
                             }
@@ -1061,17 +1116,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                     if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                        Log.d(TAG, "netReceiver TYPE_WIFI ");
                         manager.setConnected(true);
                     }
                     if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
-                        Log.d(TAG, "netReceiver TYPE_MOBILE ");
                         if (isEneableOnlyWifiMap()) {
-                            Log.d(TAG, "netReceiver - setConnected(false)");
                             manager.setConnected(false);
                         }
                         else {
-                            Log.d(TAG, "netReceiver - setConnected(true)");
                             manager.setConnected(true);
                         }
                     }
@@ -1082,7 +1133,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public boolean isEneableOnlyWifiMap() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Log.d(TAG,"isEneableOnlyWifiMap "+ String.valueOf(prefs.getBoolean("map", Boolean.parseBoolean(null))));
         return prefs.getBoolean("map", Boolean.parseBoolean(null));
     }
 
@@ -1255,8 +1305,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         save_photo(String.valueOf(location.getLatitude()),String.valueOf(location.getLongitude()), String.valueOf(select_iteam) ,f.getPath());
                     f = null;
                 }
-                else
-                    Log.d(TAG, " save button  null location !!!!!! " );
+
                 break;
             case R.id.delete_btn:   // mazania označeného markeru
 
@@ -1372,7 +1421,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean isEneableShowText() {
         SharedPreferences preferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
         Boolean alarm = preferences.getBoolean("alarm", Boolean.parseBoolean(null));
-        Log.d(TAG,"isEneableShowText stav - "+alarm);
         return ((alarm) || (!alarm && MainActivity.isActivityVisible()));
     }
 
@@ -1387,12 +1435,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public  String getLanguage() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String name = prefs.getString("lang", "");
-        Log.d(TAG,"getLanguage stav - "+name);
         return name;
     }
 
     public void setPanel(String text, final String lat, final String ltn, final String type,final  String info) {
-        Log.d(TAG, "setPanel start");
         freeMemory();
         TextView t = (TextView) findViewById(R.id.info);
         t.setText(text);
@@ -1548,21 +1594,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (lockAdd.tryLock()) {
                             try {
                                 if (lockZoznam.tryLock()) {
-                                    Log.d(TAG," save button lockZoznam lock ");
                                     try {
-                                        Log.d(TAG," save button pridal do zoznamu");
                                         fragmentActivity.accelerometer.addPossibleBumps(location, (float) round(intensity,6));
                                         fragmentActivity.accelerometer.addBumpsManual(1);
                                         fragmentActivity.accelerometer.addtextDetect(text);
                                         fragmentActivity.accelerometer.addtypeDetect(type);
                                         if (updatesLock.tryLock()) {
-                                            Log.d(TAG," save button updatesLock lock ");
                                             try  {
                                                 DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                                                 SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
                                                 fragmentActivity.checkIntegrityDB(database);
-                                                Log.d(TAG," save button vlozil do db ");
                                                 database.beginTransaction();
                                                 ContentValues contentValues = new ContentValues();
                                                 contentValues.put(Provider.new_bumps.LATITUDE, location.getLatitude());
@@ -1580,41 +1622,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                 fragmentActivity.checkCloseDb(database);
                                             }
                                             finally {
-                                                Log.d(TAG," save button updatesLock unlock");
                                                 updatesLock.unlock();
                                             }
-                                        }  else {
-                                            Log.d(TAG," lockzoznam");
                                         }
-                                            Log.d(TAG," save button casový lock end");
                                     }
                                     finally {
-                                        Log.d(TAG," save button lockZoznam unlock");
                                         flag =true;
                                         lockZoznam.unlock();
                                     }
                                 }
-                                else{   Log.d(TAG," lockkzoznam");}
                             }
                             finally {
-                                Log.d(TAG," save button lockAdd unlock");
-                            lockAdd.unlock();
+                                lockAdd.unlock();
                                 if (flag) {
                                     threadLock.getAndSet(false);
                                     break;
                                 }
                             }
-                        }else {
-                            Log.d(TAG," lockAdd");}
+                        }
                         threadLock.getAndSet(false);
                     }
-                    else  {
-                        Log.d(TAG," threadLock");
-                    }
-                    Log.d(TAG,"casovy lock");
-                    Log.d(TAG, " save button " + String.valueOf(location.getLatitude()));
-                    Log.d(TAG, " save button " + String.valueOf(location.getLongitude()));
-                    Log.d(TAG, " save button " + String.valueOf(ll));
                     try {
                         Thread.sleep(20); // sleep for 50 ms so that main UI thread can handle user actions in the meantime
                     } catch (InterruptedException e) {
@@ -1637,7 +1664,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         while (true) {
             if (updatesLock.tryLock()) {
                 try {
-                    Log.d(TAG, "save photo  from panel updatesLock lock");
                     DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(this);
                     SQLiteDatabase sb = databaseHelper.getWritableDatabase();
                     fragmentActivity.checkIntegrityDB(sb);
@@ -1657,12 +1683,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     f = null;
                 }
                 finally {
-                    Log.d(TAG, " save photo from panel updatesLock unlock  ");
                     updatesLock.unlock();
                     break;
                 }
             }  else {
-                Log.d(TAG, " save photo from panel updatesLock try lock");
                 try {
                     Thread.sleep(20);
                 } catch (InterruptedException e) {

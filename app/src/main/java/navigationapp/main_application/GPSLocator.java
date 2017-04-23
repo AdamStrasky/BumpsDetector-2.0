@@ -52,7 +52,6 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
 
     //vykresli cestu
     public void showDirection(final List<LatLng> directionPoint) {
-        Log.d(TAG, "showDirection - vykreslujem cestu");
         new Thread() {
             public void run() {
                 Looper.prepare();
@@ -74,7 +73,6 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
     }
 
     public void remove_draw_road() { // maže vykreslenu cestu
-        Log.d(TAG, "remove_draw_road");
         if (draw_road) {
             if (mapbox != null) {
                 List<Polyline> markers = mapbox.getPolylines();
@@ -116,7 +114,6 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
     }
 
     public void onLocationChanged(Location location) {
-        Log.d(TAG, " change GPS position");
         if (location!=null && location.hasAccuracy())
             mCurrentLocation = location;
         else if (mapbox!= null && mapbox.getMyLocation()!=null)
@@ -156,12 +153,10 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
                             @Override
                             public void onCancel() {
                                 mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
-                                Log.d("XXXXX","SetZoom onCancel ");
                             }
 
                             @Override
                             public void onFinish() {
-                                Log.d("XXXXX","SetZoom onFinish ");
                                 mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
 
                              }

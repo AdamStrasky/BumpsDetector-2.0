@@ -15,6 +15,7 @@ public interface Provider {
         public static final String TYPE = "type";
         public static final String FIX = "fix";
         public static final String INFO = "info";
+        public static final String ADMIN_FIX = "admin_fix";
     }
 
     public interface new_bumps extends BaseColumns {

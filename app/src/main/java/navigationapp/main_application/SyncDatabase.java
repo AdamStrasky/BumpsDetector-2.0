@@ -111,29 +111,21 @@ public class SyncDatabase {
                                         listManual.add(cursor.getInt(3));
                                         listType.add(cursor.getInt(4));
                                         listText.add(cursor.getString(5));
-                                        Log.d(TAG, "loadSaveDB latitude " + cursor.getDouble(0));
-                                        Log.d(TAG, "loadSaveDB longitude " + cursor.getDouble(1));
-                                        Log.d(TAG, "loadSaveDB listType " + cursor.getInt(4));
-                                        Log.d(TAG, "loadSaveDB listText " + cursor.getString(5));
-                                        Log.d(TAG, "loadSaveDB date"+ getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss"));
                                     }
                                 } while (cursor.moveToNext());
                                 if (cursor != null && accelerometer != null) {
                                     while (true) {
                                         if (lockZoznam.tryLock()) {
                                             try {
-                                                Log.d(TAG, "loadSaveDB copy old bump");
                                                 accelerometer.getPossibleBumps().addAll(listLocation);
                                                 accelerometer.getBumpsManual().addAll(listManual);
                                                 accelerometer.gettypeDetect().addAll(listType);
                                                 accelerometer.gettextDetect().addAll(listText);
                                             } finally {
-                                                Log.d(TAG, "loadSaveDB lockZoznam unlock");
                                                 lockZoznam.unlock();
                                                 break;
                                             }
                                         } else {
-                                            Log.d(TAG, "loadSaveDB lockZoznam try lock");
                                             try {
                                                 Random ran = new Random();
                                                 int x = ran.nextInt(20) + 1;
@@ -151,12 +143,10 @@ public class SyncDatabase {
                             databaseHelper.close();
                             checkCloseDb(database);
                         } finally {
-                            Log.d(TAG, "loadSaveDB unlock");
                             updatesLock.unlock();
                             break;
                         }
                     } else {
-                        Log.d(TAG, "loadSaveDB try lock");
                         try {
                             Random ran = new Random();
                             int x = ran.nextInt(20) + 1;
@@ -171,14 +161,12 @@ public class SyncDatabase {
     }
 
     private void startGPS() {
-        new Timer().schedule(new SyncDb(), 0, 60000);  //300000    60000
-        Log.d(TAG, " start regular update SyncDb");
+        new Timer().schedule(new SyncDb(), 0, 300000);
     }
 
     private class Regular_upgrade extends TimerTask {
         @Override
         public void run() {
-            Log.d(TAG, " Regular_upgrade set true ");
             regular_update = true;
         }
     }
@@ -780,7 +768,7 @@ public class SyncDatabase {
                                                  break;
                                              }
                                              double latitude = 0, longitude = 0;
-                                             int count = 0, b_id = 0, rating = 0, manual = 0, type = 0, fix =0;
+                                             int count = 0, b_id = 0, rating = 0, manual = 0, type = 0, fix =0, admin = 0;
                                              String last_modified = null, info = null;
                                              if (data != null) {
                                                  try {
@@ -790,6 +778,7 @@ public class SyncDatabase {
                                                      type = data.getInt("type");
                                                      count = data.getInt("count");
                                                      fix = data.getInt("fix");
+                                                     admin = data.getInt("admin_fix");
                                                      info = data.getString("info");
                                                      rating = data.getInt("rating");
                                                      last_modified = data.getString("last_modified");
@@ -805,7 +794,7 @@ public class SyncDatabase {
                                                          cursor = database.rawQuery(sql, null);
                                                          if (cursor.getCount() > 0) {
                                                              Log.d(TAG, "UpdateList exist b_id");
-                                                             sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", fix="+fix+", count=" + count +", last_modified='"+last_modified+"' WHERE b_id_bumps=" + b_id;
+                                                             sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", fix="+fix+", count=" + count +", admin_fix="+admin+", last_modified='"+last_modified+"' WHERE b_id_bumps=" + b_id;
                                                              database.execSQL(sql);
                                                          }
                                                          else {
@@ -820,6 +809,7 @@ public class SyncDatabase {
                                                              contentValues.put(Provider.bumps_detect.INFO, info);
                                                              contentValues.put(Provider.bumps_detect.RATING, rating);
                                                              contentValues.put(Provider.bumps_detect.TYPE, type);
+                                                             contentValues.put(Provider.bumps_detect.ADMIN_FIX, admin);
                                                              contentValues.put(Provider.bumps_detect.FIX, fix);
                                                              database.insert(TABLE_NAME_BUMPS, null, contentValues);
                                                          }

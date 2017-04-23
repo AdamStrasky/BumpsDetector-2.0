@@ -78,8 +78,6 @@ public class VoiceMainActivity extends Activity  {
         if(gps.canGetLocation()){ // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu
             final double longitude = gps.getLongitude();
-
-            Log.d(TAG," mám polohu ");
             Location loc = new Location("Location");
             loc.setLatitude(gps.getLatitude());
             loc.setLongitude(gps.getLongitude());

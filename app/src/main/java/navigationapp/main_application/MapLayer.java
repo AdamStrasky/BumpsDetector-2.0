@@ -58,6 +58,8 @@ public class MapLayer {
     private List<Feature> autoMarkerCoordinates = null;  // markery
     private List<Feature> manualMarkerCoordinates = null;
     private List<Feature> reportMarkerCoordinates = null;
+    private List<Feature> repairedBumpMarkerCoordinates = null;
+    private List<Feature> repairedReportMarkerCoordinates = null;
 
     boolean deleteMap = false;  // flag na mazanie mapy
     boolean clear = true; // flag či mazať celu mapu
@@ -79,10 +81,14 @@ public class MapLayer {
             public void run() {
 
                 Log.d(TAG, " gettAllBump zobrazenie markerov  spustene ");
-                int autoBumpSequence = 0, manualBumpSequence = 0, reportSequence = 0;
+                int autoBumpSequence = 0, manualBumpSequence = 0,
+                    reportSequence = 0, repairedBumpSequence= 0,
+                    repairedReportSequence = 0;
                 autoMarkerCoordinates = new ArrayList<>();
                 manualMarkerCoordinates = new ArrayList<>();
                 reportMarkerCoordinates = new ArrayList<>();
+                repairedBumpMarkerCoordinates = new ArrayList<>();
+                repairedReportMarkerCoordinates = new ArrayList<>();
                 while (true) {
                     if (updatesLock.tryLock()) {
                         try {
@@ -99,7 +105,7 @@ public class MapLayer {
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             String ago_formated = ago.format(cal.getTime());
                             // seleknutie vytlk z oblasti a starych 280 dni
-                            String selectQuery = "SELECT latitude,longitude,count,manual,last_modified,info FROM my_bumps WHERE rating/count >=" + level + " AND " +
+                            String selectQuery = "SELECT latitude,longitude,count,manual,last_modified,info,fix FROM my_bumps WHERE admin_fix=0 AND rating/count >=" + level + " AND " +
                                     " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
                                     + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1) AND type=0) ";
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
@@ -119,7 +125,7 @@ public class MapLayer {
                                         } catch (ParseException e) {
                                             e.printStackTrace();
                                         }
-                                        if (cursor.getInt(3) == 0) { // nulou je označený  automaticky detegovaný výtlk
+                                        if (cursor.getInt(3) == 0 && cursor.getInt(6) == 0) { // nulou je označený  automaticky detegovaný výtlk
                                             autoMarkerCoordinates.add(Feature.fromGeometry(
                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
                                             ); //  zobrazované vlastnosti výtlku
@@ -132,7 +138,7 @@ public class MapLayer {
                                             autoFeature.addStringProperty("type", String.valueOf(0));
                                             autoFeature.addStringProperty("text", String.valueOf( cursor.getString(5)));
                                             autoBumpSequence++;
-                                        } else { // jednotkou je označený  manuálne detegovaný výtlk
+                                        } else if (cursor.getInt(3) == 1 && cursor.getInt(6) == 0) { // jednotkou je označený  manuálne detegovaný výtlk
                                             manualMarkerCoordinates.add(Feature.fromGeometry(
                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
                                             );
@@ -146,6 +152,20 @@ public class MapLayer {
                                             manualFeature.addStringProperty("text", String.valueOf( cursor.getString(5)));
                                             manualBumpSequence++;
                                         }
+                                        else if ( cursor.getInt(6) == 1 )  {
+                                            repairedBumpMarkerCoordinates.add(Feature.fromGeometry(
+                                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
+                                            ); //  zobrazované vlastnosti výtlku
+                                            Feature repairedFeature = repairedBumpMarkerCoordinates.get(repairedBumpSequence);
+                                            repairedFeature.addStringProperty("property", context.getResources().getString(R.string.repaired_bump) + "\n" +
+                                                    context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
+                                                    context.getResources().getString(R.string.modif) + " " + showFormatData);
+                                            repairedFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
+                                            repairedFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
+                                            repairedFeature.addStringProperty("type", String.valueOf(0));
+                                            repairedFeature.addStringProperty("text", String.valueOf( cursor.getString(5)));
+                                            repairedBumpSequence++;
+                                        }
                                     }
                                     while (cursor.moveToNext());
                                 }
@@ -158,7 +178,7 @@ public class MapLayer {
                             cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DATE) - 3);  // posun od dnesneho dna o 280 dni
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             ago_formated = ago.format(cal.getTime());
-                            selectQuery = "SELECT latitude,longitude,count,last_modified,info,type FROM my_bumps WHERE " +
+                            selectQuery = "SELECT latitude,longitude,count,last_modified,info,type, fix FROM my_bumps WHERE admin_fix=0 AND " +
                                     " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
                                     + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)  AND type>0) ";
 
@@ -182,19 +202,33 @@ public class MapLayer {
                                                 select_iteam = context.getResources().getString(R.string.type_problem_canstock);
                                                 break;
                                         }
-
-                                            reportMarkerCoordinates.add(Feature.fromGeometry(
-                                                    Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
-                                            ); //  zobrazované vlastnosti výtlku
-                                            Feature reportFeature = reportMarkerCoordinates.get(reportSequence);
-                                            reportFeature.addStringProperty("property", select_iteam + "\n" +
-                                                    context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
-                                                    context.getResources().getString(R.string.modif) + " " + showFormatData);
-                                            reportFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
-                                            reportFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
-                                            reportFeature.addStringProperty("type", String.valueOf(cursor.getInt(5)));
-                                            reportFeature.addStringProperty("text", String.valueOf( cursor.getString(4)));
-                                            reportSequence++;
+                                         if (cursor.getInt(6) == 0) {
+                                             reportMarkerCoordinates.add(Feature.fromGeometry(
+                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
+                                             ); //  zobrazované vlastnosti výtlku
+                                             Feature reportFeature = reportMarkerCoordinates.get(reportSequence);
+                                             reportFeature.addStringProperty("property", select_iteam +  "\n" +
+                                                     context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
+                                                     context.getResources().getString(R.string.modif) + " " + showFormatData);
+                                             reportFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
+                                             reportFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
+                                             reportFeature.addStringProperty("type", String.valueOf(cursor.getInt(5)));
+                                             reportFeature.addStringProperty("text", String.valueOf(cursor.getString(4)));
+                                             reportSequence++;
+                                         } else  if (cursor.getInt(6) == 1) {
+                                             repairedReportMarkerCoordinates.add(Feature.fromGeometry(
+                                                     Point.fromCoordinates(com.mapbox.services.commons.models.Position.fromCoordinates(cursor.getDouble(1), cursor.getDouble(0))))
+                                             ); //  zobrazované vlastnosti výtlku
+                                             Feature repairedFeature = repairedReportMarkerCoordinates.get(repairedReportSequence);
+                                             repairedFeature.addStringProperty("property", select_iteam + " "+  context.getResources().getString(R.string.type_problem_repaired)+ "\n" +
+                                                     context.getResources().getString(R.string.number_bump) + " " + cursor.getInt(2) + "\n" +
+                                                     context.getResources().getString(R.string.modif) + " " + showFormatData);
+                                             repairedFeature.addStringProperty("lat", String.valueOf(cursor.getDouble(0)));
+                                             repairedFeature.addStringProperty("ltn", String.valueOf(cursor.getDouble(1)));
+                                             repairedFeature.addStringProperty("type", String.valueOf(cursor.getInt(5)));
+                                             repairedFeature.addStringProperty("text", String.valueOf(cursor.getString(4)));
+                                             repairedReportSequence++;
+                                        }
                                     }
                                     while (cursor.moveToNext());
                                 }
@@ -210,11 +244,9 @@ public class MapLayer {
                             checkCloseDb(database);
                         } finally {
                             updatesLock.unlock();
-                            Log.d(TAG, " gettAllBump markery z databázy vytiahnuté ");
                             break;
                         }
                     } else {
-                        Log.d(TAG, " gettAllBump lock ");
                         try {
                             Random ran = new Random();
                             int x = ran.nextInt(20) + 1;
@@ -234,7 +266,6 @@ public class MapLayer {
                                if (lockZoznam.tryLock()) {
                                    try {
                                        if (accelerometer != null && accelerometer.getPossibleBumps().size() > 0) {
-                                           Log.d(TAG, " gettAllBump kopírujem zoznam ");
                                            bumpList.addAll(accelerometer.getPossibleBumps());
                                            bumpsManual.addAll(accelerometer.getBumpsManual());
                                            detectType.addAll(accelerometer.gettypeDetect());
@@ -242,12 +273,10 @@ public class MapLayer {
                                     }
                                    } finally {
                                         lockZoznam.unlock();
-                                        Log.d(TAG, " gettAllBump zoznam unlock ");
                                         break;
                                     }
                                } else {
                                     try {
-                                        Log.d(TAG, " gettAllBump zoznam lock ");
                                         Random ran = new Random();
                                         int x = ran.nextInt(20) + 1;
                                         Thread.sleep(x);
@@ -259,13 +288,11 @@ public class MapLayer {
 
                            }
                        } finally {
-                           Log.d(TAG, " gettAllBump lockadd unlock ");
                            lockAdd.unlock();
                            break;
                        }
                     } else {
                         try {
-                            Log.d(TAG, " gettAllBump lockadd lock ");
                             Random ran = new Random();
                             int x = ran.nextInt(20) + 1;
                             Thread.sleep(x);
@@ -303,12 +330,11 @@ public class MapLayer {
     private static class DefaultCallback implements MapboxMap.CancelableCallback {
         @Override
         public void onCancel() {
-            Log.d("MapLayer", "DefaultCallback onCancel");
+
         }
 
         @Override
         public void onFinish() {
-            Log.d("MapLayer", "DefaultCallback onFinish");
         }
     }
 
@@ -328,8 +354,7 @@ public class MapLayer {
 
     synchronized private void deleteMarkers() {
 
-        Log.d(TAG, "deleteOldMarker start");
-        try {
+       try {
             if ( mapbox != null) {
                 List<Marker> markers = mapbox.getMarkers();
                 for (int i = 0; i < markers.size(); i++) {
@@ -362,9 +387,27 @@ public class MapLayer {
                 e.getMessage();
             }
 
+            try {
+                if (mapbox.getSource("marker-source-report-repaired") != null)
+                    mapbox.removeSource("marker-source-report-repaired");
+            } catch (NoSuchSourceException e) {
+                e.printStackTrace();
+                e.getMessage();
+            }
+
+            try {
+                if (mapbox.getSource("marker-source-bump-repaired") != null)
+                    mapbox.removeSource("marker-source-bump-repaired");
+            } catch (NoSuchSourceException e) {
+                e.printStackTrace();
+                e.getMessage();
+            }
+
             mapbox.removeImage("my-marker-image-auto");
             mapbox.removeImage("my-marker-image-manual");
             mapbox.removeImage("my-marker-image-report");
+            mapbox.removeImage("my-marker-image-report-repaired");
+            mapbox.removeImage("my-marker-image-bump-repaired");
 
             try {
                 if (mapbox.getLayer("marker-layer-auto") != null)
@@ -381,6 +424,20 @@ public class MapLayer {
             try {
                 if (mapbox.getLayer("marker-layer-report") != null)
                     mapbox.removeLayer("marker-layer-report");
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
+
+            try {
+                if (mapbox.getLayer("marker-layer-report-repaired") != null)
+                    mapbox.removeLayer("marker-layer-report-repaired");
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
+
+            try {
+                if (mapbox.getLayer("marker-layer-bump-repaired") != null)
+                    mapbox.removeLayer("marker-layer-bump-repaired");
             } catch (NoSuchLayerException e) {
                 e.getMessage();
             }
@@ -410,6 +467,22 @@ public class MapLayer {
             }
 
             try {
+                if (mapbox.getSource("selected-marker-report-repaired") != null)
+                    mapbox.removeSource("selected-marker-report-repaired");
+            } catch (NoSuchSourceException e) {
+                e.printStackTrace();
+                e.getMessage();
+            }
+
+            try {
+                if (mapbox.getSource("selected-marker-bump-repaired") != null)
+                    mapbox.removeSource("selected-marker-bump-repaired");
+            } catch (NoSuchSourceException e) {
+                e.printStackTrace();
+                e.getMessage();
+            }
+
+            try {
                 if (mapbox.getLayer("selected-marker-layer-auto") != null)
                     mapbox.removeLayer("selected-marker-layer-auto");
             } catch (NoSuchLayerException e) {
@@ -428,17 +501,29 @@ public class MapLayer {
             } catch (NoSuchLayerException e) {
                 e.getMessage();
             }
+
+            try {
+                if (mapbox.getLayer("selected-marker-layer-report-repaired") != null)
+                    mapbox.removeLayer("selected-marker-layer-report-repaired");
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
+
+            try {
+                if (mapbox.getLayer("selected-marker-layer-bump-repaired") != null)
+                    mapbox.removeLayer("selected-marker-layer-bump-repaired");
+            } catch (NoSuchLayerException e) {
+                e.getMessage();
+            }
         } catch (ConcurrentModificationException e) {
            e.printStackTrace();
            e.getMessage();
         }
 
-
-        Log.d(TAG, "deleteOldMarker finish");
     }
 
     synchronized private void showMarkers() {
-        Log.d(TAG, "showNewMarker start");
+
 
         try {
             FeatureCollection featureCollectionAuto = FeatureCollection.fromFeatures(autoMarkerCoordinates);
@@ -452,6 +537,15 @@ public class MapLayer {
             FeatureCollection featureCollectionReport = FeatureCollection.fromFeatures(reportMarkerCoordinates);
             Source geoJsonSourceReport = new GeoJsonSource("marker-source-report", featureCollectionReport);
             mapbox.addSource(geoJsonSourceReport);
+
+            FeatureCollection featureCollectionReportRepaired = FeatureCollection.fromFeatures(repairedReportMarkerCoordinates);
+            Source geoJsonSourceReportRepaired = new GeoJsonSource("marker-source-report-repaired", featureCollectionReportRepaired);
+            mapbox.addSource(geoJsonSourceReportRepaired);
+
+            FeatureCollection featureCollectionBumpRepaired = FeatureCollection.fromFeatures(repairedBumpMarkerCoordinates);
+            Source geoJsonSourceBumpRepaired = new GeoJsonSource("marker-source-bump-repaired", featureCollectionBumpRepaired);
+            mapbox.addSource(geoJsonSourceBumpRepaired);
+            /*************************************************/
 
             Bitmap iconAuto = BitmapFactory.decodeResource(context.getResources(), R.drawable.default_marker);
             mapbox.addImage("my-marker-image-auto", iconAuto);
@@ -474,7 +568,21 @@ public class MapLayer {
                     .withProperties(PropertyFactory.iconImage("my-marker-image-report"));
             mapbox.addLayer(markersReport);
 
+            Bitmap iconReportRepaired = BitmapFactory.decodeResource(context.getResources(), R.drawable.gray_detect);
+            mapbox.addImage("my-marker-image-report-repaired", iconReportRepaired);
 
+            SymbolLayer markersReportRepaired = new SymbolLayer("marker-layer-report-repaired", "marker-source-report-repaired")
+                    .withProperties(PropertyFactory.iconImage("my-marker-image-report-repaired"));
+            mapbox.addLayer(markersReportRepaired);
+
+            Bitmap iconBumpRepaired = BitmapFactory.decodeResource(context.getResources(), R.drawable.gray_marker);
+            mapbox.addImage("my-marker-image-bump-repaired", iconBumpRepaired);
+
+            SymbolLayer markersBumpRepaired = new SymbolLayer("marker-layer-bump-repaired", "marker-source-bump-repaired")
+                    .withProperties(PropertyFactory.iconImage("my-marker-image-bump-repaired"));
+            mapbox.addLayer(markersBumpRepaired);
+
+           /*************************************************/
             FeatureCollection emptySourceAuto = FeatureCollection.fromFeatures(new Feature[]{});
             Source selectedMarkerSourceAuto = new GeoJsonSource("selected-marker-auto", emptySourceAuto);
             mapbox.addSource(selectedMarkerSourceAuto);
@@ -487,6 +595,14 @@ public class MapLayer {
             Source selectedMarkerSourceReport = new GeoJsonSource("selected-marker-report", emptySourceReport);
             mapbox.addSource(selectedMarkerSourceReport);
 
+            FeatureCollection emptySourceReportRepaired = FeatureCollection.fromFeatures(new Feature[]{});
+            Source selectedMarkerSourceReportRepaired = new GeoJsonSource("selected-marker-report-repaired", emptySourceReportRepaired);
+            mapbox.addSource(selectedMarkerSourceReportRepaired);
+
+            FeatureCollection emptySourceBumpRepaired = FeatureCollection.fromFeatures(new Feature[]{});
+            Source selectedMarkerSourceBumpRepaired = new GeoJsonSource("selected-marker-bump-repaired", emptySourceBumpRepaired);
+            mapbox.addSource(selectedMarkerSourceBumpRepaired);
+            /*************************************************/
             SymbolLayer selectedMarkerAuto = new SymbolLayer("selected-marker-layer-auto", "selected-marker-auto")
                     .withProperties(PropertyFactory.iconImage("my-marker-image-auto"));
             mapbox.addLayer(selectedMarkerAuto);
@@ -499,20 +615,26 @@ public class MapLayer {
                     .withProperties(PropertyFactory.iconImage("my-marker-image-report"));
             mapbox.addLayer(selectedMarkerReport);
 
+            SymbolLayer selectedMarkerReportRepaired = new SymbolLayer("selected-marker-layer-report-repaired", "selected-marker-report-repaired")
+                    .withProperties(PropertyFactory.iconImage("my-marker-image-report-repaired"));
+            mapbox.addLayer(selectedMarkerReportRepaired);
+
+            SymbolLayer selectedMarkerBumpRepaired = new SymbolLayer("selected-marker-layer-bump-repaired", "selected-marker-bump-repaired")
+                    .withProperties(PropertyFactory.iconImage("my-marker-image-bump-repaired"));
+            mapbox.addLayer(selectedMarkerBumpRepaired);
+
         } catch (ConcurrentModificationException e) {
             e.printStackTrace();
             e.getMessage();
         }
 
-        Log.d(TAG, "showNewMarker finish");
+
     }
 
     public void notSendBumps(ArrayList<HashMap<Location, Float>> bumps, ArrayList<Integer> bumpsManual, int autoSeq, int manulSeq, int reportSequence, ArrayList<Integer> detectType, ArrayList<String> detectText) {
-        Log.d(TAG, "notSendBumps dopnanie zoznamu");
         float rating = 1;
         int i = 0;
         if (bumps.size() > 0) {
-            Log.d(TAG, "notSendBumps obsahuje zoznamy");
             for (HashMap<android.location.Location, Float> bump : bumps) {
                 Iterator it = bump.entrySet().iterator();
                 while (it.hasNext()) {
@@ -587,7 +709,7 @@ public class MapLayer {
                 }
             }
         }
-        Log.d(TAG, "notSendBumps koniec");
+
 
     }
     private static long getDateToLong(Date date) {

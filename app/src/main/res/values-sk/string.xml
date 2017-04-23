@@ -79,6 +79,7 @@
 
     <string name="auto_bump">Automatický detegovany výtlk</string>
     <string name="manual_bump">Manuálne detegovaný výtlk</string>
+    <string name="repaired_bump">Opravený výtlk</string>
     <string name="number_bump">Počet detekcií: </string>
     <string name="modif">Modifikácia:</string>
 
@@ -154,7 +155,7 @@
     <string name="type_problem_basket">Plný kôš</string>
     <string name="type_problem_canstock">Chýbajúci poklop</string>
     <string name="type_problem_other">Iné</string>
-
+    <string name="type_problem_repaired"> - opravené</string>
 
     <string name="load_photo">Načítanie</string>
     <string name="image_interent">Problémy s internetovým spojením</string>

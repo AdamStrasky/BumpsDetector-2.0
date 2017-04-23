@@ -93,17 +93,13 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
         boolean isConnected = activeNetworkInfo != null && activeNetworkInfo.isConnected();
         if (isConnected) {
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                Log.d(TAG, "onSharedChanged - TYPE_WIFI");
                 MainActivity.manager.setConnected(true);
             }
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
-                Log.d(TAG, "onSharedChanged - TYPE_MOBILE");
                 if (isEneableOnlyWifiMap()) {
-                    Log.d(TAG, "onSharedChanged - setConnected(false)");
                     MainActivity.manager.setConnected(false);
                 }
                 else {
-                    Log.d(TAG, "onSharedChanged - setConnected(true)");
                     MainActivity.manager.setConnected(true);
                 }
             }
@@ -113,14 +109,12 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
 
     public boolean isEneableOnlyWifiMap() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Log.d(TAG,"isEneableOnlyWifiMap "+ String.valueOf(prefs.getBoolean("map", Boolean.parseBoolean(null))));
         return prefs.getBoolean("map", Boolean.parseBoolean(null));
     }
 
     public void isEneableScreen() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         Boolean screen = prefs.getBoolean("screen", Boolean.parseBoolean(null));
-        Log.d(TAG , "isEneableScreen " +String.valueOf(screen));
         if (screen) {
            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
@@ -131,12 +125,10 @@ public class SettingsActivity extends PreferenceActivity  implements SharedPrefe
     public String getLanguage() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String name = prefs.getString("lang", "");
-        Log.d(TAG, "getLanguage - " + name);
         return name;
     }
 
     public void setLanguage(String lang) {
-        Log.d(TAG, "onSharedChasetLanguagenged - " + lang);
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
         SharedPreferences.Editor prefEditor = sharedPref.edit();
         prefEditor.putString("lang",lang);

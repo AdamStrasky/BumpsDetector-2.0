@@ -80,6 +80,7 @@
 
     <string name="auto_bump">Automatic detect bump</string>
     <string name="manual_bump">Manual detect bump</string>
+    <string name="repaired_bump">Repaired bump</string>
     <string name="number_bump">Numbers of detection: </string>
     <string name="modif">Modification:</string>
 
@@ -157,6 +158,7 @@
     <string name="type_problem_basket">Full bin</string>
     <string name="type_problem_canstock">Missing shaft</string>
     <string name="type_problem_other">Other</string>
+    <string name="type_problem_repaired"> - repaired</string>
 
     <string name="load_photo">Loading</string>
 

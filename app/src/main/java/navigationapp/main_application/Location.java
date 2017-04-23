@@ -46,7 +46,6 @@ public class Location {
     private boolean  start_bumps = true;
     Lock lock_stop = new ReentrantLock();
     private boolean  get_road = false;
-    private boolean  only_for_test = false;
     Thread collision_thread = null ,estimation_thread = null;
     FragmentActivity activity =null;
     private ArrayList<Position> LIFO;
@@ -95,22 +94,18 @@ public class Location {
                                 lock_position.unlock();
                             }
                         }
-                        if (road && select_road != null) {
-                            Log.d(TAG, "analyzePosition - zadaná a nájdena cesta");
-                            if (only_for_test && get_road && select_road != null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
+                        if (road && select_road != null) {   // vychylil som sa s trasy, nutne prepočítať trasu
+                            if ( get_road && select_road != null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
                                 get_road = false;
-                                Log.d(TAG, "analyzePosition - mimo cesty - zmena trasy flag");
-                                if (collision_thread != null && collision_thread.isAlive()) {
+                               if (collision_thread != null && collision_thread.isAlive()) {
                                     if (lock_stop.tryLock()) {
                                        try {
-                                            Log.d(TAG, "analyzePosition - collision_thread run , call interrupt");
                                             collision_thread.interrupt();
                                             collision_thread = null;
                                             collision_places();
                                             first_start_estimation = false;
                                             collision_thread.start();
                                             if (estimation_thread != null && estimation_thread.isAlive()) {
-                                                Log.d(TAG, "analyzePosition - estimation_thread run , call interrupt");
                                                 estimation_thread.interrupt();
                                                 estimation_thread = null;
                                             }
@@ -120,17 +115,9 @@ public class Location {
                                     }
                                 }
                             } else {
-                                if (position != null) {
-                                    Log.d(TAG,"analyzePosition position.latitude -" + String.valueOf(position.latitude));
-                                    Log.d(TAG,"analyzePosition position.longitude -" + String.valueOf(position.longitude));
-                                    Log.d(TAG,"analyzePosition location.getLatitude() -" + String.valueOf(location.getLatitude()));
-                                    Log.d(TAG,"analyzePosition location.getLongitude() -" + String.valueOf(location.getLongitude()));
-                                }
-                                if (position != null && getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude) < 10) {
+                               if (position != null && getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude) < 10) {
                                     if (lock_stop.tryLock()) {
-                                        try {
-                                            Log.d(TAG, "analyzePosition - ciel " + String.valueOf(getDistance((float) location.getLatitude(), (float) location.getLongitude(), (float) position.latitude, (float) position.longitude)));
-                                            Log.d(TAG, "analyzePosition - som v cieli");
+                                        try {   // ukončujem navigaciu, som v cieli
                                             stop_collision_thread();
                                             stop_estimation_thread();
                                         } finally {
@@ -151,15 +138,13 @@ public class Location {
     }
 
     public void stop_collison_navigate() {
-        Log.d(TAG, "stop_collison_navigate - start");
-        start_bumps = true;
+         start_bumps = true;
         Thread stop_navigate = new Thread() {
             public void run() {
                 Looper.prepare();
                 while (true) {
                     if (lock_stop.tryLock()) {
                         try {
-                            Log.d(TAG, "stop_collison_navigate - call interrupt thread");
                             stop_collision_thread();
                             stop_estimation_thread();
                             start_bumps = false;
@@ -170,7 +155,6 @@ public class Location {
                         }
                     } else {
                         try {
-                            Log.d(TAG, "stop_collison_navigate  try lock_stop");
                             Thread.sleep(20);
                         } catch (InterruptedException e) {
                             e.getMessage();
@@ -184,7 +168,6 @@ public class Location {
 
     public void stop_collision_thread() {
         if (collision_thread!=null && collision_thread.isAlive()) {
-            Log.d(TAG, "stop_collision_thread interrupt");
             collision_thread.interrupt();
             collision_thread= null;
             first_start_estimation = false;
@@ -194,7 +177,6 @@ public class Location {
 
     public void stop_estimation_thread() {
         if (estimation_thread!=null && estimation_thread.isAlive()) {
-            Log.d(TAG, "estimation_thread interrupt");
             estimation_thread.interrupt();
             estimation_thread= null;
         }
@@ -217,7 +199,6 @@ public class Location {
                     } catch (InterruptedException e) {
                         e.getMessage();
                     }
-                    Log.d(TAG, "bumps_on_position  try lock ");
                 }
             }
         };
@@ -228,7 +209,6 @@ public class Location {
             e.printStackTrace();
         }
         collision_places();
-        Log.d(TAG, "bumps_on_position collision_thread start ");
         collision_thread.start();
     }
 
@@ -285,7 +265,7 @@ public class Location {
                                         SQLiteDatabase database = databaseHelper.getWritableDatabase();
                                         checkIntegrityDB(database);
                                         database.beginTransaction();
-                                        String selectQuery = "SELECT latitude,longitude FROM my_bumps WHERE " +
+                                        String selectQuery = "SELECT latitude,longitude FROM my_bumps WHERE admin_fix=0 AND " +
                                                 " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
                                                 + " (ROUND(latitude,2)==ROUND(" + latitude + ",2) and ROUND(longitude,2)==ROUND(" + longitude + ",2)) AND type=0";
 
@@ -409,15 +389,8 @@ public class Location {
                                         speed += LIFO.get(i).getSpeed();
                                     }
                                     avarage_speed = speed / LIFO.size();
-                                    Log.d(TAG,"estimation avarage_speed " + String.valueOf(avarage_speed));
-                                    Log.d(TAG, "estimation first getLatitude  " + String.valueOf(LIFO.get(0).getLatitude()));
-                                    Log.d(TAG, "estimation first getLongitude " + String.valueOf(LIFO.get(0).getLongitude()));
-                                    Log.d(TAG, "estimation last getLatitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLatitude()));
-                                    Log.d(TAG, "estimation last getLongitude " + String.valueOf(LIFO.get(LIFO.size() - 1).getLongitude()));
                                     distance = getDistance((float) LIFO.get(0).getLatitude(), (float) LIFO.get(0).getLongitude(), (float) LIFO.get(LIFO.size() - 1).getLatitude(), (float) LIFO.get(LIFO.size() - 1).getLongitude());
-                                    Log.d(TAG, "estimation distance " + String.valueOf(distance));
                                     time = LIFO.get(LIFO.size() - 1).getTime() - LIFO.get(0).getTime();
-                                    Log.d(TAG, "estimation time " + String.valueOf(time));
                                 } finally {
                                     lock_position.unlock();
                                     break;
@@ -426,7 +399,6 @@ public class Location {
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
-                                    Log.d(TAG, "estimation InterruptedException lock_position ");
                                     throw new InterruptedException("");
                                 }
                             }
@@ -436,9 +408,6 @@ public class Location {
                         time -= TimeUnit.MINUTES.toMillis(minutes);
                         long seconds = TimeUnit.MILLISECONDS.toSeconds(time);
                         avarage_speed_second = (float) (distance/ (minutes+seconds));
-                        Log.d(TAG, " estimation Mins "+ String.valueOf(minutes));
-                        Log.d(TAG, "estimation seconds "+ String.valueOf(seconds));
-                        Log.d(TAG, "estimation avarage_speed_second "+ String.valueOf(avarage_speed_second));
 
                         if (avarage_speed > avarage_speed_second )
                             best_cause = avarage_speed;
@@ -495,17 +464,14 @@ public class Location {
                                 }
                             }
 
-                            Log.d(TAG, "estimation actual distance   " + String.valueOf(actual_distance));
                             double times_to_sleep = actual_distance / best_cause;
-                            Log.d(TAG, "estimation čas ku výtlku  " + String.valueOf(times_to_sleep));
+
                             //  - čas pred výtlkom
                             if (String.valueOf(times_to_sleep).equals("NaN") || String.valueOf(times_to_sleep).equals("Infinity")) {
                                 times_to_sleep = 999999;
-                                Log.d(TAG, "estimation čas ku výtlku bol NAN " );
                             }
                             long result = TimeUnit.SECONDS.toMillis((long) times_to_sleep);
                             double convert_time = result;
-                            Log.d(TAG, "estimation convert_time "+ convert_time );
                             time_stop = 0;
                             int treshold = 20000;
 
@@ -513,7 +479,6 @@ public class Location {
                                 time_stop = treshold;
                             else if (convert_time < 10000) {
                                 if (this.isInterrupted()) {
-                                    Log.d(TAG, "estimation isInterrupted pred upozornenim na výtlk ");
                                     throw new InterruptedException("");
                                 }
                                     if (!isEneableVoice()) {
@@ -548,7 +513,6 @@ public class Location {
                         try {
                             Thread.sleep(time_stop);
                         } catch (InterruptedException e) {
-                            Log.d(TAG, "estimation InterruptedException sleep  ");
                             throw new InterruptedException();
                         }
                     }
@@ -581,7 +545,6 @@ public class Location {
 
     public  ArrayList<LatLng>  directionPoint(LatLng to_position, LatLng my_position, Thread thread) {
         ArrayList<LatLng> directionPoint = null;
-        Log.d(TAG, "directionPoint get selected road");
         double latitude,longitude ;
         Route md = new Route();
         Document doc = md.getDocument(my_position, to_position);
@@ -589,13 +552,10 @@ public class Location {
             return null;
         directionPoint = new  ArrayList<LatLng>();
         directionPoint = md.getDirection(doc);
-        Log.d(TAG, " return  directionPoints");
-        if (directionPoint== null || directionPoint.size() ==0 ) {
-            Log.d(TAG, " return  directionPoints null");
-            return null;
+       if (directionPoint== null || directionPoint.size() ==0 ) {
+           return null;
         }
         else {
-            Log.d(TAG, " return  directionPoints no null");
             activity.gps.remove_draw_road();
             activity.gps.showDirection(directionPoint);
             return directionPoint;
@@ -613,7 +573,6 @@ public class Location {
     public  boolean isEneableVoice() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         Boolean voice = prefs.getBoolean("voice", Boolean.parseBoolean(null));
-        Log.d(TAG,"isEneableVoice stav - "+voice +" show stav " +isEneableShowText(context));
-        return (voice && isEneableShowText(context));
+       return (voice && isEneableShowText(context));
     }
 }

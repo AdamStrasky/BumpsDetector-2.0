@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import static android.provider.BaseColumns._ID;
+import static navigationapp.main_application.Provider.bumps_detect.ADMIN_FIX;
 import static navigationapp.main_application.Provider.bumps_detect.FIX;
 import static navigationapp.main_application.Provider.bumps_detect.INFO;
 import static  navigationapp.main_application.Provider.bumps_detect.TABLE_NAME_BUMPS;
@@ -55,9 +56,10 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                     + "%s INTEGER,"
                     + "%s INTEGER,"
                     + "%s INTEGER,"
+                    + "%s INTEGER,"
                     + "%s STRING"
                     + ")";
-            return String.format(sqlTemplate, TABLE_NAME_BUMPS, B_ID_BUMPS, COUNT, LAST_MODIFIED,LATITUDE,LONGTITUDE,MANUAL,RATING,TYPE,FIX,INFO);
+            return String.format(sqlTemplate, TABLE_NAME_BUMPS, B_ID_BUMPS, COUNT, LAST_MODIFIED,LATITUDE,LONGTITUDE,MANUAL,RATING,TYPE,FIX,ADMIN_FIX, INFO);
         }
 
         private String createTableSqlNewBump() {

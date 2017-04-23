@@ -200,14 +200,12 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
         new Thread() {
             public void run() {
-                Log.d(TAG, "spúštam získavanie akcelerometra");
                 Looper.prepare();
 
                 while (true) {
                     accelerometer = mLocnServAcc;
                     if (accelerometer != null) {
                         init = true;
-                        Log.d(TAG, "akcelerometer získaný");
                         break;
                     }
                     try {
@@ -222,7 +220,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
 
         new Thread() {
             public void run() {
-                Log.d(TAG, "spúštam získavanie pozície");
                 Looper.prepare();
                 while (true) {
                     gps = mLocnServGPS;
@@ -230,7 +227,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                     if (gps != null && init) {
                         LatLng convert_location = gps.getCurrentLatLng();
                         if (convert_location != null) {
-                            Log.d(TAG, "pozícia získana");
                             break;
                         }
                     } else {
@@ -241,7 +237,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
                         } catch (InterruptedException e) {
                             e.getMessage();
                         }
-                        Log.d(TAG, "hľadám pozíciu");
                     }
                 }
                 detection = new navigationapp.main_application.Location(fragment_context); // detekcia blížiacich sa výtlkov
@@ -287,7 +282,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             try {
                 if (!database.isOpen() )
                     break;
-                Log.d("XXXXXXXXX", "checkCloseDb");
             }catch(SQLiteException e){
                 e.getMessage();
             }
@@ -299,7 +293,6 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
             try {
                 if (!database.isDbLockedByOtherThreads())
                     break;
-                Log.d("XXXXXXXXX", "checkIntegrityDB");
             }catch(SQLiteException e){
                 e.getMessage();
             }
@@ -310,8 +303,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
         // či mám povolené ukazovať informácia aj mimo aplikácie
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         Boolean alarm = prefs.getBoolean("alarm", Boolean.parseBoolean(null));
-        Log.d("FragmentActivity", " zobrazenie textu mimo aplikácie stav - " +alarm);
-        return (alarm || (!alarm && MainActivity.isActivityVisible())) ;
+       return (alarm || (!alarm && MainActivity.isActivityVisible())) ;
     }
 
     public static  boolean isNetworkAvailable(Context context) {  // kontrola pripojeného internetu

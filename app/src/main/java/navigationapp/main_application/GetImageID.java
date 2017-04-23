@@ -62,12 +62,10 @@ public class GetImageID   {
             params.add(new BasicNameValuePair("latitude", String.valueOf(latitude)));
             params.add(new BasicNameValuePair("longitude", String.valueOf(longitude)));
             params.add(new BasicNameValuePair("type", String.valueOf(type)));
-            Log.d(TAG, " odosielam požiadavku na server");
             JSONObject json = jsonParser.makeHttpRequest(get_image_id, "POST", params);
             if (json == null) {
                 JSONArray response = new JSONArray();
                 try {
-                    Log.d(TAG, "GetAllImage - error");
                     response.put(0, "error");
                 } catch (JSONException e1) {
                     e1.printStackTrace();
@@ -76,7 +74,6 @@ public class GetImageID   {
             }
             try {
                 int success = json.getInt("new_data");
-                Log.d(TAG, "GetAllImage - new_data" + success);
 
                 if (success == 0) {   // mam nove data na stiahnutie
                     JSONArray response = new JSONArray();
@@ -84,8 +81,7 @@ public class GetImageID   {
                     bumps = json.getJSONArray("bumps");
                     return response;
                 } else {
-                    Log.d(TAG, "GetAllImage - no data");
-                    return null;
+                    return null;  // žiadne nove data
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -95,26 +91,22 @@ public class GetImageID   {
                 } catch (JSONException e1) {
                     e1.printStackTrace();
                 }
-                Log.d(TAG, "GetAllImage - JSONException");
                 return response;
             }
         }
 
         protected void onPostExecute(JSONArray array) {
             if (array == null) {
-                Log.d(TAG, "GetAllImage onPostExecute - no data");
                 message(context.getResources().getString(R.string.image_no_data));
                 return;
             }
 
             try {
                 if (array.get(0).equals("error")) {
-                    Log.d(TAG, "GetAllImage onPostExecute - error");
                     message(context.getResources().getString(R.string.image_interent));
                     return;
                 } else if (bumps!=null) {
-                    Log.d(TAG, "GetAllImage onPostExecute - new_data");
-                    new Thread() {
+                    new Thread() {     // new data
                         public void run() {
                             Looper.prepare();
                             for (int i = 0; i < bumps.length(); i++) {
@@ -141,7 +133,6 @@ public class GetImageID   {
                         }
                     }.start();
                 }else {
-                    Log.d(TAG, "GetAllImage onPostExecute - no data");
                     message(context.getResources().getString(R.string.image_no_data));
                     return;
                 }

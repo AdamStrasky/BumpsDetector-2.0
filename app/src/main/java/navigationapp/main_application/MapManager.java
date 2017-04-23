@@ -110,7 +110,6 @@ public class MapManager extends Activity {
         new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
             public void run() {
                 Looper.prepare();
-                Log.d(TAG, "alertSelectRegion start");
                 String strName = context.getResources().getString(R.string.map_for_download);
                 // ktorá možnosť bola zvolená - currnet/ select
                 final int click = which;
@@ -272,7 +271,6 @@ public class MapManager extends Activity {
                         LatLngBounds bounds = null;
                         // ak bola zvolená sučasna obrazovka, vezme mapu zobrazenu na displeji
                         if (select == 0) {
-                            Log.d(TAG, "downloadRegion sťahujem aktuálnu obrazovku");
                             bounds = mapbox.getProjection().getVisibleRegion().latLngBounds;
                         }
                         startProgress();
@@ -284,13 +282,11 @@ public class MapManager extends Activity {
                                 e.printStackTrace();
                             }
                             if (address == null) {
-                                Log.d(TAG, "downloadRegion sťahovanie podla názvu neuspešne");
                                 endProgress(context.getResources().getString(R.string.unable_find));
                                 if (isEneableShowText(context))
                                     Toast.makeText(context, context.getResources().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
                                 return;
                             } else {
-                                Log.d(TAG, "downloadRegion sťahujem podla názvu");
                                 bounds = new LatLngBounds.Builder()
                                         .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() + 0.2, address.getLongitude() + 0.2)) // Northeast
                                         .include(new com.mapbox.mapboxsdk.geometry.LatLng(address.getLatitude() - 0.2, address.getLongitude() - .2)) // Southwest
@@ -501,7 +497,6 @@ public class MapManager extends Activity {
        if (isEndNotified)
            return;
        if (message != null) {
-           Log.d(TAG, "download end  notification");
            mBuilder.setContentText(context.getResources().getString(R.string.download_complete))
                    .setProgress(0, 0, false);
            mNotifyManager.notify(0, mBuilder.build());
@@ -519,7 +514,6 @@ public class MapManager extends Activity {
     private NotificationCompat.Builder mBuilder = null;
 
     public void downloadNotification() {
-        Log.d(TAG, "downloadNotification start");
         mNotifyManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
         mBuilder = new android.support.v4.app.NotificationCompat.Builder(context);
         mBuilder.setContentTitle(context.getResources().getString(R.string.notif_map_download))
@@ -528,13 +522,11 @@ public class MapManager extends Activity {
     }
 
     public void endDownloadNotification() {
-        Log.d(TAG, "remove notification");
         if (mNotifyManager!=null)
             mNotifyManager.cancelAll();
     }
 
     public void errorDownloadNotification() {
-        Log.d(TAG, "errorDownloadNotification set");
         mBuilder.setContentTitle(context.getResources().getString(R.string.notif_map_error))
                 .setContentText(context.getResources().getString(R.string.notif_map_interrupted))
                 .setProgress(0, 0, false);
@@ -549,7 +541,6 @@ public class MapManager extends Activity {
 
     public void mapTitleExceeded(Boolean value) {
         // nastavenie prečerpaného množstva máp
-        Log.d(TAG, "mapTitleExceeded set" + value);
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor prefEditor = sharedPref.edit();
         prefEditor.putBoolean("exceeded", value);
@@ -559,7 +550,6 @@ public class MapManager extends Activity {
     public boolean isMapTitleExceeded() {
         // kontrolo prečerpaného množstva máp
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        Log.d(TAG, "isMapTitleExceeded" + prefs.getBoolean("exceeded", Boolean.parseBoolean(null)));
         return  prefs.getBoolean("exceeded", Boolean.parseBoolean(null));
     }
 }
