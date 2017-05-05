@@ -94,7 +94,7 @@ public class Location {
                                 lock_position.unlock();
                             }
                         }
-                        if (road && select_road != null) {   // vychylil som sa s trasy, nutne prepočítať trasu
+                        if (5 > 6 && road && select_road != null) {   // vychylil som sa s trasy, nutne prepočítať trasu
                             if ( get_road && select_road != null && !isLocationOnEdge(new LatLng(location.getLatitude(), location.getLongitude()), select_road, true, 4.0)) {
                                 get_road = false;
                                if (collision_thread != null && collision_thread.isAlive()) {
@@ -309,9 +309,10 @@ public class Location {
                                         try {
                                             choise_bump = new ArrayList<LatLng>();
                                             for (int i = 0; i < all_bumps.size(); i++) {
+                                                // výtlk je na vyznačenej trase
                                                 if (select_road!= null && isLocationOnEdge(all_bumps.get(i), select_road, true, 4.0)) {
                                                     choise_bump.add(all_bumps.get(i));
-                                                    Log.d(TAG, "collision_places  add bump to warning " + i);
+
                                                 }
                                             }
                                         }
@@ -385,11 +386,14 @@ public class Location {
                         while (true) {
                             if (lock_position.tryLock()) {
                                 try {
+                                    // spočítanie rýchlosti zo zásobníka
                                     for (int i = 0; i < LIFO.size(); i++) {
                                         speed += LIFO.get(i).getSpeed();
                                     }
                                     avarage_speed = speed / LIFO.size();
+                                    // vzdialenosť na základe prvého a posledného bodu
                                     distance = getDistance((float) LIFO.get(0).getLatitude(), (float) LIFO.get(0).getLongitude(), (float) LIFO.get(LIFO.size() - 1).getLatitude(), (float) LIFO.get(LIFO.size() - 1).getLongitude());
+                                    // čas na základe prvého a posledného bodu
                                     time = LIFO.get(LIFO.size() - 1).getTime() - LIFO.get(0).getTime();
                                 } finally {
                                     lock_position.unlock();
@@ -474,14 +478,16 @@ public class Location {
                             double convert_time = result;
                             time_stop = 0;
                             int treshold = 20000;
-
+                            // overenie času pred výtlkom
                             if (convert_time > treshold || convert_time < 0)
                                 time_stop = treshold;
                             else if (convert_time < 10000) {
+                                // je pod 10 sekund, idem upozorňovať
                                 if (this.isInterrupted()) {
                                     throw new InterruptedException("");
                                 }
-                                    if (!isEneableVoice()) {
+                                // kontrola či je povolené hlasové upozornenie
+                                   if (!isEneableVoice()) {
                                     final  int rounded_distance = (int) Math.round(actual_distance);
 
                                     while (tts.isSpeaking()){ }
@@ -493,6 +499,7 @@ public class Location {
                                     while (tts.isSpeaking()){ }
                                 }
                                 else {
+                                        // kontrola či je povolené textove upozornenie
                                    if (isEneableShowText(context)) {
                                        context.runOnUiThread(new Runnable() {
                                            public void run() {
@@ -501,12 +508,14 @@ public class Location {
                                        });
                                    }
                                 }
+                                // vymazanie výtlku na, ktorý som upozornil
                                 previous_distance = -1;
                                 if (directionPoint!= null && directionPoint.size() > 0)
                                     directionPoint.remove(0);
                                 time_stop = 0;
                             } else
                                 time_stop = (int) convert_time;
+                               // nastavujem default time na další výpočet
 
                         } else
                             Log.d(TAG, "estimation no gps ");

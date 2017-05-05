@@ -321,8 +321,9 @@ public class Accelerometer extends Service implements SensorEventListener {
                                     else {
                                     }
                                     isToClose = true;
+                                    Log.d(TAG, "detect - same");
                                 }
-                              /*  else {
+                               else {
                                     double distance = getDistance((float) location.getLatitude(), (float) location.getLongitude(),
                                             (float) hashLocation.getLatitude(), (float) hashLocation.getLongitude());
                                     //nie je to novy bump, pretoze z jeho okolia uz jeden pridavam (okolie 2m)
@@ -354,13 +355,15 @@ public class Accelerometer extends Service implements SensorEventListener {
                                                    updatesLock.unlock();
                                                 }
                                             }
-                                            result = fragment_context.getResources().getString(R.string.under_bump);
+                                            result = null;
+                                           // result = fragment_context.getResources().getString(R.string.under_bump);
                                         } else {
-                                            //Log.d(TAG, "detect - under 2 meters, lower data new-" +data+ " old "+(Float) pair.getValue());
+                                            Log.d(TAG, "detect - under 2 meters, lower data new-" +data+ " old "+(Float) pair.getValue());
                                         }
+                                        Log.d(TAG, "detect - under 2 meters");
                                         isToClose = true;
                                     }
-                                }*/
+                                }
                             }
 
                         }

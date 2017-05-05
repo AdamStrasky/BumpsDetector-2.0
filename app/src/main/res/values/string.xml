@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     ////////////// main activity
+
+
     <string name="turn_gps">Turn on your GPS</string>
     <string name="not_position">Not found position</string>
     <string name="change_map_style">Please connect to internet to change map style</string>
@@ -36,6 +38,7 @@
 
     ////////////// hamburger
     <string name="menu_exit">Exit app</string>
+    <string name="menu_about">About</string>
     <string name="menu_clear">Clear map</string>
     <string name="menu_calibrate">Calibrate</string>
     <string name="menu_settings">Settings</string>
@@ -113,7 +116,7 @@
     <string name="setting_language">Choice language</string>
     <string name="setting_alarm">Notifie outside application</string>
     <string name="setting_voice">Voice warning on bump</string>
-    <string name="setting_voice_alarm">Voice inf. about add bump</string>
+    <string name="setting_voice_alarm">Voice inf. about add </string>
     <string name="confirm">Confirm</string>
     <string name="slovak">Slovak</string>
     <string name="english">English</string>
@@ -162,11 +165,16 @@
 
     <string name="load_photo">Loading</string>
 
-    <string name="image_interent">Problem with internet conncetion </string>
+    <string name="image_interent">Problem with internet connection </string>
     <string name="image_no_data">No images</string>
 
     <string name="detect_bump">Detected bump</string>
 
 
+    <string name="link_web"><a href="http://vytlky.fiit.stuba.sk/contact">vytlky.fiit.stuba.sk/contact</a></string>
+
+    <string name="text_about1">For every questions write us on email:</string>
+    <string name="text_about2">or visit us on web site</string>
+    <string name="ok">OK</string>
 
 </resources>

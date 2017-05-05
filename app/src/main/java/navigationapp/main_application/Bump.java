@@ -65,11 +65,11 @@ public class Bump {
 
     class CreateNewBump extends AsyncTask<String, String, String> {
         protected String doInBackground(String... args) {
+
             String latitude = String.valueOf(location.getLatitude());
             String longitude = String.valueOf(location.getLongitude());
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            Log.d(TAG," date "+getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss"));
-           //do databazy sa posiela vytlk s informaciami o jeho polohe, intenzite a ratingu, ktory sa vypocital na zaklade intenzity
+           //odosielaná datekcia
             params.add(new BasicNameValuePair("latitude", latitude));
             params.add(new BasicNameValuePair("longitude", longitude));
             params.add(new BasicNameValuePair("intensity", Float.toString(intensity)));
@@ -87,7 +87,7 @@ public class Bump {
                 return "error";
             }
 
-             int success = 0;
+            int success = 0;
              try {
                  success = json.getInt("success");
                 } catch (JSONException e) {
@@ -96,7 +96,7 @@ public class Bump {
                 }
             if (success == 1)
                 return "success";
-              else
+            else
                 return "error";
         }
     }

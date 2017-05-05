@@ -50,12 +50,13 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
         locationServices = com.mapbox.mapboxsdk.location.LocationServices.getLocationServices(GPSLocator.this);
     }
 
-    //vykresli cestu
+    //vykreslovanie cesty
     public void showDirection(final List<LatLng> directionPoint) {
         new Thread() {
             public void run() {
                 Looper.prepare();
-                com.mapbox.mapboxsdk.geometry.LatLng[] points = new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
+                com.mapbox.mapboxsdk.geometry.LatLng[] points =
+                        new com.mapbox.mapboxsdk.geometry.LatLng[directionPoint.size()];
                 for (int i = 0; i < directionPoint.size(); i++) {
                     points[i] = new com.mapbox.mapboxsdk.geometry.LatLng(
                             directionPoint.get(i).latitude,
@@ -121,10 +122,12 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
         else
             mCurrentLocation = null;
 
-      if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {   // nastavujem kameru ak zmenim pozíciu
+        if (location!=null && setOnPosition &&  MainActivity.isActivityVisible()) {   // nastavujem kameru ak zmenim pozíciu
             try {
-                if (mapbox!=null) {
-                    mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude())));
+                if (mapbox!=null && getmCurrentLocation()!=null && getmCurrentLocation().getLatitude()!=0 && getmCurrentLocation().getLongitude()!=0) {
+                    mapbox.easeCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(
+                            new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(),
+                                    getmCurrentLocation().getLongitude())));
                     //locationServices.onLocationChanged(getmCurrentLocation());
 
                 }
@@ -133,7 +136,7 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
             }
             if (ZoomInit)
                SetZoom();
-      }
+        }
     }
     private boolean ZoomInit = true;
 

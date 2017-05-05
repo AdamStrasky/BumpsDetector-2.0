@@ -101,27 +101,29 @@ public class ShareActivity extends AppCompatActivity {
                         loc.setLatitude(gps.getLatitude());
                         loc.setLongitude(gps.getLongitude());
                         loc.setTime(new Date().getTime());
+                        // vytváram záznam na odoslanie
                         BumpHandler = new Bump(loc, 6.0f, 1, typeIndex, choiseType(typeIndex), Settings.Secure.getString(getContentResolver(),
                                 Settings.Secure.ANDROID_ID));
                         BumpHandler.getResponse(new CallBackReturn() {
                             public void callback(String results) {
                                 if (results.equals("success")) {
+                                    // uspešne odoslaný zaznam, odosielam aj fotu
                                     create_file_photo();
                                     HandlerPhoto = new UploadPhoto(getBaseContext(),String.valueOf(latitude), String.valueOf(longitude), String.valueOf(typeIndex), getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"), f.getPath());
                                     HandlerPhoto.getResponse(new CallBackReturn() {
                                         public void callback(String results) {
                                             if (results.equals("success")) {
-                                                    Log.d(TAG, "UploadPhoto success ");
+                                                // úspešne odoslaná fotka, zmažem
                                                     f.delete();
                                             } else {
-                                                Log.d(TAG, "UploadPhoto errror ");
+                                                // nastala chyba, pošlem neskôr
                                                 save_photo(String.valueOf(latitude),String.valueOf(longitude),String.valueOf(typeIndex),f.getPath());
                                             }
                                         }
                                     });
                                     Log.d(TAG, "success handler");
                                 } else {
-                                    Log.d(TAG, "error handler, zapisujem do db");
+                                    // nastala chyba pri odoslaní, ukladám do DB
                                     BigDecimal bd = new BigDecimal(Float.toString(6));
                                     bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
                                     ContentValues contentValues = new ContentValues();

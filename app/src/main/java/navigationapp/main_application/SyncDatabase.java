@@ -91,7 +91,7 @@ public class SyncDatabase {
                             ArrayList<Integer> listManual = new ArrayList<Integer>();
                             ArrayList<Integer> listType = new ArrayList<Integer>();
                             ArrayList<String>  listText = new ArrayList<String>();
-                            
+
                             if (cursor != null && cursor.moveToFirst()) {
                                 do {
                                     if (!cursor.isNull(0) && !cursor.isNull(1) & !cursor.isNull(2) && !cursor.isNull(3)) {
@@ -170,7 +170,7 @@ public class SyncDatabase {
             regular_update = true;
         }
     }
-    
+
     ArrayList<HashMap<android.location.Location, Float>> bumpsQQ = new ArrayList<HashMap<android.location.Location, Float>>();
     ArrayList<Integer> bumpsManualQQ = new ArrayList<Integer>();
     ArrayList<Integer> bumpsTypeQQ = new ArrayList<Integer>();
@@ -588,7 +588,7 @@ public class SyncDatabase {
     String StringlistID = null;
     String StringlistDate = null;
     String StringlistCount = null;
-    
+
     private void syncList(final Double langtitude, final Double longtitude, final Integer enable_net)  {
         Log.d(TAG, "syncList start");
         new Thread() {
@@ -783,21 +783,17 @@ public class SyncDatabase {
                                                      rating = data.getInt("rating");
                                                      last_modified = data.getString("last_modified");
                                                      manual = data.getInt("manual");
-                                                     Log.d(TAG, "UpdateList b_id" + b_id);
-                                                     Log.d(TAG, "UpdateList latitude " + latitude);
-                                                     Log.d(TAG, "UpdateList longitude " + longitude);
-                                                     Log.d(TAG, "UpdateList last_modified " + last_modified);
-                                                     Log.d(TAG, "UpdateList info " + info);
                                                      Cursor cursor = null;
                                                      String sql = "SELECT * FROM my_bumps WHERE b_id_bumps=" + b_id;
                                                      try {
                                                          cursor = database.rawQuery(sql, null);
                                                          if (cursor.getCount() > 0) {
-                                                             Log.d(TAG, "UpdateList exist b_id");
+                                                             // bol pozmenení záznam, aktualizujem
                                                              sql = "UPDATE " + TABLE_NAME_BUMPS + " SET rating=rating+ " + rating + ", fix="+fix+", count=" + count +", admin_fix="+admin+", last_modified='"+last_modified+"' WHERE b_id_bumps=" + b_id;
                                                              database.execSQL(sql);
                                                          }
                                                          else {
+                                                             // vytváram nový záznam
                                                              Log.d(TAG, "UpdateList new b_id");
                                                              ContentValues contentValues = new ContentValues();
                                                              contentValues.put(Provider.bumps_detect.B_ID_BUMPS, b_id);

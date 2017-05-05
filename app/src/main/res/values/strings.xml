@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Detector</string>
-    <string name="title_activity_main">Detector</string>
+    <string name="app_name">BumpsDetector</string>
+    <string name="title_activity_main">BumpsDetector</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="appwidget_text">EXAMPLE</string>
     <string name="add_widget">Add widget</string>
+    <string name="email"><font color='blue'>strasky.adam1@gmail.com</font></string>
 
 
 </resources>

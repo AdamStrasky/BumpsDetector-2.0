@@ -35,6 +35,7 @@
 
     /////// hamburger
     <string name="menu_exit">Ukončiť</string>
+    <string name="menu_about">O nás</string>
     <string name="menu_clear">Vyčistiť mapu</string>
     <string name="menu_calibrate">Kalibrovať</string>
     <string name="menu_settings">Nastavenia</string>
@@ -112,7 +113,7 @@
     <string name="setting_language">Výber jazyka</string>
     <string name="setting_alarm">Upozorňovať mimo aplikácie</string>
     <string name="setting_voice">Hlasové upozor. na výtlk</string>
-    <string name="setting_voice_alarm">Hlas. upoz. na nový výtlk</string>
+    <string name="setting_voice_alarm">Hlas. upoz. na pridanie</string>
     <string name="confirm">Potvrdiť</string>
     <string name="slovak">Slovenský</string>
     <string name="english">Anglický</string>
@@ -162,4 +163,8 @@
     <string name="image_no_data">Žiadne obrázky</string>
 
     <string name="detect_bump">Detegovaný výtlk</string>
+    V prípade otázok nás kontaktuj alebo navštív
+    <string name="text_about1">V prípade otázok nám napíš na mail: </string>
+    <string name="text_about2">alebo nás navštív na webovej stránke</string>
+    <string name="ok">OK</string>
 </resources>

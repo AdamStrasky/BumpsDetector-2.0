@@ -255,6 +255,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         if (isEneableShowText(getActivity()))
+
             Toast.makeText(getActivity(), "GoogliApiClient connection failed", Toast.LENGTH_LONG).show();
     }
 

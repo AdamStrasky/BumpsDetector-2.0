@@ -17,6 +17,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -37,10 +38,16 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
+import android.text.util.Linkify;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -71,6 +78,8 @@ import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.constants.MyBearingTracking;
+import com.mapbox.mapboxsdk.constants.MyLocationTracking;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -189,6 +198,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mapbox.setMyLocationEnabled(false);
                 if (setOnPosition)
                     mapbox.setMyLocationEnabled(true);
+
+                mapbox.getTrackingSettings().setMyLocationTrackingMode(MyLocationTracking.TRACKING_FOLLOW);
+
+                mapbox.getTrackingSettings().setMyBearingTrackingMode(MyBearingTracking.COMPASS);
 
                 mapbox.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
                     @Override
@@ -883,9 +896,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mapManager.downloadedRegionList();
                 return true;
 
-            /* case R.id.error:
-               int number = Integer.parseInt("number");
-               return true;*/
+           case R.id.about:
+               showInfo();
+               close();
+               return true;
 
             case R.id.exit:
                 close();
@@ -972,6 +986,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 drawer.closeDrawer(GravityCompat.START);
                 return true;
         }
+    }
+
+    public void showInfo() {
+
+        final TextView web = new TextView(context);
+        final SpannableString s = new SpannableString(context.getText(R.string.link_web));
+        Linkify.addLinks(s, Linkify.WEB_URLS);
+        web.setText(s);
+        web.setMovementMethod(LinkMovementMethod.getInstance());
+        web.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        SpannableStringBuilder message = new SpannableStringBuilder();
+        message.append(new SpannableString(context.getText(R.string.text_about1)));
+        message.append(" ");
+        SpannableString email= new SpannableString(context.getText(R.string.email));
+        email.setSpan(new ForegroundColorSpan(Color.BLUE), 0, context.getText(R.string.email).length(), 0);
+        message.append(email);
+        message.append(" ");
+        message.append(new SpannableString(context.getText(R.string.text_about2)));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(context.getText(R.string.menu_about));
+        builder.setMessage(message);
+        builder.setView(web);
+        builder.setPositiveButton(context.getText(R.string.ok), null);
+        AlertDialog dialog = builder.show();
+        TextView messageText = (TextView)dialog.findViewById(android.R.id.message);
+        messageText.setGravity(Gravity.CENTER);
+        TextView titleText = (TextView)dialog.findViewById(android.R.id.title);
+        messageText.setGravity(Gravity.CENTER);
     }
 
     @Override
