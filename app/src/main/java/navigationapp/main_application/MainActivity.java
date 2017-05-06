@@ -3,6 +3,7 @@ package navigationapp.main_application;
 import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.FragmentManager;
@@ -50,8 +51,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -64,6 +67,7 @@ import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
+import io.github.douglasjunior.androidSimpleTooltip.SimpleTooltip;
 import navigationapp.Error.ExceptionHandler;
 import navigationapp.R;
 
@@ -128,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final float MEDIUM_BUMPS = 1.5f;
     private final float LARGE_BUMPS = 2.5f;
     public static int ZOOM_LEVEL = 16;
+    EditText text = null;
     private FragmentActivity fragmentActivity =null;
     public  final String FRAGMENTACTIVITY_TAG = "blankFragment";
     public  final String TAG = "MainActivity";
@@ -141,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static LinearLayout mapConfirm;
     public static Button navig_on,add_button;
     public static MapboxMap mapbox = null;
+    public Button set_location = null, show_address = null ;
     public static MapboxAccountManager manager;
     private boolean markerSelectedAuto = false;
     private boolean markerSelectedManual = false;
@@ -155,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MapManager mapManager = null;
     private PlaceLocation positionGPS = null;
     ImageView searchLocation = null;
+    public Button infosssss = null;
     private Integer numOfPicture = 0;
     private int select_iteam = 0;
     private String select_iteam_text = null;
@@ -167,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     File f = null;
     Boolean panelState = true;
     @InjectView(R.id.location)
+
     PlacesAutocompleteTextView mAutocomplete;
     com.mapbox.mapboxsdk.geometry.LatLng points =null;
     @Override
@@ -431,7 +439,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mapConfirm = (LinearLayout) findViewById(R.id.mapConfirm);
         confirm = (LinearLayout) findViewById(R.id.confirm);
         searchLocation = (ImageView) findViewById(R.id.search_img);
+        searchLocation.setVisibility(View.VISIBLE);
         layoutNavigation = (LinearLayout) findViewById(R.id.laytbtns);
+        set_location = (Button) findViewById(R.id.set_location);
+        show_address = (Button) findViewById(R.id.show_address);
+        infosssss = (Button) findViewById(R.id.infosssss);
         navig_on.setVisibility(View.INVISIBLE);
         confirm.setVisibility(View.INVISIBLE);
         mapConfirm.setVisibility(View.INVISIBLE);
@@ -441,11 +453,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         add_button.setOnClickListener(this);
         downloand_button.setOnClickListener(this);
         back_button.setOnClickListener(this);
+        set_location.setOnClickListener(this);
+        show_address.setOnClickListener(this);
         navig_on.setOnClickListener(this);
         mapManager = new MapManager(this);
-
+        layoutNavigation.setVisibility(View.INVISIBLE);
         isEneableScreen();  // nastavenie či vypínať displej
-        EditText text = (EditText) findViewById(R.id.location);
+        text = (EditText) findViewById(R.id.location);
+        text.setVisibility(View.VISIBLE);
         text.setCursorVisible(false);
         mAutocomplete.setOnPlaceSelectedListener(new OnPlaceSelectedListener() {
             @Override
@@ -463,63 +478,116 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
             }
         });
-        searchLocation.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
+
+
+
+
+        set_location.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
             @Override
             public void onClick(final View v) {
-                EditText text = (EditText) findViewById(R.id.location);
-                text.setCursorVisible(false);
-                new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
-                    public void run() {
-                        Looper.prepare();
-                        Log.d(TAG, "onClick searchLocation");
-                        if (fragmentActivity == null || fragmentActivity.detection == null) { // nieje načítana mapa
-                            if (isEneableShowText())
-                                Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        Address address = null;
-                        EditText text = (EditText) findViewById(R.id.location);
-                        if (isEneableShowText())
-                            Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
-                        hideKeyboard(v);
-                        LatLng position = null;
-                        String location = text.getText().toString();
-                        if (fragmentActivity.isNetworkAvailable(context)) {
-                            try {
-                                if (positionGPS == null) {
-                                    address = Route.findLocality(location, getApplicationContext());
-                                    position = new LatLng(address.getLatitude(), address.getLongitude());
-                                } else {
-                                    position = new LatLng(positionGPS.lat, positionGPS.lng);
-                                }
-
-                                if (address == null && positionGPS == null) {
-                                    if (isEneableShowText())
-                                        Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
-                                } else {
-                                    positionGPS = null;
-                                    final LatLng to_position = new LatLng(position.latitude, position.longitude);
-                                    fragmentActivity.detection.stop_collison_navigate();
-                                    fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
-                                }
-                            } catch (Exception e) {
-                                if (isEneableShowText())
-                                    Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
-                                if (fragmentActivity.gps != null) {
-                                    fragmentActivity.gps.remove_draw_road();
-                                    fragmentActivity.detection.setRoad(false);
-                                    fragmentActivity.detection.stop_collison_navigate();
-                                }
-                            }
-                        } else {
-                            if (isEneableShowText())
-                                Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find_net), Toast.LENGTH_LONG).show();
-                        }
-                        Looper.loop();
-                    }
-                }.start();
+                if (!fragmentActivity.checkGPSEnable() && mapbox.getMyLocation()==null) {
+                    if (isEneableShowText())
+                        Toast.makeText(context, context.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                    return ;
+                }
+                if (fragmentActivity.gps != null || mapbox.getMyLocation()!=null)
+                    fragmentActivity.gps.getOnPosition();
+                else {
+                    if (isEneableShowText())
+                        Toast.makeText(context, context.getResources().getString(R.string.not_position), Toast.LENGTH_LONG).show();
+                }
             }
         });
+
+        show_address.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
+            @Override
+            public void onClick(final View v) {
+                layoutNavigation.setVisibility(View.VISIBLE);
+                layoutNavigation.startAnimation(AnimationUtils.loadAnimation(MainActivity.this,R.anim.slide_in_left));
+            }
+        });
+
+        text.setOnTouchListener(new OnSwipeTouchListener(MainActivity.this) {
+            public void onSwipeLeft() {
+                layoutNavigation.startAnimation(AnimationUtils.loadAnimation(MainActivity.this,R.anim.slide_out_left));
+                layoutNavigation.setVisibility(View.INVISIBLE);
+                hideKeyboard();
+            }
+
+            public void onClick() {
+               text.requestFocus();
+               InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+               imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+            }
+        });
+
+        searchLocation.setOnTouchListener(new OnSwipeTouchListener(MainActivity.this) {
+
+            public void onSwipeLeft() {
+                layoutNavigation.startAnimation(AnimationUtils.loadAnimation(MainActivity.this,R.anim.slide_out_left));
+                layoutNavigation.setVisibility(View.INVISIBLE);
+                hideKeyboard();
+            }
+
+            public void onClick() {
+                hideKeyboard();
+                text = (EditText) findViewById(R.id.location);
+                text.setCursorVisible(false);
+                new Thread() {  // ukončím predchádzajucuc navigáciu ak bola, a vytvorím novú
+                public void run() {
+                    Looper.prepare();
+                    Log.d(TAG, "onClick searchLocation");
+                    if (fragmentActivity == null || fragmentActivity.detection == null) { // nieje načítana mapa
+                        if (isEneableShowText())
+                            Toast.makeText(getApplicationContext(), getApplicationContext().getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    Address address = null;
+                    EditText text = (EditText) findViewById(R.id.location);
+                    if (isEneableShowText())
+                        Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.fnd_location), Toast.LENGTH_LONG).show();
+                    hideKeyboard();
+                    LatLng position = null;
+                    String location = text.getText().toString();
+                    if (fragmentActivity.isNetworkAvailable(context)) {
+                        try {
+                            if (positionGPS == null) {
+                                address = Route.findLocality(location, getApplicationContext());
+                                position = new LatLng(address.getLatitude(), address.getLongitude());
+                            } else {
+                                position = new LatLng(positionGPS.lat, positionGPS.lng);
+                            }
+
+                            if (address == null && positionGPS == null) {
+                                if (isEneableShowText())
+                                    Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
+                            } else {
+                                positionGPS = null;
+                                final LatLng to_position = new LatLng(position.latitude, position.longitude);
+                                fragmentActivity.detection.stop_collison_navigate();
+                                fragmentActivity.detection.bumps_on_position(fragmentActivity, to_position);
+                            }
+                        } catch (Exception e) {
+                            if (isEneableShowText())
+                                Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find), Toast.LENGTH_LONG).show();
+                            if (fragmentActivity.gps != null) {
+                                fragmentActivity.gps.remove_draw_road();
+                                fragmentActivity.detection.setRoad(false);
+                                fragmentActivity.detection.stop_collison_navigate();
+                            }
+                        }
+                    } else {
+                        if (isEneableShowText())
+                            Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.unable_find_net), Toast.LENGTH_LONG).show();
+                    }
+                    Looper.loop();
+                }
+            }.start();
+            }
+        });
+
+
+
 
         registerReceiver(netReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
@@ -594,13 +662,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
 
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+       /* if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             layoutNavigation.setVisibility(View.INVISIBLE);
            //. Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
             layoutNavigation.setVisibility(View.VISIBLE);
            // Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
-        }
+        }*/
         drawerToggle.onConfigurationChanged(newConfig);
         super.onConfigurationChanged(newConfig);
 
@@ -631,20 +699,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return true;
         }
         switch (item.getItemId()) {
-
-            case R.id.position:   // nastavenie aktualnej polohy a zoomu po kliku na ikonu
-                if (!fragmentActivity.checkGPSEnable() && mapbox.getMyLocation()==null) {
-                    if (isEneableShowText())
-                        Toast.makeText(this, this.getResources().getString(R.string.turn_gps), Toast.LENGTH_LONG).show();
-                    return true;
-                }
-                if (fragmentActivity.gps != null || mapbox.getMyLocation()!=null)
-                    fragmentActivity.gps.getOnPosition();
-                else {
-                    if (isEneableShowText())
-                        Toast.makeText(this, this.getResources().getString(R.string.not_position), Toast.LENGTH_LONG).show();
-                }
-                return true;
 
             case R.id.layer:
                 if (!fragmentActivity.isNetworkAvailable(context) || mapbox == null) {
@@ -787,12 +841,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
     }
-
+    private MenuItem activeMenuItem;
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.calibrate:  // spusti prekalibrovanie aplikácie
+
+        if (activeMenuItem != null)
+            activeMenuItem.setChecked(false);
+        activeMenuItem = item;
+        item.setChecked(true);
+
+        drawerLayout.closeDrawers();
+        return true;
+
+
+     //   switch (item.getItemId()) {
+         /*   case R.id.calibrate:  // spusti prekalibrovanie aplikácie
                 close();
                 if ( fragmentActivity.accelerometer!=null) {
                     fragmentActivity.accelerometer.calibrate();
@@ -980,12 +1044,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 onDestroy();
                 return true;
-
-            default:
+*/
+       /*     default:
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
-                return true;
-        }
+                return true;*/
+     //   }
     }
 
     public void showInfo() {
@@ -1314,6 +1378,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void onClick(View v) {   // pridanie markeru na stlačenie pluska
         switch (v.getId()) {
+            case R.id.infosssss:
+               new SimpleTooltip.Builder(this)
+                        .anchorView(v)
+                        .text("Texto do Tooltip")
+                        .gravity(Gravity.BOTTOM)
+                        .animated(true)
+                        .transparentOverlay(false)
+                        .build()
+                        .show();
+                break;
             case R.id.add_button:
                 if (!fragmentActivity.checkGPSEnable()) {
                     if (isEneableShowText())
@@ -1404,9 +1478,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         activityVisible = false;
     }
 
-    public void hideKeyboard(View v) {
-        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+    public void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
     @Override

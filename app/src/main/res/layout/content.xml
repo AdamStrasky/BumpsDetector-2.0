@@ -27,10 +27,27 @@
         mapbox:center_latitude="49.2066418"
         mapbox:center_longitude="18.8746749"
         mapbox:style_url="mapbox://styles/mapbox/streets-v9"
-        mapbox:zoom="2"></com.mapbox.mapboxsdk.maps.MapView>
+        mapbox:zoom="2">
+
+        <Button
+            android:id="@+id/show_address"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignBaseline="@+id/add_button"
+
+            android:layout_marginBottom="25dp"
+            android:layout_marginLeft="0dp"
+            android:background="@drawable/gps_fixed"
+            android:textAllCaps="false"
+            android:textColor="#fff"
+            android:textSize="36sp" />
+    </com.mapbox.mapboxsdk.maps.MapView>
 
     <LinearLayout
         android:id="@+id/laytbtns"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content">
 
@@ -46,17 +63,17 @@
             android:background="#FFFFFF"
             android:hint="@string/navig"
             android:paddingLeft="20dp"
-            android:minHeight="50dp"
+            android:minHeight="57dp"
             app:pacv_googleMapsApiKey="AIzaSyA_L4Y03zBnAh6u9y6Lq2WcpcXkig_N0xs" />
 
         <ImageView
             android:id="@+id/search_img"
             android:layout_width="0dp"
-            android:layout_height="50dp"
+            android:layout_height="57dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
-            android:background="#FFFFFF"
             android:layout_weight="1"
+            android:background="#FFFFFF"
             android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha" />
     </LinearLayout>
 
@@ -151,4 +168,21 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
 
+    <Button
+        android:id="@+id/set_location"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignBaseline="@+id/add_button"
+
+        android:layout_marginBottom="25dp"
+        android:layout_marginLeft="21dp"
+        android:background="@drawable/gps_fixed"
+        android:textAllCaps="false"
+        android:textColor="#fff"
+        android:textSize="36sp"/><![CDATA[
+
+
+    />
+
+]]>
 </RelativeLayout>

@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/first_section" android:checkableBehavior="all">
+        <item
 
-    <group android:checkableBehavior="single">
-        <item android:id="@+id/calibrate" android:title="@string/menu_calibrate"></item>
+            android:title="@string/menu_exit" />
+        <item
+            android:id="@+id/search"
+
+            android:title="@string/menu_exit" />
+    </group>
+    <group android:id="@+id/second_section" android:checkableBehavior="all">
+        <item
+            android:id="@+id/events"
+
+            android:title="@string/menu_exit" />
     </group>
 
-    <group android:checkableBehavior="single">
-        <item android:id="@+id/clear_map" android:title="@string/menu_clear"></item>
-        <item android:id="@+id/navigation" android:title="@string/menu_navig"></item>
-    </group>
+    <item android:id="@+id/nav_switch"
 
-    <group android:checkableBehavior="single">
-        <item android:id="@+id/download" android:title="@string/menu_download"></item>
-        <item android:id="@+id/list" android:title="@string/menu_list"></item>
-    </group>
+        app:actionLayout="@layout/action_view_switch"
 
-    <group android:checkableBehavior="single">
-        <item android:id="@+id/action_settings" android:title="@string/menu_settings" />
-    </group>
+        android:title="Downloaded only" />
 
-    <group android:checkableBehavior="single">
-        <item android:id="@+id/about" android:title="@string/menu_about"></item>
-    </group>
-
-
-    <group android:checkableBehavior="single">
-        <item android:id="@+id/exit" android:title="@string/menu_exit"></item>
-    </group>
 
 </menu>
-
