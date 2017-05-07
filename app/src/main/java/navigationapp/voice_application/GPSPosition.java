@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
@@ -27,7 +28,7 @@ public class GPSPosition extends Service implements LocationListener {
     double longitude = 0;
     protected LocationManager locationManager = null;
     private final String TAG = "GPSPosition";
-
+    public boolean permision = false;
     public GPSPosition() {
 
     }
@@ -35,7 +36,14 @@ public class GPSPosition extends Service implements LocationListener {
     public GPSPosition(Context context) {
         this.mContext = context;
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
-        getLocation();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ActivityCompat.checkSelfPermission((mContext), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                  ||  ActivityCompat.checkSelfPermission((mContext), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                 permision = false;
+        } else {
+                permision = true;
+                getLocation();
+            }
     }
 
     public android.location.Location getLocation() {

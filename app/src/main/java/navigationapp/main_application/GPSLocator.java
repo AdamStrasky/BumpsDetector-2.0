@@ -1,9 +1,7 @@
 package navigationapp.main_application;
 
-import android.Manifest;
-import android.app.AlertDialog;
+import android.app.Activity;
 import android.app.Service;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -14,7 +12,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -35,6 +32,7 @@ import java.util.List;
 
 import navigationapp.R;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
 import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
@@ -102,19 +100,16 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
     }
 
     protected void startLocationUpdates() {
-
-        if ( Build.VERSION.SDK_INT >= 23 &&
-                ContextCompat.checkSelfPermission( GPSLocator.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission( GPSLocator.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            return  ;
-
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
-    }
-
-    protected void makeRequest() {
-        ActivityCompat.requestPermissions(fragment_context,
-                new String[]{Manifest.permission.RECORD_AUDIO},
-                1);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ActivityCompat.checkSelfPermission((Activity) fragment_context, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    || ActivityCompat.checkSelfPermission((Activity) fragment_context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions((Activity) fragment_context, new String[]{
+                        ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION
+                }, 10);
+            } else
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
+        } else
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
     }
 
     protected LocationRequest createLocationRequest() {
@@ -140,7 +135,6 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
                             new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(),
                                     getmCurrentLocation().getLongitude())));
                     //locationServices.onLocationChanged(getmCurrentLocation());
-
                 }
             } catch  (NullPointerException e) {
                 e.getMessage();
@@ -149,6 +143,25 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
                SetZoom();
         }
     }
+
+    public void startLocation()  {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ActivityCompat.checkSelfPermission((Activity)fragment_context, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    ||  ActivityCompat.checkSelfPermission((Activity)fragment_context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions((Activity) fragment_context, new String[]{
+                        ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION
+                }, 10);
+            }else {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
+                setPosition();
+            }
+        }else {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
+            setPosition();
+        }
+    }
+
+
     private boolean ZoomInit = true;
 
     public void SetZoom() {    // nastavujem kam sa ma presunúť kamera s akým zoomov
@@ -179,9 +192,49 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
             Toast.makeText(this, this.getResources().getString(R.string.not_position), Toast.LENGTH_LONG).show();
     }
 
+    public void setPosition() {
+        ZoomInit = false;
+        if (mapbox!=null  && getmCurrentLocation()!=null){
+            final   com.mapbox.mapboxsdk.geometry.LatLng yourLatLng = new com.mapbox.mapboxsdk.geometry.LatLng(getmCurrentLocation().getLatitude(), getmCurrentLocation().getLongitude());
+            locationServices.onLocationChanged(getmCurrentLocation());
+
+            final CameraPosition position = new CameraPosition.Builder()
+                    .target(yourLatLng)
+                    .zoom(ZOOM_LEVEL)
+                    .build();
+
+            mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000,
+                    new MapboxMap.CancelableCallback() {
+                        @Override
+                        public void onCancel() {
+                            mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            mapbox.animateCamera(CameraUpdateFactory.newCameraPosition(position), 6000);
+
+                        }
+                    });
+        }
+    }
+
+
     public void getOnPosition() {
-        ZoomInit = true;
-        SetZoom();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ActivityCompat.checkSelfPermission((Activity) fragment_context, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    || ActivityCompat.checkSelfPermission((Activity) fragment_context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions((Activity) fragment_context, new String[]{
+                        ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION
+                }, 10);
+            } else {
+                ZoomInit = true;
+                SetZoom();
+            }
+        } else {
+            ZoomInit = true;
+            SetZoom();
+        }
     }
 
     public IBinder onBind(Intent intent) {

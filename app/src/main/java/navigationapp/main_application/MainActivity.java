@@ -1,5 +1,6 @@
 package navigationapp.main_application;
 
+import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
@@ -13,6 +14,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -25,6 +27,7 @@ import android.location.Address;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -33,6 +36,7 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -73,6 +77,7 @@ import com.daimajia.slider.library.SliderLayout;
 import com.daimajia.slider.library.SliderTypes.BaseSliderView;
 import com.daimajia.slider.library.SliderTypes.TextSliderView;
 import com.daimajia.slider.library.Tricks.ViewPagerEx;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
@@ -120,7 +125,8 @@ import static navigationapp.main_application.MapManager.selectedName;
 import static navigationapp.main_application.MapManager.setOnPosition;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener , BaseSliderView.OnSliderClickListener, ViewPagerEx.OnPageChangeListener{
-
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 10;
+    public static final int MY_PERMISSIONS_WRITE_EXTERNAL = 15;
     private SlidingUpPanelLayout mLayout;
     private SliderLayout mDemoSlider;
     private Context context;
@@ -168,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String latitude_photo = null;
     private String longitude_photo = null;
     private String type_photo = null;
+    int pick = 0;
     File f = null;
     SimpleTooltip  tip_info = null;
     Boolean panelState = true;
@@ -1303,6 +1310,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         freeMemory();
+                        pick = PICK_IMAGE_ADD_ID;
                         onPickImage( getCurrentFocus(),PICK_IMAGE_ADD_ID);
                     }
                 })
@@ -1559,6 +1567,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                pick = PICK_IMAGE_ID;
                onPickImage( getCurrentFocus(),PICK_IMAGE_ID);
             }
         });
@@ -1577,8 +1586,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void onPickImage(View view,Integer id) {
-        Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
-        startActivityForResult(chooseImageIntent, id);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            if ( ContextCompat.checkSelfPermission(this,Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_WRITE_EXTERNAL);
+            }
+            else{
+                Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
+                startActivityForResult(chooseImageIntent, id);
+            }
+        else{
+            Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
+            startActivityForResult(chooseImageIntent, id);
+        }
     }
 
     @Override
@@ -1801,6 +1820,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (InterruptedException e) {
                     e.getMessage();
                 }
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] grantResults) {
+        if (requestCode == MY_PERMISSIONS_REQUEST_LOCATION) {
+            if (grantResults.length == 2
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                fragmentActivity.gps.startLocation();
+            }
+        }
+
+        if (requestCode == MY_PERMISSIONS_WRITE_EXTERNAL) {
+            if (grantResults.length == 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
+                startActivityForResult(chooseImageIntent, pick);
             }
         }
     }

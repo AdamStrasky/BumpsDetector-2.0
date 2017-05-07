@@ -2,6 +2,7 @@ package navigationapp.widget;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Handler;
@@ -28,10 +29,31 @@ public class Click {
     private GPSPosition gps = null;
     private final String TAG = "Click";
     private Bump Handler = null;
+    private Context cContext;
+    Integer cType;
+    String cText;
+    String cDeviceID;
 
-    public Click(final Context context, final Integer type,final String text, final String deviceID) {
+    public Click(final Context context, Integer type, String text, String deviceID) {
+        cContext = context;
+        cType = type;
+        cText = text;
+        cDeviceID= deviceID;
         gps = new GPSPosition(context);
+        if (gps.permision)
+            send(context,type,text,cDeviceID);
+        else {
+            android.os.Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(context, context.getResources().getString(R.string.permision), Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    }
 
+    public void send(final Context context, final Integer type,final String text, final String deviceID) {
         if(gps.canGetLocation()) { // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu
             final double longitude = gps.getLongitude();

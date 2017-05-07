@@ -1,14 +1,20 @@
 package navigationapp.share;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,8 +43,11 @@ import navigationapp.main_application.Provider;
 import navigationapp.main_application.UploadPhoto;
 import navigationapp.voice_application.GPSPosition;
 
-public class ShareActivity extends AppCompatActivity {
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
+public class ShareActivity extends AppCompatActivity {
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 10;
+    public static final int MY_PERMISSIONS_WRITE_EXTERNAL = 15;
     RadioGroup radioGroup = null;
     EditText editText = null;
     Button sendButton = null;
@@ -86,73 +95,95 @@ public class ShareActivity extends AppCompatActivity {
             @Override
             public void onClick(final View v) {
                 initialization_database();
-                gps = new GPSPosition(ShareActivity.this);
-                Log.d(TAG, gps.canGetLocation() + " getLatitude " + gps.getLatitude() + " getLongitude " + gps.getLongitude());
-                if (gps.canGetLocation() && gps.getLatitude() != 0 && gps.getLongitude() != 0) {
-                    final double latitude = gps.getLatitude(); // vratim si polohu
-                    final double longitude = gps.getLongitude();
-
-                    if (check) {
-                        pDialog = new ProgressDialog(ShareActivity.this);
-                        pDialog.setMessage(getApplication().getString(R.string.share_upload));
-                        pDialog.show();
-                        typeIndex = radioGroup.indexOfChild(findViewById(radioGroup.getCheckedRadioButtonId()));
-                        Location loc = new Location("Location");
-                        loc.setLatitude(gps.getLatitude());
-                        loc.setLongitude(gps.getLongitude());
-                        loc.setTime(new Date().getTime());
-                        // vytváram záznam na odoslanie
-                        BumpHandler = new Bump(loc, 6.0f, 1, typeIndex, choiseType(typeIndex), Settings.Secure.getString(getContentResolver(),
-                                Settings.Secure.ANDROID_ID));
-                        BumpHandler.getResponse(new CallBackReturn() {
-                            public void callback(String results) {
-                                if (results.equals("success")) {
-                                    // uspešne odoslaný zaznam, odosielam aj fotu
-                                    create_file_photo();
-                                    HandlerPhoto = new UploadPhoto(getBaseContext(),String.valueOf(latitude), String.valueOf(longitude), String.valueOf(typeIndex), getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"), f.getPath());
-                                    HandlerPhoto.getResponse(new CallBackReturn() {
-                                        public void callback(String results) {
-                                            if (results.equals("success")) {
-                                                // úspešne odoslaná fotka, zmažem
-                                                    f.delete();
-                                            } else {
-                                                // nastala chyba, pošlem neskôr
-                                                save_photo(String.valueOf(latitude),String.valueOf(longitude),String.valueOf(typeIndex),f.getPath());
-                                            }
-                                        }
-                                    });
-                                    Log.d(TAG, "success handler");
-                                } else {
-                                    // nastala chyba pri odoslaní, ukladám do DB
-                                    BigDecimal bd = new BigDecimal(Float.toString(6));
-                                    bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
-                                    ContentValues contentValues = new ContentValues();
-                                    contentValues.put(Provider.new_bumps.LATITUDE, latitude);
-                                    contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
-                                    contentValues.put(Provider.new_bumps.MANUAL, 1);
-                                    contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
-                                    contentValues.put(Provider.new_bumps.TYPE, typeIndex);
-                                    contentValues.put(Provider.new_bumps.TEXT, choiseType(typeIndex));
-                                    contentValues.put(Provider.new_bumps.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
-                                    sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
-                                    create_file_photo();
-                                    save_photo(String.valueOf(latitude),String.valueOf(longitude),String.valueOf(typeIndex),f.getPath());
-                                }
-                                pDialog.dismiss();
-                            }
-                        });
-                        Toast.makeText(getApplication(), getApplication().getString(R.string.share_was_send), Toast.LENGTH_LONG).show();
-                        gps.stopUsingGPS();
-                        finish();
-                    } else
-                        Toast.makeText(getApplication(), getApplication().getString(R.string.share_check), Toast.LENGTH_LONG).show();
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (ContextCompat.checkSelfPermission(ShareActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                          || ContextCompat.checkSelfPermission(ShareActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSIONS_REQUEST_LOCATION);
+                    } else {
+                        gps = new GPSPosition(ShareActivity.this);
+                        send();
+                    }
                 } else {
-                    Toast.makeText(getApplication(), getApplication().getString(R.string.share_gps), Toast.LENGTH_LONG).show();
-                    gps.stopUsingGPS();
+                    gps = new GPSPosition(ShareActivity.this);
+                    send();
                 }
             }
         });
+    }
+
+    public void send () {
+        Log.d(TAG, gps.canGetLocation() + " getLatitude " + gps.getLatitude() + " getLongitude " + gps.getLongitude());
+
+        if (gps.canGetLocation() && gps.getLatitude() != 0 && gps.getLongitude() != 0) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                if (ContextCompat.checkSelfPermission(ShareActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_WRITE_EXTERNAL);
+                    return;
+                }
+
+            final double latitude = gps.getLatitude(); // vratim si polohu
+            final double longitude = gps.getLongitude();
+
+            if (check) {
+                pDialog = new ProgressDialog(ShareActivity.this);
+                pDialog.setMessage(getApplication().getString(R.string.share_upload));
+                pDialog.show();
+                typeIndex = radioGroup.indexOfChild(findViewById(radioGroup.getCheckedRadioButtonId()));
+                Location loc = new Location("Location");
+                loc.setLatitude(gps.getLatitude());
+                loc.setLongitude(gps.getLongitude());
+                loc.setTime(new Date().getTime());
+                // vytváram záznam na odoslanie
+                BumpHandler = new Bump(loc, 6.0f, 1, typeIndex, choiseType(typeIndex), Settings.Secure.getString(getContentResolver(),
+                        Settings.Secure.ANDROID_ID));
+                BumpHandler.getResponse(new CallBackReturn() {
+                    public void callback(String results) {
+                        if (results.equals("success")) {
+                            // uspešne odoslaný zaznam, odosielam aj fotu
+                            create_file_photo();
+                            HandlerPhoto = new UploadPhoto(getBaseContext(),String.valueOf(latitude), String.valueOf(longitude), String.valueOf(typeIndex), getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"), f.getPath());
+                            HandlerPhoto.getResponse(new CallBackReturn() {
+                                public void callback(String results) {
+                                    if (results.equals("success")) {
+                                        // úspešne odoslaná fotka, zmažem
+                                        f.delete();
+                                    } else {
+                                        // nastala chyba, pošlem neskôr
+                                        save_photo(String.valueOf(latitude),String.valueOf(longitude),String.valueOf(typeIndex),f.getPath());
+                                    }
+                                }
+                            });
+                            Log.d(TAG, "success handler");
+                        } else {
+                            // nastala chyba pri odoslaní, ukladám do DB
+                            BigDecimal bd = new BigDecimal(Float.toString(6));
+                            bd = bd.setScale(6, BigDecimal.ROUND_HALF_UP);
+                            ContentValues contentValues = new ContentValues();
+                            contentValues.put(Provider.new_bumps.LATITUDE, latitude);
+                            contentValues.put(Provider.new_bumps.LONGTITUDE, longitude);
+                            contentValues.put(Provider.new_bumps.MANUAL, 1);
+                            contentValues.put(Provider.new_bumps.INTENSITY, String.valueOf(bd));
+                            contentValues.put(Provider.new_bumps.TYPE, typeIndex);
+                            contentValues.put(Provider.new_bumps.TEXT, choiseType(typeIndex));
+                            contentValues.put(Provider.new_bumps.CREATED_AT, getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss"));
+                            sb.insert(Provider.new_bumps.TABLE_NAME_NEW_BUMPS, null, contentValues);
+                            create_file_photo();
+                            save_photo(String.valueOf(latitude),String.valueOf(longitude),String.valueOf(typeIndex),f.getPath());
+                        }
+                        pDialog.dismiss();
+                    }
+                });
+                Toast.makeText(getApplication(), getApplication().getString(R.string.share_was_send), Toast.LENGTH_LONG).show();
+                gps.stopUsingGPS();
+                finish();
+            } else
+                Toast.makeText(getApplication(), getApplication().getString(R.string.share_check), Toast.LENGTH_LONG).show();
+
+        } else {
+            Toast.makeText(getApplication(), getApplication().getString(R.string.share_gps), Toast.LENGTH_LONG).show();
+            gps.stopUsingGPS();
+        }
+
     }
 
     public String getDate(long milliSeconds, String dateFormat) {
@@ -236,6 +267,24 @@ public class ShareActivity extends AppCompatActivity {
 
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] grantResults) {
+
+        if (requestCode == MY_PERMISSIONS_REQUEST_LOCATION) {
+            if (grantResults.length == 2
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                gps = new GPSPosition(ShareActivity.this);
+                send();
+            }
+        }
+        if (requestCode == MY_PERMISSIONS_WRITE_EXTERNAL) {
+            if (grantResults.length == 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                send();
             }
         }
     }

@@ -65,6 +65,7 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        fragment_context = getActivity();
         if (!isNetworkAvailable(getActivity())) {  // kontrola internetu
             if (isEneableShowText(getActivity()))
                 Toast.makeText(getActivity(), getActivity().getResources().getString(R.string.offline_mode), Toast.LENGTH_SHORT).show();
@@ -176,13 +177,11 @@ public class FragmentActivity extends Fragment implements GoogleApiClient.Connec
     }
     boolean init = false;
     public void init_servise() {  // inicializujem  služby
-
         global_mGoogleApiClient = mGoogleApiClient;
         mServiceConnectedGPS = getActivity().bindService(new Intent(getActivity().getApplicationContext(), GPSLocator.class), mServconnGPS, Context.BIND_AUTO_CREATE);
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                fragment_context = getActivity();
                 global_gps = mLocnServGPS;
                 mServiceConnectedAcc = getActivity().bindService(new Intent(getActivity().getApplicationContext(), Accelerometer.class), mServconnAcc, Context.BIND_AUTO_CREATE);
             }

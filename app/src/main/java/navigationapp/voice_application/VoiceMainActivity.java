@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
@@ -74,6 +76,12 @@ public class VoiceMainActivity extends Activity  {
 
         initialization_database(); // inicializácia databázy
         gps = new GPSPosition(VoiceMainActivity.this);
+        if (!gps.permision) {
+            Toast.makeText(this, getApplication().getResources().getString(R.string.permision)  ,Toast.LENGTH_LONG).show();
+            gps.stopUsingGPS();
+            finish();
+            return;
+        }
 
         if(gps.canGetLocation()){ // kontrola GPS
             final double latitude = gps.getLatitude(); // vratim si polohu

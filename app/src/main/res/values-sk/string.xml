@@ -168,4 +168,5 @@
     <string name="text_about2">alebo nás navštív na webovej stránke</string>
     <string name="ok">OK</string>
     <string name="tooltip_download">Ak chcete povoliť navigáciu v režime offline v konkrétnom regióne, zadajte názov mesta alebo regiónu ...</string>
+    <string name="permision">Povoľte najskôr povolenie GPS v aplikácii</string>
 </resources>
