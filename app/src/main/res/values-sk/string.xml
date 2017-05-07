@@ -8,7 +8,7 @@
     <string name="satellite">Satelitné</string>
     <string name="outdoors">Terénne</string>
     <string name="cancel">Zrušiť</string>
-    <string name="map">Mapy</string>
+    <string name="map">Typy máp</string>
     <string name="sh_bumps">Výtlky</string>
     <string name="all_bumps">Všetky výtlky</string>
     <string name="med_lar_bumps">Stredné a veľké</string>
@@ -35,12 +35,12 @@
 
     /////// hamburger
     <string name="menu_exit">Ukončiť</string>
-    <string name="menu_about">O nás</string>
-    <string name="menu_clear">Vyčistiť mapu</string>
+    <string name="menu_about">O aplikácii</string>
+    <string name="menu_clear">Vymazať výtlky z mapy</string>
     <string name="menu_calibrate">Kalibrovať</string>
     <string name="menu_settings">Nastavenia</string>
     <string name="menu_download">Stiahnuť oblasť</string>
-    <string name="menu_list">Zoznam oblastí</string>
+    <string name="menu_list">Stiahnuté oblasti</string>
     <string name="menu_navig">Ukončiť navigáciu</string>
 
     ///// accelerometer
@@ -105,15 +105,15 @@
     <string name="voice_turn_gps">Prosím, povoľte GPS na využívanie tejto funkcionality</string>
     <string name="voice_language_not_supported">Jazyk nie je podporovaný, prosím stiahnite si jazykový balík britskéj angličtiny na hlasové využívanie</string>
 
-    //// settings activity
-    <string name="setting_name">Vaše meno</string>
+    //// settings activity   Your name for voice control
+    <string name="setting_name">Vaše meno na hlasové ovládanie</string>
     <string name="setting_bumps_download">Sťahovať výtlky len na wifi</string>
     <string name="setting_screen">Nevypínať displej</string>
     <string name="setting_map">Sťahovať mapu len na wifi</string>
     <string name="setting_language">Výber jazyka</string>
-    <string name="setting_alarm">Upozorňovať mimo aplikácie</string>
-    <string name="setting_voice">Hlasové upozor. na výtlk</string>
-    <string name="setting_voice_alarm">Hlas. upoz. na pridanie</string>
+    <string name="setting_alarm">Upozorňovať na pozadí</string>
+    <string name="setting_voice">Hlasové upozornenie na výtlk</string>
+    <string name="setting_voice_alarm">Hlasové upozor. na pridanie</string>
     <string name="confirm">Potvrdiť</string>
     <string name="slovak">Slovenský</string>
     <string name="english">Anglický</string>
@@ -167,4 +167,5 @@
     <string name="text_about1">V prípade otázok nám napíš na mail: </string>
     <string name="text_about2">alebo nás navštív na webovej stránke</string>
     <string name="ok">OK</string>
+    <string name="tooltip_download">Ak chcete povoliť navigáciu v režime offline v konkrétnom regióne, zadajte názov mesta alebo regiónu ...</string>
 </resources>

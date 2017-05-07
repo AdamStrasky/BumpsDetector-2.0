@@ -4,14 +4,16 @@
 
     android:orientation="horizontal" android:layout_width="match_parent"
 
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    >
 
 
     <Button
-        android:id="@+id/infosssss"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@drawable/gps_fixed"
+        android:id="@+id/info_btn"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/info_icon"
         android:onClick="onClick">
 
     </Button>

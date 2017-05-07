@@ -1,6 +1,9 @@
 package navigationapp.main_application;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Service;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -10,6 +13,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
@@ -31,6 +35,7 @@ import java.util.List;
 
 import navigationapp.R;
 
+import static navigationapp.main_application.FragmentActivity.fragment_context;
 import static navigationapp.main_application.FragmentActivity.global_mGoogleApiClient;
 import static navigationapp.main_application.MainActivity.ZOOM_LEVEL;
 import static navigationapp.main_application.MainActivity.mapbox;
@@ -104,6 +109,12 @@ public class GPSLocator extends Service implements LocationListener, MapboxMap.O
             return  ;
 
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
+    }
+
+    protected void makeRequest() {
+        ActivityCompat.requestPermissions(fragment_context,
+                new String[]{Manifest.permission.RECORD_AUDIO},
+                1);
     }
 
     protected LocationRequest createLocationRequest() {

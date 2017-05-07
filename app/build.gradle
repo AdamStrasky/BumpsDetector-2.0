@@ -59,7 +59,6 @@ dependencies {
     compile 'com.daimajia.slider:library:1.1.5@aar'
     compile 'com.loopj.android:android-async-http:1.4.9'
     compile 'com.github.douglasjunior:android-simple-tooltip:0.2.0'
-
 }
 
 repositories {

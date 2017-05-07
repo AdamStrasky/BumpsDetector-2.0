@@ -3,7 +3,6 @@ package navigationapp.main_application;
 import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.FragmentManager;
@@ -39,7 +38,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -51,7 +49,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
@@ -161,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MapManager mapManager = null;
     private PlaceLocation positionGPS = null;
     ImageView searchLocation = null;
-    public Button infosssss = null;
+    public Button  tooltip = null;
     private Integer numOfPicture = 0;
     private int select_iteam = 0;
     private String select_iteam_text = null;
@@ -172,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String longitude_photo = null;
     private String type_photo = null;
     File f = null;
+    SimpleTooltip  tip_info = null;
     Boolean panelState = true;
     @InjectView(R.id.location)
 
@@ -443,7 +441,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         layoutNavigation = (LinearLayout) findViewById(R.id.laytbtns);
         set_location = (Button) findViewById(R.id.set_location);
         show_address = (Button) findViewById(R.id.show_address);
-        infosssss = (Button) findViewById(R.id.infosssss);
+        tooltip = (Button) findViewById(R.id.info_btn);
         navig_on.setVisibility(View.INVISIBLE);
         confirm.setVisibility(View.INVISIBLE);
         mapConfirm.setVisibility(View.INVISIBLE);
@@ -478,9 +476,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
             }
         });
-
-
-
 
         set_location.setOnClickListener(new View.OnClickListener() {  // vymazenie textu navige to na kliknutie
             @Override
@@ -586,9 +581,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-
-
-
         registerReceiver(netReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
         FragmentManager fragmentManager = getFragmentManager();  // vytváranie fragmentu
@@ -661,14 +653,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-
-       /* if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            layoutNavigation.setVisibility(View.INVISIBLE);
-           //. Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            layoutNavigation.setVisibility(View.VISIBLE);
-           // Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
-        }*/
         drawerToggle.onConfigurationChanged(newConfig);
         super.onConfigurationChanged(newConfig);
 
@@ -676,15 +660,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onBackPressed() {  // preťažený klik spať ak je zobrazené menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+
+       DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+            if (tip_info!=null) {
+                tip_info.dismiss();
+                tip_info = null;
+            }
         }  else if (mLayout != null &&
                 (mLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED || mLayout.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED)) {
             mLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         } else {
-            // super.onBackPressed();
+           //  super.onBackPressed();
         }
+
     }
 
     @Override
@@ -846,17 +836,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
 
-        if (activeMenuItem != null)
-            activeMenuItem.setChecked(false);
-        activeMenuItem = item;
-        item.setChecked(true);
+        switch (item.getItemId()) {
 
-        drawerLayout.closeDrawers();
-        return true;
-
-
-     //   switch (item.getItemId()) {
-         /*   case R.id.calibrate:  // spusti prekalibrovanie aplikácie
+        case R.id.calibrate:  // spusti prekalibrovanie aplikácie
                 close();
                 if ( fragmentActivity.accelerometer!=null) {
                     fragmentActivity.accelerometer.calibrate();
@@ -965,7 +947,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                close();
                return true;
 
-            case R.id.exit:
+           case R.id.exit:
                 close();
                 if (fragmentActivity.accelerometer!=null) {
                     while (true) {
@@ -1044,12 +1026,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 onDestroy();
                 return true;
-*/
-       /*     default:
+
+            default:
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
-                return true;*/
-     //   }
+                return true;
+          }
     }
 
     public void showInfo() {
@@ -1376,17 +1358,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         builderSingle.show();
     }
 
-    public void onClick(View v) {   // pridanie markeru na stlačenie pluska
+    public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.infosssss:
-               new SimpleTooltip.Builder(this)
+            case R.id.info_btn:
+                SimpleTooltip.Builder simpleTooltip = new SimpleTooltip.Builder(this);
+                    simpleTooltip
                         .anchorView(v)
-                        .text("Texto do Tooltip")
+                        .text(context.getResources().getString(R.string.tooltip_download))
                         .gravity(Gravity.BOTTOM)
+                        .arrowColor(Color.CYAN)
                         .animated(true)
-                        .transparentOverlay(false)
-                        .build()
-                        .show();
+                        .dismissOnOutsideTouch(true)
+                        .dismissOnInsideTouch(true)
+                        .backgroundColor(Color.CYAN)
+                        .transparentOverlay(false);
+                tip_info = simpleTooltip.build();
+                tip_info.show();
+
                 break;
             case R.id.add_button:
                 if (!fragmentActivity.checkGPSEnable()) {
