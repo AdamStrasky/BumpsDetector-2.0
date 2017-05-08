@@ -76,7 +76,7 @@ public class Bump {
             params.add(new BasicNameValuePair("rating", Float.toString(rating)));
             params.add(new BasicNameValuePair("manual", Integer.toString(manual)));
             params.add(new BasicNameValuePair("type", Integer.toString(type)));
-            params.add(new BasicNameValuePair("device_id", androidId+"AC"));
+            params.add(new BasicNameValuePair("device_id", androidId));
             params.add(new BasicNameValuePair("date",  getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss")));
             params.add(new BasicNameValuePair("actual_date", getDate(new Date().getTime(), "yyyy-MM-dd HH:mm:ss")));
             params.add(new BasicNameValuePair("info", text));

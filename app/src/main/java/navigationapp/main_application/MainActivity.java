@@ -54,6 +54,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
@@ -199,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDemoSlider.setDuration(8000);
         mDemoSlider.addOnPageChangeListener(this);
         mDemoSlider.setPresetTransformer(SliderLayout.Transformer.RotateDown);
+
 
         ButterKnife.inject(this);
         context = this;
