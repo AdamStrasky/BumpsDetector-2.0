@@ -177,5 +177,5 @@
     <string name="text_about2">or visit us on web site</string>
     <string name="ok">OK</string>
     <string name="permision">Eneable GPS permition in aplication first</string>
-
+    <string name="tooltip_download">To enable navigation in offline mode in specific region, type name of city or region...</string>
 </resources>

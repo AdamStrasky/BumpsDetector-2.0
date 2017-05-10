@@ -10,7 +10,6 @@
     sothree:umanoPanelHeight="90dp"
     sothree:umanoShadowHeight="4dp"
     sothree:umanoParallaxOffset="100dp"
-    sothree:umanoDragView="@+id/dragView"
     sothree:umanoOverlay="true"
     sothree:umanoScrollableView="@+id/list">
 
@@ -80,9 +79,6 @@
                 android:layout_marginRight="15dp"
                 />
 
-
-
-
             <Button
                 android:id="@+id/add"
                 android:layout_width="80dp"
@@ -103,15 +99,13 @@
         <com.daimajia.slider.library.SliderLayout
             android:id="@+id/slider"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            />
+            android:layout_height="match_parent"/>
 
         <com.daimajia.slider.library.Indicators.PagerIndicator
             android:id="@+id/custom_indicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            />
+            android:gravity="center" />
 
     </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

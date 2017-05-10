@@ -36,7 +36,6 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -50,11 +49,11 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.text.util.Linkify;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
@@ -78,7 +77,6 @@ import com.daimajia.slider.library.SliderLayout;
 import com.daimajia.slider.library.SliderTypes.BaseSliderView;
 import com.daimajia.slider.library.SliderTypes.TextSliderView;
 import com.daimajia.slider.library.Tricks.ViewPagerEx;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
@@ -175,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String latitude_photo = null;
     private String longitude_photo = null;
     private String type_photo = null;
+    private Integer  displej_height = 1280;
     int pick = 0;
     File f = null;
     SimpleTooltip  tip_info = null;
@@ -190,7 +189,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         manager = MapboxAccountManager.start(this,"pk.eyJ1IjoiYWRhbXN0cmFza3kiLCJhIjoiY2l1aDYwYzZvMDAydTJ5b2dwNXoyNHJjeCJ9.XsDrnj02GHMwBExP5Va35w");
         Language.setLanguage(MainActivity.this,getLanguage());
-        setContentView(R.layout.activity_main);
+        Display display = getWindowManager().getDefaultDisplay();
+        if (display.getHeight()>= displej_height)
+         setContentView(R.layout.activity_main_large);
+        else
+            setContentView(R.layout.activity_main_small);
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         mLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         mLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
@@ -200,8 +203,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDemoSlider.setDuration(8000);
         mDemoSlider.addOnPageChangeListener(this);
         mDemoSlider.setPresetTransformer(SliderLayout.Transformer.RotateDown);
-
-
         ButterKnife.inject(this);
         context = this;
         mapView = (MapView) findViewById(R.id.mapboxMarkerMapView);
@@ -620,7 +621,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drawerToggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
         mLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
