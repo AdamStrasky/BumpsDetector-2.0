@@ -608,9 +608,9 @@ public class SyncDatabase {
                             StringlistDate = null;
                             StringlistCount = null;
 
-                            String selectQuery = "SELECT b_id_bumps, last_modified, count  FROM " + TABLE_NAME_BUMPS
-                                    + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))";
+                            String selectQuery = "SELECT b_id_bumps, last_modified, count  FROM " + TABLE_NAME_BUMPS   + " where " +
+                                /*    + " where (last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "*/
+                                     " (ROUND(latitude,1)==ROUND(" + langtitude + ",1) and ROUND(longitude,1)==ROUND(" + longtitude + ",1))";
 
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();

@@ -106,8 +106,8 @@ public class MapLayer {
                             String ago_formated = ago.format(cal.getTime());
                             // seleknutie vytlk z oblasti a starych 280 dni
                             String selectQuery = "SELECT latitude,longitude,count,manual,last_modified,info,fix FROM my_bumps WHERE admin_fix=0 AND rating/count >=" + level + " AND " +
-                                    " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1) AND type=0) ";
+                                 /*   " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "*/
+                                     " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1) AND type=0) ";
                             DatabaseOpenHelper databaseHelper = new DatabaseOpenHelper(context);
                             SQLiteDatabase database = databaseHelper.getReadableDatabase();
                             checkIntegrityDB(database);
@@ -179,8 +179,8 @@ public class MapLayer {
                             ago = new SimpleDateFormat("yyyy-MM-dd");
                             ago_formated = ago.format(cal.getTime());
                             selectQuery = "SELECT latitude,longitude,count,last_modified,info,type, fix FROM my_bumps WHERE admin_fix=0 AND " +
-                                    " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "
-                                    + " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)  AND type>0) ";
+                                   /* " ( last_modified BETWEEN '" + ago_formated + " 00:00:00' AND '" + now_formated + " 23:59:59') and  "*/
+                                     " (ROUND(latitude,1)==ROUND(" + latitude + ",1) and ROUND(longitude,1)==ROUND(" + longitude + ",1)  AND type>0) ";
 
                             cursor = null;
                             try {

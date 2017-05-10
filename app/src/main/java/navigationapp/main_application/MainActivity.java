@@ -210,9 +210,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onMapReady(final MapboxMap mapboxMap) {
                 mapbox = mapboxMap;
+                mapbox.getUiSettings().setRotateGesturesEnabled(true);
+                mapbox.getUiSettings().setScrollGesturesEnabled(true);
                 mapbox.setMyLocationEnabled(false);
+
                 if (setOnPosition)
-                    mapbox.setMyLocationEnabled(true);
+                  mapbox.setMyLocationEnabled(true);
 
                 mapbox.getTrackingSettings().setMyLocationTrackingMode(MyLocationTracking.TRACKING_FOLLOW);
 
