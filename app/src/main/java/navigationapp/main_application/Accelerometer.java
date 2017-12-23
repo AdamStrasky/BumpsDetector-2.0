@@ -283,89 +283,116 @@ public class Accelerometer extends Service implements SensorEventListener {
             try {
                 if (lockZoznam.tryLock()) {
                     try {
-                        for (HashMap<Location, Float> bump : possibleBumps) {
-                            Iterator it = bump.entrySet().iterator();
-                            while (it.hasNext()) {
-                                HashMap.Entry pair = (HashMap.Entry)it.next();
-                                Location hashLocation = (Location) pair.getKey();
-                                //ak je location rovnaka, neprida sa vytlk
-                                if ((location.getLatitude() == hashLocation.getLatitude()) && (location.getLongitude() == hashLocation.getLongitude())) {
-                                    if (data > (Float) pair.getValue()) {
-                                        pair.setValue(data);
-                                        Log.d(TAG, "detect - same location, bigger data " + data);
+
+                        if (possibleBumps.size() > 0) {
+                            Float avgData = 0.f;
+                            Location loc_avg = new Location("Location");
+                            Double lat_avg = 0.0, longt_avg = 0.0;
+                            for (HashMap<Location, Float> bump : possibleBumps) {
+                                Iterator it = bump.entrySet().iterator();
+                                while (it.hasNext()) {
+                                    HashMap.Entry pair = (HashMap.Entry) it.next();
+                                    Location hashLocation = (Location) pair.getKey();
+                                    avgData += (Float) pair.getValue();
+                                    lat_avg += hashLocation.getLatitude();
+                                    longt_avg += hashLocation.getLongitude();
+                                }
+                            }
+
+                            loc_avg.setLatitude(lat_avg / possibleBumps.size());
+                            loc_avg.setLongitude(longt_avg / possibleBumps.size());
+                            avgData = avgData / possibleBumps.size();
+
+                            //ak je location rovnaka, neprida sa vytlk
+                            if ((location.getLatitude() == loc_avg.getLatitude()) && (location.getLongitude() == loc_avg.getLongitude())) {
+                                if (data > (Float) avgData) {
+                                    for (HashMap<Location, Float> bump : possibleBumps) {
+                                        Iterator it = bump.entrySet().iterator();
+                                        while (it.hasNext()) {
+                                            HashMap.Entry pair = (HashMap.Entry) it.next();
+                                            Location hashLocation = (Location) pair.getKey();
+                                            if ((hashLocation.getLatitude() == loc_avg.getLatitude()) && (hashLocation.getLongitude() == loc_avg.getLongitude()))
+                                                pair.setValue(data);
+                                                break;
+                                        }
+                                    }
+
+                                    Log.d(TAG, "detect - same location, bigger data " + data);
+                                    if (updatesLock.tryLock()) {
+                                        try {
+                                            DatabaseOpenHelper databaseHelper = null;
+                                            SQLiteDatabase database = null;
+                                            try {
+                                                databaseHelper = new DatabaseOpenHelper(this);
+                                                database = databaseHelper.getWritableDatabase();
+                                                checkIntegrityDB(database);
+                                                database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6), created_at='" + getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss") + "' WHERE ROUND(latitude,7)==ROUND(" + location.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + location.getLongitude() + ",7)  AND type=0 ");
+                                            } finally {
+                                                if (database != null) {
+                                                    database.close();
+                                                    databaseHelper.close();
+                                                }
+                                            }
+                                            checkCloseDb(database);
+                                        } finally {
+                                            updatesLock.unlock();
+                                        }
+                                    }
+                                    // result =  fragment_context.getResources().getString(R.string.same_bump);
+                                    result = null;
+                                } else {
+                                }
+                                isToClose = true;
+                                Log.d(TAG, "detect - same");
+                            } else {
+                                double distance = getDistance((float) location.getLatitude(), (float) location.getLongitude(),
+                                        (float) loc_avg.getLatitude(), (float) loc_avg.getLongitude());
+                                //nie je to novy bump, pretoze z jeho okolia uz jeden pridavam (okolie 2m)
+                                if (distance < 2000.0) {
+                                    //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
+                                    if (data > (Float) avgData) {
+                                        Location firstLocation = null;
+                                        Log.d(TAG, "detect - under 2 meters, bigger data " + data);
+                                        for (HashMap<Location, Float> bump : possibleBumps) {
+                                            Iterator it = bump.entrySet().iterator();
+                                            while (it.hasNext()) {
+                                                HashMap.Entry pair = (HashMap.Entry) it.next();
+                                                firstLocation = (Location) pair.getKey();
+                                                pair.setValue(data);
+                                                break;
+                                            }
+                                            break;
+                                        }
                                         if (updatesLock.tryLock()) {
                                             try {
-                                                DatabaseOpenHelper databaseHelper =null;
+                                                Log.d(TAG, "detect - under write DB");
+                                                DatabaseOpenHelper databaseHelper = null;
                                                 SQLiteDatabase database = null;
                                                 try {
                                                     databaseHelper = new DatabaseOpenHelper(this);
                                                     database = databaseHelper.getWritableDatabase();
                                                     checkIntegrityDB(database);
-                                                    database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6), created_at='"+getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss")+"' WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7)  AND type=0 ");
-                                                }
-                                                finally {
-                                                    if (database!=null) {
+                                                    database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6), created_at='" + getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss") + "' WHERE ROUND(latitude,7)==ROUND(" + firstLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + firstLocation.getLongitude() + ",7) AND type=0 ");
+                                                } finally {
+                                                    if (database != null) {
                                                         database.close();
                                                         databaseHelper.close();
                                                     }
                                                 }
                                                 checkCloseDb(database);
-                                            }
-                                            finally {
+                                            } finally {
                                                 updatesLock.unlock();
                                             }
                                         }
-                                       // result =  fragment_context.getResources().getString(R.string.same_bump);
                                         result = null;
+                                        // result = fragment_context.getResources().getString(R.string.under_bump);
+                                    } else {
+                                        Log.d(TAG, "detect - under 2 meters, lower data new-" + data + " old " + avgData);
                                     }
-                                    else {
-                                    }
+                                    Log.d(TAG, "detect - under 2 meters");
                                     isToClose = true;
-                                    Log.d(TAG, "detect - same");
-                                }
-                               else {
-                                    double distance = getDistance((float) location.getLatitude(), (float) location.getLongitude(),
-                                            (float) hashLocation.getLatitude(), (float) hashLocation.getLongitude());
-                                    //nie je to novy bump, pretoze z jeho okolia uz jeden pridavam (okolie 2m)
-                                    if (distance < 2000.0) {
-                                        //do databazy sa ulozi najvacsia intenzita s akou sa dany vytlk zaznamenal
-                                        if (data > (Float) pair.getValue()) {
-                                            Log.d(TAG, "detect - under 2 meters, bigger data "+ data);
-                                            pair.setValue(data);
-                                            if (updatesLock.tryLock()) {
-                                                try {
-                                                    Log.d(TAG, "detect - under write DB");
-                                                    DatabaseOpenHelper databaseHelper =null;
-                                                    SQLiteDatabase database = null;
-                                                    try {
-                                                        databaseHelper = new DatabaseOpenHelper(this);
-                                                        database = databaseHelper.getWritableDatabase();
-                                                        checkIntegrityDB(database);
-                                                        database.execSQL("UPDATE new_bumps  SET intensity=ROUND(" + data + ",6), created_at='"+getDate(location.getTime(), "yyyy-MM-dd HH:mm:ss")+"' WHERE ROUND(latitude,7)==ROUND(" + hashLocation.getLatitude() + ",7)  and ROUND(longitude,7)==ROUND(" + hashLocation.getLongitude() + ",7) AND type=0 ");
-                                                    }
-                                                    finally {
-                                                        if (database!=null) {
-                                                            database.close();
-                                                            databaseHelper.close();
-                                                        }
-                                                    }
-                                                    checkCloseDb(database);
-                                                }
-                                                finally {
-                                                   updatesLock.unlock();
-                                                }
-                                            }
-                                            result = null;
-                                           // result = fragment_context.getResources().getString(R.string.under_bump);
-                                        } else {
-                                            Log.d(TAG, "detect - under 2 meters, lower data new-" +data+ " old "+(Float) pair.getValue());
-                                        }
-                                        Log.d(TAG, "detect - under 2 meters");
-                                        isToClose = true;
-                                    }
                                 }
                             }
-
                         }
                     }
                     finally {
